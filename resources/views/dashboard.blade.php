@@ -2,35 +2,138 @@
 
 @section('content')
      <style>
-          body {
+          /* =========================================
+                           TRANSITION PERUBAHAN TEMA
+                        ========================================= */
 
-               background: #f8fafc;
-
+          body,
+          .content,
+          .content-header,
+          .content-body,
+          .modern-card,
+          .service-box,
+          .activity,
+          .card,
+          .list-group-item {
+               transition:
+                    background-color 0.3s ease,
+                    color 0.3s ease,
+                    border-color 0.3s ease,
+                    box-shadow 0.3s ease;
           }
 
+          /* =========================================
+                           WHITE THEME
+                        ========================================= */
 
+          body.white-theme {
+               background-color: #f8fafc !important;
+               color: #0f172a;
+          }
 
-          /* GLOBAL CARD */
+          body.white-theme .content,
+          body.white-theme .content-header,
+          body.white-theme .content-body {
+               background-color: #f8fafc !important;
+               color: #0f172a;
+          }
 
-          .modern-card {
-
-               background: white;
-
+          body.white-theme .modern-card {
+               background-color: #ffffff !important;
+               color: #0f172a;
                border: none;
-
                border-radius: 24px;
-
-               box-shadow:
-                    0 12px 35px rgba(15, 23, 42, .08);
-
+               box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
           }
 
+          body.white-theme .service-box,
+          body.white-theme .activity {
+               background-color: #f8fafc !important;
+               color: #0f172a;
+          }
 
+          body.white-theme .card,
+          body.white-theme .card-header,
+          body.white-theme .card-body,
+          body.white-theme .card-footer {
+               background-color: #ffffff;
+               color: #0f172a;
+          }
 
-          /* HEADER */
+          body.white-theme .list-group-item {
+               background-color: #ffffff;
+               color: #0f172a;
+               border-color: #e2e8f0;
+          }
+
+          /* =========================================
+                           BLACK THEME
+                        ========================================= */
+
+          body.black-theme {
+               background-color: #0f1115 !important;
+               color: #f8fafc !important;
+          }
+
+          body.black-theme .content,
+          body.black-theme .content-header,
+          body.black-theme .content-body {
+               background-color: #0f1115 !important;
+               color: #f8fafc !important;
+          }
+
+          body.black-theme .modern-card {
+               background-color: #1a1d24 !important;
+               color: #f8fafc !important;
+               border: 1px solid #2d313a;
+               border-radius: 24px;
+               box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+          }
+
+          body.black-theme .service-box,
+          body.black-theme .activity {
+               background-color: #242832 !important;
+               color: #f8fafc !important;
+               border: 1px solid #303541;
+          }
+
+          body.black-theme .card,
+          body.black-theme .card-header,
+          body.black-theme .card-body,
+          body.black-theme .card-footer {
+               background-color: #1a1d24 !important;
+               color: #f8fafc !important;
+               border-color: #303541 !important;
+          }
+
+          body.black-theme .list-group-item {
+               background-color: #1a1d24 !important;
+               color: #f8fafc !important;
+               border-color: #303541 !important;
+          }
+
+          body.black-theme h1,
+          body.black-theme h2,
+          body.black-theme h3,
+          body.black-theme h4,
+          body.black-theme h5,
+          body.black-theme h6,
+          body.black-theme p,
+          body.black-theme span,
+          body.black-theme label {
+               color: inherit;
+          }
+
+          body.black-theme .text-muted,
+          body.black-theme .tx-color-03 {
+               color: #a8b0bd !important;
+          }
+
+          /* =========================================
+                           HERO DASHBOARD
+                        ========================================= */
 
           .hero-dashboard {
-
                background:
                     linear-gradient(135deg,
                          #0f172a,
@@ -38,152 +141,143 @@
                          #7c3aed);
 
                padding: 35px;
-
                border-radius: 30px;
-
-               color: white;
-
+               color: #ffffff;
           }
 
+          body.black-theme .hero-dashboard {
+               background:
+                    linear-gradient(135deg,
+                         #111827,
+                         #1e3a8a,
+                         #4c1d95);
+          }
 
+          .hero-dashboard h1,
+          .hero-dashboard h2,
+          .hero-dashboard h3,
+          .hero-dashboard h4,
+          .hero-dashboard h5,
+          .hero-dashboard h6,
+          .hero-dashboard p,
+          .hero-dashboard span {
+               color: #ffffff !important;
+          }
 
-          /* KPI */
+          /* =========================================
+                           GLOBAL CARD
+                        ========================================= */
+
+          .modern-card {
+               border: none;
+               border-radius: 24px;
+          }
+
+          /* =========================================
+                           KPI CARD
+                        ========================================= */
 
           .kpi-card {
-
                padding: 25px;
-
                border-radius: 24px;
-
-               color: white;
-
+               color: #ffffff;
                height: 180px;
-
                position: relative;
-
                overflow: hidden;
-
           }
 
-
-
-          .kpi-card:after {
-
+          .kpi-card::after {
                content: "";
-
                position: absolute;
-
                right: -30px;
-
                top: -30px;
-
                width: 130px;
-
                height: 130px;
-
-               background:
-                    rgba(255, 255, 255, .15);
-
+               background: rgba(255, 255, 255, 0.15);
                border-radius: 50%;
-
           }
-
-
 
           .kpi-card h1 {
-
                font-size: 40px;
-
                font-weight: 800;
-
+               color: #ffffff !important;
           }
 
-
+          .kpi-card p,
+          .kpi-card span,
+          .kpi-card h5,
+          .kpi-card h6 {
+               color: #ffffff !important;
+          }
 
           .kpi-blue {
-
                background:
                     linear-gradient(135deg, #2563eb, #38bdf8);
-
           }
-
 
           .kpi-green {
-
                background:
                     linear-gradient(135deg, #059669, #34d399);
-
           }
-
 
           .kpi-purple {
-
                background:
                     linear-gradient(135deg, #7c3aed, #c084fc);
-
           }
-
 
           .kpi-red {
-
                background:
                     linear-gradient(135deg, #dc2626, #fb7185);
-
           }
 
-
-
+          /* =========================================
+                           ICON
+                        ========================================= */
 
           .icon-modern {
-
                width: 55px;
-
                height: 55px;
-
                display: flex;
-
                align-items: center;
-
                justify-content: center;
-
                border-radius: 18px;
-
-               background:
-                    rgba(255, 255, 255, .25);
-
+               background: rgba(255, 255, 255, 0.25);
                font-size: 25px;
-
           }
 
-
-
-
-          /* CHART */
+          /* =========================================
+                           CHART
+                        ========================================= */
 
           .chart-container {
-
                padding: 25px;
-
           }
 
+          body.black-theme .chart-container {
+               color: #f8fafc;
+          }
 
-
-
-
-          /* STATUS */
+          /* =========================================
+                           STATUS DAN ACTIVITY
+                        ========================================= */
 
           .service-box {
-
                padding: 18px;
-
                border-radius: 18px;
-
-               background: #f8fafc;
-
                margin-bottom: 15px;
-
           }
 
+          .activity {
+               display: flex;
+               gap: 15px;
+               padding: 15px;
+               border-radius: 16px;
+               margin-bottom: 12px;
+          }
+
+          /* =========================================
+                           CARD DAN CHART
+                        ========================================= */
 
           .card-total-sales {
                height: 100%;
@@ -210,38 +304,17 @@
                font-size: 13px;
           }
 
+          /* =========================================
+                           RESPONSIVE
+                        ========================================= */
+
           @media (max-width: 1199px) {
                #flotChart7 {
                     height: 320px;
                     min-height: 320px;
                }
           }
-
-          /* ACTIVITY */
-
-          .activity {
-
-               display: flex;
-
-               gap: 15px;
-
-               padding: 15px;
-
-               border-radius: 16px;
-
-               background: #f8fafc;
-
-               margin-bottom: 12px;
-
-          }
      </style>
-
-
-
-
-
-
-
      {{-- HEADER --}}
 
 
@@ -300,7 +373,7 @@
 
           <!-- Laba Bersih -->
           <div class="col-xl-3 col-md-6 mb-4">
-               <div class="kpi-card kpi-green">
+               <div class="kpi-card kpi-purple">
 
                     <div class="icon-modern">
                          <i data-feather="trending-up"></i>

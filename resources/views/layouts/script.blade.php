@@ -55,75 +55,32 @@
 {{-- Theme Toggle --}}
 <script>
      document.addEventListener("DOMContentLoaded", function() {
+          const body = document.body;
+          const themeToggle = document.getElementById("themeToggle");
 
+          function setTheme(theme) {
+               body.classList.remove("white-theme", "black-theme");
 
-          const themeButton = document.getElementById("themeToggle");
-          const themeIcon = document.getElementById("themeIcon");
-
-
-          if (themeButton && themeIcon) {
-
-
-               if (localStorage.getItem("theme") === "black") {
-
-                    document.body.classList.add("black-theme");
-
-                    themeIcon.setAttribute(
-                         "data-feather",
-                         "sun"
-                    );
-
+               if (theme === "black") {
+                    body.classList.add("black-theme");
+               } else {
+                    body.classList.add("white-theme");
                }
 
-
-               themeButton.addEventListener("click", function(e) {
-
-                    e.preventDefault();
-
-
-                    document.body.classList.toggle("black-theme");
-
-
-                    if (document.body.classList.contains("black-theme")) {
-
-
-                         localStorage.setItem(
-                              "theme",
-                              "black"
-                         );
-
-
-                         themeIcon.setAttribute(
-                              "data-feather",
-                              "sun"
-                         );
-
-
-                    } else {
-
-
-                         localStorage.setItem(
-                              "theme",
-                              "white"
-                         );
-
-
-                         themeIcon.setAttribute(
-                              "data-feather",
-                              "moon"
-                         );
-
-                    }
-
-
-                    feather.replace();
-
-
-               });
-
-
+               localStorage.setItem("dashboardTheme", theme);
           }
 
+          const savedTheme = localStorage.getItem("dashboardTheme");
+          setTheme(savedTheme === "black" ? "black" : "white");
 
+          if (themeToggle) {
+               themeToggle.addEventListener("click", function() {
+                    const currentTheme = body.classList.contains("black-theme") ?
+                         "black" :
+                         "white";
+
+                    setTheme(currentTheme === "black" ? "white" : "black");
+               });
+          }
      });
 </script>
