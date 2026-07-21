@@ -1,66 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.app')
 
-<head>
-     <!-- Required meta tags -->
-     <meta charset="utf-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-
-     <!-- Meta -->
-     <meta name="description" content="Responsive Bootstrap 4 Dashboard and Admin Template">
-     <meta name="author" content="ThemePixels">
-
-
-     <!-- Favicon -->
-     <link rel="shortcut icon" type="image/x-icon" href="{{ asset('backend/assets/img/logo.png') }}">
-
-
-     <title>Dashboard Monitoring Kinerja & Kepuasan Pelanggan</title>
-
-     <!-- vendor css -->
-     <link href="{{ asset('backend/lib/@fortawesome/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
-
-     <link href="{{ asset('backend/lib/ionicons/css/ionicons.min.css') }}" rel="stylesheet">
-
-     <link href="{{ asset('backend/lib/jqvmap/jqvmap.min.css') }}" rel="stylesheet">
-     <link rel="stylesheet" href="{{ asset('backend/assets/css/template.css') }}">
-     <link rel="stylesheet" href="{{ asset('backend/assets/css/custom.css') }}">
-
-     <!-- template css -->
-     <link rel="stylesheet" href="{{ asset('backend/assets/css/cassie.css') }}">
+@section('content')
      <style>
-          /* =====================
-   BLACK THEME
-===================== */
+          body {
 
-          body.black-theme {
-
-               background: #121212;
-               color: #ffffff;
+               background: #f8fafc;
 
           }
 
 
-          /* Header */
 
-          body.black-theme .header {
+          /* GLOBAL CARD */
 
-               background: #1e1e1e;
+          .modern-card {
+
+               background: white;
+
+               border: none;
+
+               border-radius: 24px;
+
+               box-shadow:
+                    0 12px 35px rgba(15, 23, 42, .08);
 
           }
 
 
-          /* Sidebar */
 
-          body.black-theme .sidebar {
+          /* HEADER */
 
-               background: #181818;
+          .hero-dashboard {
 
-          }
+               background:
+                    linear-gradient(135deg,
+                         #0f172a,
+                         #2563eb,
+                         #7c3aed);
 
+               padding: 35px;
 
-          body.black-theme .sidebar-logo span {
+               border-radius: 30px;
 
                color: white;
 
@@ -68,880 +47,1146 @@
 
 
 
-          /* Content */
+          /* KPI */
 
-          body.black-theme .content,
-          body.black-theme .content-header,
-          body.black-theme .content-body {
+          .kpi-card {
 
-               background: #121212;
-               color: white;
+               padding: 25px;
 
-          }
-
-
-          /* Title */
-
-          body.black-theme .content-title {
+               border-radius: 24px;
 
                color: white;
 
-          }
+               height: 180px;
 
+               position: relative;
 
-          /* Breadcrumb */
-
-          body.black-theme .breadcrumb-item {
-
-               color: #ddd;
+               overflow: hidden;
 
           }
 
 
 
-          /* Dropdown */
+          .kpi-card:after {
 
-          body.black-theme .dropdown-menu {
+               content: "";
 
-               background: #242424;
+               position: absolute;
 
-          }
+               right: -30px;
 
+               top: -30px;
 
-          body.black-theme .dropdown-item {
+               width: 130px;
 
-               color: white;
+               height: 130px;
 
-          }
+               background:
+                    rgba(255, 255, 255, .15);
 
-
-          body.black-theme .dropdown-item:hover {
-
-               background: #333;
-
-          }
-
-
-
-          /* Input */
-
-          body.black-theme .form-control {
-
-               background: #2b2b2b;
-               color: white;
-               border-color: #444;
+               border-radius: 50%;
 
           }
 
 
 
-          /* =====================
-   WHITE THEME
-===================== */
+          .kpi-card h1 {
 
+               font-size: 40px;
 
-          body.white-theme {
-
-               background: #ffffff;
+               font-weight: 800;
 
           }
 
-          /* Container logo */
-          .sidebar-brand {
+
+
+          .kpi-blue {
+
+               background:
+                    linear-gradient(135deg, #2563eb, #38bdf8);
+
+          }
+
+
+          .kpi-green {
+
+               background:
+                    linear-gradient(135deg, #059669, #34d399);
+
+          }
+
+
+          .kpi-purple {
+
+               background:
+                    linear-gradient(135deg, #7c3aed, #c084fc);
+
+          }
+
+
+          .kpi-red {
+
+               background:
+                    linear-gradient(135deg, #dc2626, #fb7185);
+
+          }
+
+
+
+
+          .icon-modern {
+
+               width: 55px;
+
+               height: 55px;
+
                display: flex;
-               flex-direction: column;
+
                align-items: center;
+
                justify-content: center;
 
-               width: 100%;
-               text-align: center;
+               border-radius: 18px;
+
+               background:
+                    rgba(255, 255, 255, .25);
+
+               font-size: 25px;
+
           }
 
-          /* Link logo */
-          .sidebar-logo {
+
+
+
+          /* CHART */
+
+          .chart-container {
+
+               padding: 25px;
+
+          }
+
+
+
+
+
+          /* STATUS */
+
+          .service-box {
+
+               padding: 18px;
+
+               border-radius: 18px;
+
+               background: #f8fafc;
+
+               margin-bottom: 15px;
+
+          }
+
+
+          .card-total-sales {
+               height: 100%;
+          }
+
+          #flotChart7 {
+               width: 100%;
+               height: 430px;
+               min-height: 430px;
+          }
+
+          .card-transactions,
+          .card-deal {
+               width: 100%;
+          }
+
+          .card-transactions .list-group-item {
                display: flex;
-               flex-direction: column;
                align-items: center;
-               justify-content: center;
-
-               width: 100%;
-               padding: 15px 0;
-               margin: 0 auto;
-
-               text-align: center;
-               text-decoration: none;
-               box-sizing: border-box;
           }
 
-          /* Gambar logo */
-          .sidebar-logo-image {
-               display: block;
-
-               width: auto;
-               max-width: 130px;
-               height: 80px;
-
-               margin: 0 auto;
-               padding: 0;
-
-               object-fit: contain;
-               object-position: center;
-          }
-
-          /* Teks logo */
-          .sidebar-logo-text,
-          .sidebar-logo-headline {
-               display: block;
-
-               width: 100%;
-               margin: 6px auto 0;
-               padding: 0 10px;
-
-               color: #0e0d0d;
+          .card-transactions .list-group-item h6 {
+               margin-bottom: 3px;
                font-size: 13px;
-               font-weight: 600;
-               line-height: 1.3;
-               text-align: center;
-
-               box-sizing: border-box;
           }
 
-          /* =========================================
-   SIDEBAR TEMA BIRU
-========================================= */
-
-          .sidebar {
-               background: linear-gradient(180deg, #78a9e0 0%, #78a9e0 55%, #78a9e0 100%) !important;
-               color: #ffffff;
+          @media (max-width: 1199px) {
+               #flotChart7 {
+                    height: 320px;
+                    min-height: 320px;
+               }
           }
 
-          /* Bagian logo */
-          .sidebar-header {
-               background-color: #78a9e0 !important;
-               border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-          }
+          /* ACTIVITY */
 
-          .sidebar-brand {
-               background-color: transparent !important;
-          }
+          .activity {
 
-          /* Judul di bawah logo */
-          .sidebar-logo-headline,
-          .sidebar-logo-headline b {
-               color: #ffffff !important;
-          }
+               display: flex;
 
-          /* Area menu */
-          .sidebar-body {
-               background-color: transparent !important;
-          }
+               gap: 15px;
 
-          /* Judul kelompok menu */
-          .sidebar .nav-label,
-          .sidebar .content-label {
-               color: #bbdefb !important;
-          }
+               padding: 15px;
 
-          /* Menu utama */
-          .sidebar .nav-sidebar .nav-link {
-               color: #e3f2fd !important;
-               border-radius: 8px;
-               margin: 3px 10px;
-               padding: 11px 14px;
-               transition: all 0.25s ease;
-          }
+               border-radius: 16px;
 
-          /* Icon menu */
-          .sidebar .nav-sidebar .nav-link i,
-          .sidebar .nav-sidebar .nav-link svg {
-               color: #e3f2fd !important;
-               stroke: #e3f2fd !important;
-          }
+               background: #f8fafc;
 
-          /* Hover menu */
-          .sidebar .nav-sidebar .nav-link:hover {
-               background-color: rgba(255, 255, 255, 0.15) !important;
-               color: #ffffff !important;
-               transform: translateX(3px);
-          }
-
-          /* Menu aktif */
-          .sidebar .nav-sidebar .nav-link.active {
-               background-color: #ffffff !important;
-               color: #0d47a1 !important;
-               font-weight: 600;
-               box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-          }
-
-          .sidebar .nav-sidebar .nav-link.active i,
-          .sidebar .nav-sidebar .nav-link.active svg {
-               color: #81a7e0 !important;
-               stroke: #81a7e0 !important;
-          }
-
-          /* Submenu */
-          .sidebar .nav-sub {
-               background-color: rgba(0, 0, 0, 0.12);
-               margin: 4px 10px 8px;
-               padding: 6px 0;
-               border-radius: 8px;
-          }
-
-          /* Link submenu */
-          .sidebar .nav-sub-link {
-               color: #d9ecff !important;
-               padding: 9px 15px 9px 45px;
-               transition: all 0.2s ease;
-          }
-
-          /* Hover submenu */
-          .sidebar .nav-sub-link:hover {
-               color: #ffffff !important;
-               background-color: rgba(255, 255, 255, 0.12);
-          }
-
-          /* Submenu aktif */
-          .sidebar .nav-sub-link.active {
-               color: #ffffff !important;
-               background-color: rgba(255, 255, 255, 0.2);
-               font-weight: 600;
-               border-left: 3px solid #ffffff;
-          }
-
-          /* Scrollbar sidebar */
-          .sidebar-body::-webkit-scrollbar {
-               width: 5px;
-          }
-
-          .sidebar-body::-webkit-scrollbar-thumb {
-               background-color: rgba(255, 255, 255, 0.35);
-               border-radius: 10px;
-          }
-
-          .sidebar-body::-webkit-scrollbar-track {
-               background-color: transparent;
-          }
-
-          body.white-theme .header {
-
-               background: #ffffff;
+               margin-bottom: 12px;
 
           }
      </style>
-</head>
 
-<body>
 
-     <div class="sidebar">
-          <div class="sidebar-header">
-               <div class="sidebar-brand">
-                    <a href="{{ route('dashboard') }}" class="sidebar-logo">
-                         <img src="{{ asset('backend/assets/img/logo.png') }}" alt="Logo Dashboard Monitoring"
-                              class="sidebar-logo-image">
-                    </a>
 
-                    <small class="sidebar-logo-headline">
-                         Kinerja Karyawan &amp; Kepuasan Pelanggan
-                    </small>
+
+
+
+
+     {{-- HEADER --}}
+
+
+     <div class="hero-dashboard mb-4">
+
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+
+               <div>
+                    <h2>
+                         Dashboard Business Intelligence
+                    </h2>
+
+                    <p class="mb-0">
+                         Analisis pendapatan dan kualitas pelayanan perusahaan jasa
+                    </p>
                </div>
-          </div><!-- sidebar-header -->
-          <div id="dpSidebarBody" class="sidebar-body">
 
-               <ul class="nav nav-sidebar">
-
-                    {{-- DASHBOARD --}}
-                    <li class="nav-label">
-                         <label class="content-label">Dashboard Utama</label>
-                    </li>
-
-                    <li class="nav-item">
-                         <a href="{{ route('dashboard') }}"
-                              class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                              <i data-feather="home"></i>
-                              <span>Dashboard Eksekutif</span>
-                         </a>
-                    </li>
-
-                    {{-- MASTER DATA --}}
-                    <li class="nav-label">
-                         <label class="content-label">Master Data</label>
-                    </li>
-
-                    <li
-                         class="nav-item {{ request()->routeIs(
-                             'branches.*',
-                             'departments.*',
-                             'positions.*',
-                             'employees.*',
-                             'customers.*',
-                             'service-categories.*',
-                             'services.*',
-                         )
-                             ? 'show'
-                             : '' }}">
-
-                         <a href="#"
-                              class="nav-link with-sub {{ request()->routeIs(
-                                  'branches.*',
-                                  'departments.*',
-                                  'positions.*',
-                                  'employees.*',
-                                  'customers.*',
-                                  'service-categories.*',
-                                  'services.*',
-                              )
-                                  ? 'active'
-                                  : '' }}">
-
-                              <i data-feather="database"></i>
-                              <span>Master Data</span>
-                         </a>
-
-                         <nav class="nav nav-sub">
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('branches.*') ? 'active' : '' }}">
-                                   Cabang
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('departments.*') ? 'active' : '' }}">
-                                   Departemen
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('positions.*') ? 'active' : '' }}"
-                                   class="nav-sub-link {{ request()->routeIs('positions.*') ? 'active' : '' }}">
-                                   Jabatan
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                                   Data Karyawan
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-                                   Data Pelanggan
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('service-categories.*') ? 'active' : '' }}">
-                                   Kategori Layanan
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('services.*') ? 'active' : '' }}">
-                                   Data Layanan
-                              </a>
-
-                         </nav>
-                    </li>
-
-                    {{-- TRANSAKSI JASA --}}
-                    <li class="nav-label">
-                         <label class="content-label">Operasional Jasa</label>
-                    </li>
-
-                    <li
-                         class="nav-item {{ request()->routeIs('transactions.*', 'transaction-assignments.*') ? 'show' : '' }}">
-
-                         <a href="#"
-                              class="nav-link with-sub {{ request()->routeIs('transactions.*', 'transaction-assignments.*') ? 'active' : '' }}">
-
-                              <i data-feather="briefcase"></i>
-                              <span>Transaksi Jasa</span>
-                         </a>
-
-                         <nav class="nav nav-sub">
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('transactions.index') ? 'active' : '' }}">
-                                   Daftar Transaksi
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('transactions.create') ? 'active' : '' }}">
-                                   Tambah Transaksi
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('transaction-assignments.*') ? 'active' : '' }}">
-                                   Penugasan Karyawan
-                              </a>
-
-                         </nav>
-                    </li>
-
-                    {{-- KINERJA KARYAWAN --}}
-                    <li
-                         class="nav-item {{ request()->routeIs(
-                             'kpi-categories.*',
-                             'kpi-indicators.*',
-                             'employee-targets.*',
-                             'employee-kpi-results.*',
-                             'performance-evaluations.*',
-                         )
-                             ? 'show'
-                             : '' }}">
-
-                         <a href="#"
-                              class="nav-link with-sub {{ request()->routeIs(
-                                  'kpi-categories.*',
-                                  'kpi-indicators.*',
-                                  'employee-targets.*',
-                                  'employee-kpi-results.*',
-                                  'performance-evaluations.*',
-                              )
-                                  ? 'active'
-                                  : '' }}">
-
-                              <i data-feather="bar-chart-2"></i>
-                              <span>Kinerja Karyawan</span>
-                         </a>
-
-                         <nav class="nav nav-sub">
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('kpi-categories.*') ? 'active' : '' }}">
-                                   Kategori KPI
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('kpi-indicators.*') ? 'active' : '' }}">
-                                   Indikator KPI
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('employee-targets.*') ? 'active' : '' }}">
-                                   Target Karyawan
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('employee-kpi-results.*') ? 'active' : '' }}">
-                                   Hasil KPI
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('performance-evaluations.*') ? 'active' : '' }}">
-                                   Evaluasi Kinerja
-                              </a>
-
-                         </nav>
-                    </li>
-
-                    {{-- KEPUASAN PELANGGAN --}}
-                    <li
-                         class="nav-item {{ request()->routeIs('surveys.*', 'survey-questions.*', 'survey-responses.*') ? 'show' : '' }}">
-
-                         <a href="#"
-                              class="nav-link with-sub {{ request()->routeIs('surveys.*', 'survey-questions.*', 'survey-responses.*') ? 'active' : '' }}">
-
-                              <i data-feather="smile"></i>
-                              <span>Kepuasan Pelanggan</span>
-                         </a>
-
-                         <nav class="nav nav-sub">
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('surveys.*') ? 'active' : '' }}">
-                                   Data Survei
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('survey-questions.*') ? 'active' : '' }}">
-                                   Pertanyaan Survei
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('survey-responses.*') ? 'active' : '' }}">
-                                   Hasil Survei
-                              </a>
-
-                         </nav>
-                    </li>
-
-                    {{-- KELUHAN --}}
-                    <li
-                         class="nav-item {{ request()->routeIs('complaint-categories.*', 'complaints.*') ? 'show' : '' }}">
-
-                         <a href="#"
-                              class="nav-link with-sub {{ request()->routeIs('complaint-categories.*', 'complaints.*') ? 'active' : '' }}">
-
-                              <i data-feather="message-square"></i>
-                              <span>Keluhan Pelanggan</span>
-                         </a>
-
-                         <nav class="nav nav-sub">
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('complaints.index') ? 'active' : '' }}">
-                                   Daftar Keluhan
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('complaints.create') ? 'active' : '' }}">
-                                   Tambah Keluhan
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('complaint-categories.*') ? 'active' : '' }}">
-                                   Kategori Keluhan
-                              </a>
-
-                         </nav>
-                    </li>
-
-                    {{-- LAPORAN --}}
-                    <li class="nav-label">
-                         <label class="content-label">Laporan dan Sistem</label>
-                    </li>
-
-                    <li class="nav-item {{ request()->routeIs('reports.*') ? 'show' : '' }}">
-
-                         <a href="#"
-                              class="nav-link with-sub {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-
-                              <i data-feather="file-text"></i>
-                              <span>Laporan</span>
-                         </a>
-
-                         <nav class="nav nav-sub">
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('reports.transactions') ? 'active' : '' }}">
-                                   Laporan Transaksi
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('reports.performance') ? 'active' : '' }}">
-                                   Laporan Kinerja
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('reports.satisfaction') ? 'active' : '' }}">
-                                   Laporan Kepuasan
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('reports.complaints') ? 'active' : '' }}">
-                                   Laporan Keluhan
-                              </a>
-
-                         </nav>
-                    </li>
-
-                    {{-- PENGGUNA --}}
-                    <li
-                         class="nav-item {{ request()->routeIs('users.*', 'roles.*', 'settings.*', 'activity-logs.*') ? 'show' : '' }}">
-
-                         <a href="#"
-                              class="nav-link with-sub {{ request()->routeIs('users.*', 'roles.*', 'settings.*', 'activity-logs.*') ? 'active' : '' }}">
-
-                              <i data-feather="settings"></i>
-                              <span>Pengaturan Sistem</span>
-                         </a>
-
-                         <nav class="nav nav-sub">
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                                   Pengguna
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
-                                   Role dan Hak Akses
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('activity-logs.*') ? 'active' : '' }}">
-                                   Log Aktivitas
-                              </a>
-
-                              <a href="#"
-                                   class="nav-sub-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                                   Pengaturan Aplikasi
-                              </a>
-
-                         </nav>
-                    </li>
-
-                    {{-- PROFIL DAN LOGOUT --}}
-                    <li class="nav-item">
-                         <a href="#" class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                              <i data-feather="user"></i>
-                              <span>Profil Saya</span>
-                         </a>
-                    </li>
-               </ul>
+               <div class="mt-3 mt-md-0">
+                    <button type="button" class="btn btn-light">
+                         <i data-feather="download" class="mg-r-5"></i>
+                         Unduh Laporan
+                    </button>
+               </div>
 
           </div>
-     </div><!-- sidebar -->
 
-     <div class="content">
-          <div class="header">
-               <div class="header-left">
-                    <a href="" class="burger-menu"><i data-feather="menu"></i></a>
+     </div>
 
-                    <div class="header-search">
-                         <i data-feather="search"></i>
-                         <input type="search" class="form-control" placeholder="What are you looking for?">
-                    </div><!-- header-search -->
 
-               </div><!-- header-left -->
+     {{-- KPI SECTION --}}
+     <div class="row">
 
-               <div class="header-right">
+          <!-- Total Pendapatan -->
+          <div class="col-xl-3 col-md-6 mb-4">
+               <div class="kpi-card kpi-blue">
 
-                    <a href="" class="header-help-link"><i data-feather="help-circle"></i></a>
-                    <div class="dropdown dropdown-notification">
-                         <!-- Theme Toggle -->
-                         <a href="#" class="header-help-link" id="themeToggle" title="Change Theme">
-
-                              <i data-feather="moon" id="themeIcon"></i>
-
-                         </a>
-                         <a href="" class="dropdown-link new" data-toggle="dropdown"><i
-                                   data-feather="bell"></i></a>
-                         <div class="dropdown-menu dropdown-menu-right">
-                              <div class="dropdown-menu-header">
-                                   <h6>Notifications</h6>
-                                   <a href=""><i data-feather="more-vertical"></i></a>
-                              </div><!-- dropdown-menu-header -->
-                              <div class="dropdown-menu-body">
-                                   <a href="" class="dropdown-item">
-                                        <div class="avatar"><span
-                                                  class="avatar-initial rounded-circle text-primary bg-primary-light">s</span>
-                                        </div>
-                                        <div class="dropdown-item-body">
-                                             <p><strong>Socrates Itumay</strong> marked the task as completed.</p>
-                                             <span>5 hours ago</span>
-                                        </div>
-                                   </a>
-                                   <a href="" class="dropdown-item">
-                                        <div class="avatar"><span
-                                                  class="avatar-initial rounded-circle tx-pink bg-pink-light">r</span>
-                                        </div>
-                                        <div class="dropdown-item-body">
-                                             <p><strong>Reynante Labares</strong> marked the task as incomplete.</p>
-                                             <span>8 hours ago</span>
-                                        </div>
-                                   </a>
-                                   <a href="" class="dropdown-item">
-                                        <div class="avatar"><span
-                                                  class="avatar-initial rounded-circle tx-success bg-success-light">d</span>
-                                        </div>
-                                        <div class="dropdown-item-body">
-                                             <p><strong>Dyanne Aceron</strong> responded to your comment on this
-                                                  <strong>post</strong>.
-                                             </p>
-                                             <span>a day ago</span>
-                                        </div>
-                                   </a>
-                                   <a href="" class="dropdown-item">
-                                        <div class="avatar"><span
-                                                  class="avatar-initial rounded-circle tx-indigo bg-indigo-light">k</span>
-                                        </div>
-                                        <div class="dropdown-item-body">
-                                             <p><strong>Kirby Avendula</strong> marked the task as incomplete.</p>
-                                             <span>2 days ago</span>
-                                        </div>
-                                   </a>
-                              </div><!-- dropdown-menu-body -->
-                              <div class="dropdown-menu-footer">
-                                   <a href="">View All Notifications</a>
-                              </div>
-                         </div><!-- dropdown-menu -->
-
+                    <div class="icon-modern">
+                         <i data-feather="dollar-sign"></i>
                     </div>
-                    <div class="dropdown dropdown-loggeduser">
-                         <a href="#" class="dropdown-link" data-toggle="dropdown">
 
-                              <div class="avatar avatar-sm">
+                    <h1>
+                         Rp486,03 Juta
+                    </h1>
 
-                                   <img src="{{ asset('backend/assets/img/favicon.png') }}" class="rounded-circle"
-                                        alt="User Avatar">
+                    <p>
+                         Total Pendapatan
+                    </p>
 
-                              </div>
+                    <small>
+                         Naik 8,5% dari periode sebelumnya
+                    </small>
 
-                         </a>
-                         <div class="dropdown-menu dropdown-menu-right">
-                              <div class="dropdown-menu-header">
-
-                                   <div class="media align-items-center">
-
-                                        <div class="avatar">
-
-                                             <img src="{{ asset('backend/assets/img/favicon.png') }}"
-                                                  class="rounded-circle" alt="Avatar">
-
-                                        </div>
+               </div>
+          </div>
 
 
-                                        <div class="media-body mg-l-10">
+          <!-- Laba Bersih -->
+          <div class="col-xl-3 col-md-6 mb-4">
+               <div class="kpi-card kpi-green">
 
-                                             <h6>
-                                                  Administrator
-                                             </h6>
+                    <div class="icon-modern">
+                         <i data-feather="trending-up"></i>
+                    </div>
 
-                                             <span>
-                                                  Admin Dashboard
-                                             </span>
+                    <h1>
+                         Rp98,81 Juta
+                    </h1>
 
-                                        </div>
+                    <p>
+                         Laba Bersih
+                    </p>
 
+                    <small>
+                         Margin laba mencapai 20,3%
+                    </small>
+
+               </div>
+          </div>
+
+
+          <!-- Kepuasan Pelanggan -->
+          <div class="col-xl-3 col-md-6 mb-4">
+               <div class="kpi-card kpi-purple">
+
+                    <div class="icon-modern">
+                         <i data-feather="smile"></i>
+                    </div>
+
+                    <h1>
+                         94,5%
+                    </h1>
+
+                    <p>
+                         Indeks Kepuasan Pelanggan
+                    </p>
+
+                    <small>
+                         Kualitas pelayanan sangat baik
+                    </small>
+
+               </div>
+          </div>
+
+
+          <!-- Keluhan Aktif -->
+          <div class="col-xl-3 col-md-6 mb-4">
+               <div class="kpi-card kpi-red">
+
+                    <div class="icon-modern">
+                         <i data-feather="alert-triangle"></i>
+                    </div>
+
+                    <h1>
+                         25
+                    </h1>
+
+                    <p>
+                         Keluhan Aktif
+                    </p>
+
+                    <small>
+                         Memerlukan tindak lanjut
+                    </small>
+
+               </div>
+          </div>
+
+     </div>
+     <div class="row align-items-stretch">
+
+          <!-- Analisis Pendapatan -->
+          <div class="col-md-12 col-xl-8 mg-t-15 mg-sm-t-20">
+               <div class="card card-hover card-total-sales h-100">
+
+                    <div class="card-header bg-transparent pd-y-15 pd-l-15 pd-sm-l-20 pd-r-15 bd-b-0">
+                         <div>
+                              <h6 class="card-title mg-b-0">
+                                   Analisis Pendapatan Perusahaan
+                              </h6>
+
+                              <small class="text-muted">
+                                   Perbandingan pendapatan berdasarkan jenis layanan
+                              </small>
+                         </div>
+
+                         <nav class="nav">
+                              <a href="#" class="link-gray-500" title="Bantuan">
+                                   <i data-feather="help-circle" class="svg-16"></i>
+                              </a>
+
+                              <a href="#" class="link-gray-500" title="Menu lainnya">
+                                   <i data-feather="more-vertical" class="svg-16"></i>
+                              </a>
+                         </nav>
+                    </div>
+
+                    <div class="card-body pd-x-15 pd-sm-x-20 pd-t-5">
+
+                         <div class="d-flex flex-column flex-sm-row align-items-start justify-content-between mg-b-15">
+
+                              <div class="total-sales-info order-2 order-sm-0">
+
+                                   <div>
+                                        <label>Total Pendapatan</label>
+                                        <h5>Rp486.030.000</h5>
+                                   </div>
+
+                                   <div>
+                                        <label>Laba Bersih</label>
+                                        <h5>Rp98.809.700</h5>
+                                   </div>
+
+                                   <div>
+                                        <label>Jumlah Transaksi</label>
+                                        <h5>36.760</h5>
                                    </div>
 
                               </div>
-                              <div class="dropdown-menu-body">
-                                   <a href="" class="dropdown-item"><i data-feather="user"></i> View
-                                        Profile</a>
-                                   <a href="" class="dropdown-item"><i data-feather="edit-2"></i> Edit
-                                        Profile</a>
-                                   <a href="" class="dropdown-item"><i data-feather="briefcase"></i> Account
-                                        Settings</a>
-                                   <a href="" class="dropdown-item"><i data-feather="shield"></i> Privacy
-                                        Settings</a>
-                                   <a href="" class="dropdown-item"><i data-feather="log-out"></i> Sign
-                                        Out</a>
+
+                              <div class="order-1 order-sm-0 mg-sm-t-7 mg-b-15 mg-sm-b-0">
+
+                                   <button type="button" class="btn btn-xs btn-white pd-x-10">
+                                        Triwulanan
+                                        <i class="icon ion-ios-arrow-down mg-l-5"></i>
+                                   </button>
+
+                                   <button type="button" class="btn btn-xs btn-white pd-x-10">
+                                        Semua Layanan
+                                        <i class="icon ion-ios-arrow-down mg-l-5"></i>
+                                   </button>
+
                               </div>
-                         </div><!-- dropdown-menu -->
+
+                         </div>
+
+                         <div class="flot-wrapper">
+
+                              <div class="chart-legend">
+                                   <label>
+                                        <span class="bg-blue"></span>
+                                        Layanan Offline
+                                   </label>
+
+                                   <label>
+                                        <span class="bg-green"></span>
+                                        Layanan Online
+                                   </label>
+                              </div>
+
+                              <div id="flotChart7" class="flot-chart"></div>
+
+                         </div>
 
                     </div>
-               </div><!-- header-right -->
-
-          </div><!-- header -->
-
-          <div class="content-header">
-               <div>
-                    <nav aria-label="breadcrumb">
-                         <ol class="breadcrumb">
-                              <li class="breadcrumb-item"><a href="#">Home</a></li>
-                              <li class="breadcrumb-item"><a href="#">Pages</a></li>
-                              <li class="breadcrumb-item active" aria-current="page">Blank Page</li>
-                         </ol>
-                    </nav>
-                    <h4 class="content-title content-title-xs">Blank Page</h4>
                </div>
-          </div><!-- content-header -->
-          <div class="content-body">
-
-          </div><!-- content-body -->
-     </div><!-- content -->
-
-     <!-- Vendor JS -->
-     <script src="{{ asset('backend/lib/jquery/jquery.min.js') }}"></script>
-
-     <script src="{{ asset('backend/lib/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-
-     <script src="{{ asset('backend/lib/feather-icons/feather.min.js') }}"></script>
-
-     <script src="{{ asset('backend/lib/perfect-scrollbar/perfect-scrollbar.min.js') }}"></script>
-
-     <script src="{{ asset('backend/lib/js-cookie/js.cookie.js') }}"></script>
+          </div>
 
 
-     <!-- Chart -->
-     <script src="{{ asset('backend/lib/chart.js/Chart.bundle.min.js') }}"></script>
+          <!-- Kolom Kanan -->
+          <div class="col-md-12 col-xl-4 mg-t-15 mg-sm-t-20">
+               <div class="d-flex flex-column h-100">
+
+                    <!-- Transaksi Terbaru -->
+                    <div class="card card-hover card-transactions">
+
+                         <div class="card-header bg-transparent">
+                              <div>
+                                   <h6 class="card-title mg-b-0">
+                                        Transaksi Terbaru
+                                   </h6>
+
+                                   <small class="text-muted">
+                                        Aktivitas pembayaran pelanggan
+                                   </small>
+                              </div>
+
+                              <nav class="nav nav-card-icon">
+                                   <a href="#" title="Unduh">
+                                        <i data-feather="download"></i>
+                                   </a>
+
+                                   <a href="#" title="Cetak">
+                                        <i data-feather="printer"></i>
+                                   </a>
+
+                                   <a href="#" title="Menu lainnya">
+                                        <i data-feather="more-horizontal"></i>
+                                   </a>
+                              </nav>
+                         </div>
+
+                         <ul class="list-group list-group-flush">
+
+                              <li class="list-group-item">
+                                   <div class="avatar">
+                                        <span class="avatar-initial rounded-circle bg-primary-light">
+                                             <i data-feather="shopping-bag" class="svg-18"></i>
+                                        </span>
+                                   </div>
+
+                                   <div class="mg-l-10 mg-sm-l-15">
+                                        <h6>Pembayaran Layanan - TRX001</h6>
+                                        <small>Hari ini, 21 Juli 2026</small>
+                                   </div>
+
+                                   <div class="mg-l-auto tx-right">
+                                        <h6>Rp1.500.000</h6>
+                                        <small class="d-none d-sm-inline">
+                                             Transfer bank
+                                        </small>
+                                   </div>
+                              </li>
+
+                              <li class="list-group-item">
+                                   <div class="avatar">
+                                        <span class="avatar-initial rounded-circle bg-teal-light">
+                                             <i data-feather="credit-card" class="svg-18"></i>
+                                        </span>
+                                   </div>
+
+                                   <div class="mg-l-10 mg-sm-l-15">
+                                        <h6>Pembayaran Layanan - TRX002</h6>
+                                        <small>Hari ini, 21 Juli 2026</small>
+                                   </div>
+
+                                   <div class="mg-l-auto tx-right">
+                                        <h6>Rp750.000</h6>
+                                        <small class="d-none d-sm-inline">
+                                             Pembayaran digital
+                                        </small>
+                                   </div>
+                              </li>
+
+                              <li class="list-group-item">
+                                   <div class="avatar">
+                                        <span class="avatar-initial rounded-circle bg-pink-light">
+                                             <i data-feather="file-text" class="svg-18"></i>
+                                        </span>
+                                   </div>
+
+                                   <div class="mg-l-10 mg-sm-l-15">
+                                        <h6>Pembayaran Layanan - TRX003</h6>
+                                        <small>Kemarin, 20 Juli 2026</small>
+                                   </div>
+
+                                   <div class="mg-l-auto tx-right">
+                                        <h6>Rp2.000.000</h6>
+                                        <small class="d-none d-sm-inline">
+                                             Pembayaran tunai
+                                        </small>
+                                   </div>
+                              </li>
+
+                         </ul>
+
+                         <div class="card-footer bg-transparent">
+                              <a href="#">
+                                   Lihat Semua Transaksi
+                                   <i class="icon ion-chevron-right"></i>
+                                   <i class="icon ion-chevron-right"></i>
+                              </a>
+                         </div>
+
+                    </div>
 
 
-     <!-- Flot Chart -->
-     <script src="{{ asset('backend/lib/jquery.flot/jquery.flot.js') }}"></script>
+                    <!-- Layanan Pendapatan Tertinggi -->
+                    <div class="card card-hover card-deal mg-t-20 flex-grow-1">
 
-     <script src="{{ asset('backend/lib/jquery.flot/jquery.flot.stack.js') }}"></script>
+                         <div class="card-header bg-transparent bd-b-0">
+                              <div>
+                                   <h6 class="card-title mg-b-0">
+                                        Layanan dengan Pendapatan Tertinggi
+                                   </h6>
 
-     <script src="{{ asset('backend/lib/jquery.flot/jquery.flot.resize.js') }}"></script>
+                                   <small class="text-muted">
+                                        Berdasarkan periode berjalan
+                                   </small>
+                              </div>
 
-     <script src="{{ asset('backend/lib/jquery.flot/jquery.flot.threshold.js') }}"></script>
+                              <nav class="nav nav-card-icon">
+                                   <a href="#" title="Simpan">
+                                        <i data-feather="save"></i>
+                                   </a>
+
+                                   <a href="#" title="Cetak">
+                                        <i data-feather="printer"></i>
+                                   </a>
+
+                                   <a href="#" title="Menu lainnya">
+                                        <i data-feather="more-horizontal"></i>
+                                   </a>
+                              </nav>
+                         </div>
+
+                         <div class="card-body">
+                              <div class="d-flex align-items-center">
+
+                                   <div class="avatar">
+                                        <span class="avatar-initial rounded-circle bg-primary-light">
+                                             <i data-feather="briefcase" class="svg-18"></i>
+                                        </span>
+                                   </div>
+
+                                   <div class="mg-l-15">
+                                        <h6 class="mg-b-3">Layanan Konsultasi</h6>
+                                        <small class="text-muted">1.245 transaksi</small>
+                                   </div>
+
+                                   <div class="mg-l-auto tx-right">
+                                        <h6 class="mg-b-3">Rp125.000.000</h6>
+                                        <small class="text-success">Naik 12,5%</small>
+                                   </div>
+
+                              </div>
+                         </div>
+
+                    </div>
+
+               </div>
+          </div>
+
+     </div>
+     <div class="row">
+
+          <!-- Target Penyelesaian Layanan Harian -->
+          <div class="col-md-6 col-xl-4 mg-t-15 mg-sm-t-20 order-md-1 order-xl-0">
+               <div class="card card-hover card-chart-one ht-md-100p">
+
+                    <div class="card-header bg-transparent pd-b-15-f bd-b-0">
+                         <div>
+                              <h6 class="card-title mg-b-0">
+                                   Target Penyelesaian Layanan Harian
+                              </h6>
+
+                              <small class="text-muted">
+                                   Monitoring jumlah layanan pelanggan yang diselesaikan
+                              </small>
+                         </div>
+
+                         <nav class="nav">
+                              <a href="#" class="link-gray-500" title="Informasi">
+                                   <i data-feather="help-circle" class="svg-16"></i>
+                              </a>
+
+                              <a href="#" class="link-gray-500" title="Menu lainnya">
+                                   <i data-feather="more-vertical" class="svg-16"></i>
+                              </a>
+                         </nav>
+                    </div>
+
+                    <div class="card-body pd-t-0 d-block">
+
+                         <div class="d-flex align-items-center justify-content-between mg-b-10">
+
+                              <p class="tx-11 tx-color-03 mg-b-0">
+                                   Hari ini, 21 Juli 2026
+                              </p>
+
+                              <div class="chart-legend">
+                                   <label>
+                                        <span class="bg-brand-01"></span>
+                                        Target tercapai
+                                   </label>
+                              </div>
+
+                         </div>
+
+                         <!-- Grafik pencapaian layanan -->
+                         <div id="flotChart5" class="flot-chart-two"></div>
+
+                    </div>
+
+                    <div class="card-footer bg-transparent pd-y-15 pd-x-20">
+
+                         <div class="row row-sm tx-13">
+
+                              <div class="col">
+                                   <label class="tx-13 mg-b-3">
+                                        Target Layanan
+                                   </label>
+
+                                   <h4 class="mg-b-0">
+                                        60
+                                   </h4>
+
+                                   <small class="tx-11 tx-color-04">
+                                        Layanan per hari
+                                   </small>
+                              </div>
+
+                              <div class="col">
+                                   <label class="tx-13 mg-b-3">
+                                        Selesai Hari Ini
+                                   </label>
+
+                                   <h4 class="mg-b-0">
+                                        48
+                                   </h4>
+
+                                   <small class="tx-11 tx-color-04">
+                                        80% target tercapai
+                                   </small>
+                              </div>
+
+                         </div>
+
+                    </div>
+
+               </div>
+          </div>
 
 
-     <!-- Map -->
-     <script src="{{ asset('backend/lib/jqvmap/jquery.vmap.min.js') }}"></script>
+          <!-- Pendapatan Berdasarkan Cabang -->
+          <div class="col-md-12 col-xl-8 mg-t-15 mg-sm-t-20">
+               <div class="card card-hover card-sale-location ht-md-100p">
 
-     <script src="{{ asset('backend/lib/jqvmap/maps/jquery.vmap.world.js') }}"></script>
+                    <div class="card-header bg-transparent">
 
+                         <div>
+                              <h6 class="card-title mg-b-0">
+                                   Pendapatan Berdasarkan Cabang
+                              </h6>
 
-     <!-- Cassie Template -->
-     <script src="{{ asset('backend/assets/js/cassie.js') }}"></script>
+                              <small class="text-muted">
+                                   Perbandingan pendapatan perusahaan berdasarkan wilayah operasional
+                              </small>
+                         </div>
 
+                         <nav class="nav">
+                              <a href="#" class="link-gray-500" title="Informasi">
+                                   <i data-feather="help-circle" class="svg-16"></i>
+                              </a>
 
-     <!-- Dashboard -->
-     <script src="{{ asset('backend/assets/js/flot.sampledata.js') }}"></script>
+                              <a href="#" class="link-gray-500" title="Menu lainnya">
+                                   <i data-feather="more-vertical" class="svg-16"></i>
+                              </a>
+                         </nav>
 
-     <script src="{{ asset('backend/assets/js/vmap.sampledata.js') }}"></script>
-     <!--
-<script src="{{ asset('backend/assets/js/dashboard-one.js') }}"></script>
--->
+                    </div>
+
+                    <div class="card-body">
+
+                         <!-- Daftar cabang -->
+                         <div class="list-group-wrapper order-2 order-md-0 mg-t-20 mg-sm-t-30 mg-md-t-0">
+
+                              <label class="content-label mg-b-8">
+                                   Cabang dengan Pendapatan Tertinggi
+                              </label>
+
+                              <ul class="list-group list-group-flush mg-b-15">
+
+                                   <li class="list-group-item">
+                                        <span class="bg-primary"></span>
+                                        <span>Jakarta</span>
+                                        <span class="tx-medium">Rp125 Juta</span>
+                                   </li>
+
+                                   <li class="list-group-item">
+                                        <span class="bg-teal"></span>
+                                        <span>Surabaya</span>
+                                        <span class="tx-medium">Rp108 Juta</span>
+                                   </li>
+
+                                   <li class="list-group-item">
+                                        <span class="bg-warning"></span>
+                                        <span>Bandung</span>
+                                        <span class="tx-medium">Rp95 Juta</span>
+                                   </li>
+
+                                   <li class="list-group-item">
+                                        <span class="bg-pink"></span>
+                                        <span>Medan</span>
+                                        <span class="tx-medium">Rp82 Juta</span>
+                                   </li>
+
+                                   <li class="list-group-item">
+                                        <span class="bg-purple"></span>
+                                        <span>Semarang</span>
+                                        <span class="tx-medium">Rp74 Juta</span>
+                                   </li>
+
+                                   <li class="list-group-item">
+                                        <span class="bg-success"></span>
+                                        <span>Makassar</span>
+                                        <span class="tx-medium">Rp68 Juta</span>
+                                   </li>
+
+                              </ul>
+
+                              <a href="#" class="d-flex align-items-center tx-12">
+                                   Lihat laporan lengkap
+                                   <i class="icon ion-android-arrow-forward mg-l-5"></i>
+                              </a>
+
+                         </div>
+
+                         <!-- Peta wilayah -->
+                         <div class="vmap-wrapper">
+                              <div id="vmap" class="vmap order-1 order-md-0"></div>
+                         </div>
+
+                    </div>
+
+               </div>
+          </div>
+
+     </div>
+@endsection
+@push('script')
      <script>
-          document.addEventListener("DOMContentLoaded", function() {
+          document.addEventListener('DOMContentLoaded', function() {
+               if (typeof feather !== 'undefined') {
+                    feather.replace();
+               }
+          });
+     </script>
+     <script>
+          $(document).ready(function() {
 
+               const chartElement = $('#flotChart7');
 
-               const themeButton = document.getElementById("themeToggle");
-               const themeIcon = document.getElementById("themeIcon");
+               // Pastikan elemen grafik tersedia
+               if (chartElement.length === 0) {
+                    console.error('Elemen #flotChart7 tidak ditemukan.');
+                    return;
+               }
 
-
-               if (localStorage.getItem("theme") === "black") {
-
-                    document.body.classList.add("black-theme");
-
-                    themeIcon.setAttribute(
-                         "data-feather",
-                         "sun"
+               // Pastikan library Flot sudah dimuat
+               if (typeof $.plot !== 'function') {
+                    console.error(
+                         'Library Flot belum dimuat. Periksa jquery.flot.js.'
                     );
+                    return;
+               }
 
+               const offlineSales = [
+                    [1, 120000],
+                    [2, 145000],
+                    [3, 130000],
+                    [4, 175000],
+                    [5, 160000],
+                    [6, 210000],
+                    [7, 195000],
+                    [8, 240000],
+                    [9, 225000],
+                    [10, 270000],
+                    [11, 255000],
+                    [12, 300000]
+               ];
+
+               const onlineSales = [
+                    [1, 80000],
+                    [2, 95000],
+                    [3, 110000],
+                    [4, 105000],
+                    [5, 140000],
+                    [6, 155000],
+                    [7, 170000],
+                    [8, 165000],
+                    [9, 200000],
+                    [10, 215000],
+                    [11, 235000],
+                    [12, 260000]
+               ];
+
+               const chartData = [{
+                         label: 'Offline Sales',
+                         data: offlineSales,
+                         color: '#0168fa'
+                    },
+                    {
+                         label: 'Online Sales',
+                         data: onlineSales,
+                         color: '#10b759'
+                    }
+               ];
+
+               const chartOptions = {
+                    series: {
+                         lines: {
+                              show: true,
+                              lineWidth: 2,
+                              fill: 0.08
+                         },
+                         points: {
+                              show: true,
+                              radius: 3,
+                              lineWidth: 2,
+                              fill: true,
+                              fillColor: '#ffffff'
+                         },
+                         shadowSize: 0
+                    },
+
+                    grid: {
+                         borderWidth: 0,
+                         hoverable: true,
+                         clickable: true,
+                         labelMargin: 10
+                    },
+
+                    legend: {
+                         show: false
+                    },
+
+                    xaxis: {
+                         ticks: [
+                              [1, 'Jan'],
+                              [2, 'Feb'],
+                              [3, 'Mar'],
+                              [4, 'Apr'],
+                              [5, 'May'],
+                              [6, 'Jun'],
+                              [7, 'Jul'],
+                              [8, 'Aug'],
+                              [9, 'Sep'],
+                              [10, 'Oct'],
+                              [11, 'Nov'],
+                              [12, 'Dec']
+                         ],
+                         tickColor: 'transparent'
+                    },
+
+                    yaxis: {
+                         min: 0,
+                         tickColor: '#e5e7eb',
+                         tickFormatter: function(value) {
+                              return '$' + (value / 1000) + 'K';
+                         }
+                    }
+               };
+
+               $.plot(chartElement, chartData, chartOptions);
+
+               // Menampilkan icon Feather
+               if (typeof feather !== 'undefined') {
+                    feather.replace();
+               }
+          });
+     </script>
+     <script>
+          $(document).ready(function() {
+
+               /*
+               |--------------------------------------------------------------------------
+               | FEATHER ICON
+               |--------------------------------------------------------------------------
+               */
+               if (typeof feather !== 'undefined') {
+                    feather.replace();
                }
 
 
+               /*
+               |--------------------------------------------------------------------------
+               | GRAFIK TARGET PENYELESAIAN LAYANAN HARIAN
+               |--------------------------------------------------------------------------
+               */
 
-               themeButton.addEventListener("click", function(e) {
+               const chartLayanan = $('#flotChart5');
 
-                    e.preventDefault();
+               if (
+                    chartLayanan.length > 0 &&
+                    typeof $.plot === 'function'
+               ) {
+                    const dataLayanan = [
+                         [1, 42],
+                         [2, 48],
+                         [3, 45],
+                         [4, 51],
+                         [5, 54],
+                         [6, 49],
+                         [7, 48]
+                    ];
+
+                    $.plot(
+                         chartLayanan,
+                         [{
+                              label: 'Layanan selesai',
+                              data: dataLayanan,
+                              color: '#0168fa',
+                              lines: {
+                                   show: true,
+                                   lineWidth: 2,
+                                   fill: true,
+                                   fillColor: {
+                                        colors: [{
+                                                  opacity: 0.25
+                                             },
+                                             {
+                                                  opacity: 0.03
+                                             }
+                                        ]
+                                   }
+                              },
+                              points: {
+                                   show: true,
+                                   radius: 3,
+                                   lineWidth: 2,
+                                   fillColor: '#ffffff'
+                              }
+                         }], {
+                              series: {
+                                   shadowSize: 0
+                              },
+
+                              grid: {
+                                   borderWidth: 0,
+                                   hoverable: true,
+                                   clickable: true,
+                                   labelMargin: 10
+                              },
+
+                              legend: {
+                                   show: false
+                              },
+
+                              xaxis: {
+                                   ticks: [
+                                        [1, 'Sen'],
+                                        [2, 'Sel'],
+                                        [3, 'Rab'],
+                                        [4, 'Kam'],
+                                        [5, 'Jum'],
+                                        [6, 'Sab'],
+                                        [7, 'Min']
+                                   ],
+                                   tickColor: 'transparent',
+                                   font: {
+                                        size: 10,
+                                        color: '#8392a5'
+                                   }
+                              },
+
+                              yaxis: {
+                                   min: 0,
+                                   max: 60,
+                                   ticks: 4,
+                                   tickColor: '#e5e9f2',
+                                   font: {
+                                        size: 10,
+                                        color: '#8392a5'
+                                   }
+                              }
+                         }
+                    );
 
 
-                    document.body.classList.toggle("black-theme");
+                    /*
+                    |--------------------------------------------------------------------------
+                    | TOOLTIP GRAFIK
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $('<div id="chartTooltip5"></div>')
+                         .css({
+                              position: 'absolute',
+                              display: 'none',
+                              padding: '7px 10px',
+                              background: '#001737',
+                              color: '#ffffff',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              zIndex: 10000,
+                              pointerEvents: 'none'
+                         })
+                         .appendTo('body');
+
+                    chartLayanan.bind(
+                         'plothover',
+                         function(event, position, item) {
+                              if (item) {
+                                   const jumlah = item.datapoint[1];
+
+                                   $('#chartTooltip5')
+                                        .html(
+                                             '<strong>' +
+                                             jumlah +
+                                             '</strong> layanan selesai'
+                                        )
+                                        .css({
+                                             top: item.pageY - 40,
+                                             left: item.pageX + 10
+                                        })
+                                        .fadeIn(150);
+                              } else {
+                                   $('#chartTooltip5').hide();
+                              }
+                         }
+                    );
+               } else {
+                    console.warn(
+                         'Flot Chart belum tersedia atau elemen #flotChart5 tidak ditemukan.'
+                    );
+               }
 
 
-                    if (document.body.classList.contains("black-theme")) {
+               /*
+               |--------------------------------------------------------------------------
+               | PETA PENDAPATAN BERDASARKAN WILAYAH
+               |--------------------------------------------------------------------------
+               */
+
+               const mapPendapatan = $('#vmap');
+
+               if (
+                    mapPendapatan.length > 0 &&
+                    typeof $.fn.vectorMap === 'function'
+               ) {
+                    mapPendapatan.vectorMap({
+                         map: 'world_en',
+
+                         backgroundColor: 'transparent',
+
+                         color: '#d9e2ec',
+
+                         hoverOpacity: 0.8,
+
+                         selectedColor: '#0168fa',
+
+                         enableZoom: true,
+
+                         showTooltip: true,
+
+                         normalizeFunction: 'polynomial',
+
+                         selectedRegions: ['id'],
+
+                         borderColor: '#ffffff',
+
+                         borderWidth: 1,
+
+                         borderOpacity: 1,
+
+                         onRegionOver: function(event, code, region) {
+                              if (code.toLowerCase() === 'id') {
+                                   $('#jqvmap1_' + code).attr(
+                                        'fill',
+                                        '#0168fa'
+                                   );
+                              }
+                         },
+
+                         onLabelShow: function(event, label, code) {
+                              if (code.toLowerCase() === 'id') {
+                                   label.html(
+                                        '<strong>Indonesia</strong>' +
+                                        '<br>Kontribusi pendapatan: Rp552 juta'
+                                   );
+                              }
+                         },
+
+                         onRegionClick: function(event) {
+                              event.preventDefault();
+                         }
+                    });
+               } else {
+                    console.warn(
+                         'Vector Map belum tersedia atau elemen #vmap tidak ditemukan.'
+                    );
+               }
 
 
-                         localStorage.setItem(
-                              "theme",
-                              "black"
-                         );
+               /*
+               |--------------------------------------------------------------------------
+               | RESIZE GRAFIK SAAT UKURAN LAYAR BERUBAH
+               |--------------------------------------------------------------------------
+               */
 
+               let resizeTimer;
 
-                         themeIcon.setAttribute(
-                              "data-feather",
-                              "sun"
-                         );
+               $(window).on('resize', function() {
+                    clearTimeout(resizeTimer);
 
-
-                    } else {
-
-
-                         localStorage.setItem(
-                              "theme",
-                              "white"
-                         );
-
-
-                         themeIcon.setAttribute(
-                              "data-feather",
-                              "moon"
-                         );
-
-
-                    }
-
-
-                    feather.replace();
-
-
+                    resizeTimer = setTimeout(function() {
+                         if (
+                              chartLayanan.length > 0 &&
+                              typeof $.plot === 'function'
+                         ) {
+                              chartLayanan.trigger('resize');
+                         }
+                    }, 200);
                });
-
 
           });
      </script>
-</body>
-
-</html>
+@endpush
