@@ -85,10 +85,11 @@ Aplikasi ini mencakup pengelolaan karyawan, absensi, cuti, target kinerja, trans
 
 ### Halaman Login
 
-<p align="center">
+<p class="text-center">
     <img
-        src="{{asset('backend/assets/img/login-page.png')}}"
+        src="{{ asset('backend/assets/img/readme/login-page.png') }}"
         width="850"
+        class="img-fluid"
         alt="Halaman Login Dashboard Eksekutif"
     >
 </p>
