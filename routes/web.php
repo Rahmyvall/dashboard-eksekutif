@@ -6,13 +6,32 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+/*
+|--------------------------------------------------------------------------
+| Pemeriksaan server
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/health', static function () {
+    return response()->json([
+        'status'  => 'ok',
+        'message' => 'Laravel berjalan',
+    ]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Halaman utama
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/', static function () {
     return redirect()->route('login');
 })->name('home');
 
 /*
 |--------------------------------------------------------------------------
-| Login
+| Autentikasi
 |--------------------------------------------------------------------------
 */
 
@@ -26,20 +45,18 @@ Route::post('/login', [
     'login',
 ])->name('login.process');
 
+Route::post('/logout', [
+    LoginController::class,
+    'logout',
+])->middleware('auth')->name('logout');
+
 /*
 |--------------------------------------------------------------------------
 | Dashboard
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function (): void {
-    Route::get('/dashboard', [
-        DashboardController::class,
-        'index',
-    ])->name('dashboard');
-
-    Route::post('/logout', [
-        LoginController::class,
-        'logout',
-    ])->name('logout');
-});
+Route::get('/dashboard', [
+    DashboardController::class,
+    'index',
+])->middleware('auth')->name('dashboard');
