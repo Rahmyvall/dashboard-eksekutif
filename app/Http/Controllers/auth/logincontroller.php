@@ -5,56 +5,34 @@ declare (strict_types = 1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use RuntimeException;
 
 class LoginController extends Controller
 {
     /**
-     * Maksimal percobaan login gagal.
-     */
-    private const MAX_LOGIN_ATTEMPTS = 5;
-
-    /**
-     * Durasi pembatasan login dalam detik.
-     */
-    private const LOGIN_DECAY_SECONDS = 60;
-
-    /**
      * Menampilkan halaman login.
      */
-    public function showLoginForm(): View | RedirectResponse
+    public function showLoginForm(): View
     {
-        if (Auth::guard('web')->check()) {
-            return redirect()->route('dashboard');
-        }
-
         return view('welcome');
     }
 
     /**
      * Memproses autentikasi pengguna.
-     *
-     * @throws ValidationException
      */
     public function login(Request $request): RedirectResponse
     {
         /*
-         * Normalisasi email dan checkbox remember.
+         * Normalisasi email sebelum validasi.
          */
         $request->merge([
-            'email'    => Str::lower(
+            'email' => Str::lower(
                 trim((string) $request->input('email'))
             ),
-            'remember' => $request->boolean('remember'),
         ]);
 
         /*
@@ -73,9 +51,6 @@ class LoginController extends Controller
                     'string',
                     'max:255',
                 ],
-                'remember' => [
-                    'boolean',
-                ],
             ],
             [
                 'email.required'    => 'Email wajib diisi.',
@@ -86,266 +61,64 @@ class LoginController extends Controller
                 'password.required' => 'Password wajib diisi.',
                 'password.string'   => 'Password harus berupa teks.',
                 'password.max'      => 'Password maksimal 255 karakter.',
-
-                'remember.boolean'  => 'Pilihan ingat saya tidak valid.',
             ]
         );
 
-        /*
-         * Rate limiter berdasarkan email dan alamat IP.
-         */
-        $throttleKey = $this->throttleKey(
-            $validated['email'],
-            (string) $request->ip()
-        );
+        $credentials = [
+            'email'    => $validated['email'],
+            'password' => $validated['password'],
+        ];
 
-        $this->ensureIsNotRateLimited($throttleKey);
+        $guard = Auth::guard('web');
 
         /*
-         * Mencari pengguna berdasarkan email.
+         * Proses autentikasi pengguna.
          */
-        $user = User::query()
-            ->with('role')
-            ->whereRaw(
-                'LOWER(TRIM(email)) = ?',
-                [$validated['email']]
+        if (
+            ! $guard->attempt(
+                $credentials,
+                $request->boolean('remember')
             )
-            ->first();
-
-        /*
-         * Email tidak ditemukan.
-         */
-        if (! $user instanceof User) {
-            $this->failCredentials(
-                $throttleKey,
-                $this->developmentMessage(
-                    'Email tidak terdaftar.'
-                )
-            );
+        ) {
+            return back()
+                ->withErrors([
+                    'email' => 'Email atau password yang dimasukkan tidak sesuai.',
+                ])
+                ->onlyInput('email');
         }
 
         /*
-         * Memeriksa password.
-         */
-        try {
-            $passwordMatches = Hash::check(
-                $validated['password'],
-                (string) $user->password
-            );
-        } catch (RuntimeException $exception) {
-            report($exception);
-
-            $this->failCredentials(
-                $throttleKey,
-                $this->developmentMessage(
-                    'Format hash password di database tidak valid.'
-                )
-            );
-        }
-
-        if (! $passwordMatches) {
-            $this->failCredentials(
-                $throttleKey,
-                $this->developmentMessage(
-                    'Password yang dimasukkan salah.'
-                )
-            );
-        }
-
-        /*
-         * Memastikan akun aktif.
-         *
-         * Method isActive() harus tersedia di model User.
-         */
-        if (! $user->isActive()) {
-            $this->denyAccess(
-                $throttleKey,
-                'Akun tidak aktif. Silakan hubungi administrator.'
-            );
-        }
-
-        /*
-         * Memastikan pengguna mempunyai role.
-         *
-         * Relasi role() harus tersedia di model User.
-         */
-        if ($user->role === null) {
-            $this->denyAccess(
-                $throttleKey,
-                'Akun belum memiliki role akses.'
-            );
-        }
-
-        /*
-         * Memastikan role menggunakan guard web.
-         */
-        if ((string) $user->role->guard_name !== 'web') {
-            $this->denyAccess(
-                $throttleKey,
-                'Guard role akun tidak sesuai.'
-            );
-        }
-
-        /*
-         * Memastikan role dapat mengakses dashboard eksekutif.
-         *
-         * Method canAccessExecutiveDashboard() harus tersedia
-         * di model User.
-         */
-        if (! $user->canAccessExecutiveDashboard()) {
-            $roleName = (string) $user->role->name;
-
-            $this->denyAccess(
-                $throttleKey,
-                'Role '
-                . $roleName
-                . ' tidak memiliki akses ke Dashboard Eksekutif.'
-            );
-        }
-
-        /*
-         * Memperbarui hash password jika diperlukan.
-         */
-        if (Hash::needsRehash((string) $user->password)) {
-            $user->forceFill([
-                'password' => Hash::make(
-                    $validated['password']
-                ),
-            ])->save();
-        }
-
-        /*
-         * Login menggunakan guard web.
-         */
-        Auth::guard('web')->login(
-            $user,
-            (bool) ($validated['remember'] ?? false)
-        );
-
-        /*
-         * Regenerasi session untuk mencegah session fixation.
+         * Membuat session ID baru setelah login berhasil.
          */
         $request->session()->regenerate();
 
-        /*
-         * Menghapus percobaan login gagal.
-         */
-        RateLimiter::clear($throttleKey);
+        $user = $guard->user();
+
+        $userName = $user?->name ?? $user?->email ?? 'Pengguna';
 
         /*
-         * Langsung menuju halaman dashboard.
+         * Login berhasil dan selalu diarahkan ke dashboard.
          */
         return redirect()
             ->route('dashboard')
             ->with(
                 'success',
                 'Login berhasil. Selamat datang, '
-                . $user->name
+                . $userName
                 . '.'
             );
     }
 
     /**
-     * Memastikan percobaan login belum melewati batas.
-     *
-     * @throws ValidationException
-     */
-    private function ensureIsNotRateLimited(
-        string $throttleKey
-    ): void {
-        if (
-            ! RateLimiter::tooManyAttempts(
-                $throttleKey,
-                self::MAX_LOGIN_ATTEMPTS
-            )
-        ) {
-            return;
-        }
-
-        $seconds = RateLimiter::availableIn($throttleKey);
-
-        throw ValidationException::withMessages([
-            'email' => sprintf(
-                'Terlalu banyak percobaan login. '
-                . 'Coba kembali dalam %d detik.',
-                $seconds
-            ),
-        ]);
-    }
-
-    /**
-     * Menangani kredensial yang tidak sesuai.
-     *
-     * @throws ValidationException
-     */
-    private function failCredentials(
-        string $throttleKey,
-        string $message
-    ): never {
-        RateLimiter::hit(
-            $throttleKey,
-            self::LOGIN_DECAY_SECONDS
-        );
-
-        throw ValidationException::withMessages([
-            'email' => $message,
-        ]);
-    }
-
-    /**
-     * Menolak akses ketika kredensial benar,
-     * tetapi status atau role tidak sesuai.
-     *
-     * @throws ValidationException
-     */
-    private function denyAccess(
-        string $throttleKey,
-        string $message
-    ): never {
-        RateLimiter::clear($throttleKey);
-
-        throw ValidationException::withMessages([
-            'email' => $message,
-        ]);
-    }
-
-    /**
-     * Pesan detail hanya ditampilkan pada environment local.
-     */
-    private function developmentMessage(
-        string $message
-    ): string {
-        if (app()->isLocal()) {
-            return $message;
-        }
-
-        return 'Email atau password yang dimasukkan tidak sesuai.';
-    }
-
-    /**
-     * Membuat kunci rate limiter.
-     */
-    private function throttleKey(
-        string $email,
-        string $ipAddress
-    ): string {
-        $identity = Str::lower(trim($email))
-            . '|'
-            . $ipAddress;
-
-        return 'login:' . hash(
-            'sha256',
-            $identity
-        );
-    }
-
-    /**
-     * Memproses logout.
+     * Memproses logout pengguna.
      */
     public function logout(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
 
+        /*
+         * Menghapus session lama dan membuat token CSRF baru.
+         */
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

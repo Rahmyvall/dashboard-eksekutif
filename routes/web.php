@@ -4,19 +4,10 @@ declare (strict_types = 1);
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Halaman utama
-|--------------------------------------------------------------------------
-*/
-
 Route::get('/', function () {
-    return Auth::guard('web')->check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
+    return redirect()->route('login');
 })->name('home');
 
 /*
@@ -25,17 +16,15 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('guest')->group(function (): void {
-    Route::get('/login', [
-        LoginController::class,
-        'showLoginForm',
-    ])->name('login');
+Route::get('/login', [
+    LoginController::class,
+    'showLoginForm',
+])->name('login');
 
-    Route::post('/login', [
-        LoginController::class,
-        'login',
-    ])->name('login.process');
-});
+Route::post('/login', [
+    LoginController::class,
+    'login',
+])->name('login.process');
 
 /*
 |--------------------------------------------------------------------------
