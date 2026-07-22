@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
 use RuntimeException;
 
 class LoginController extends Controller
@@ -31,13 +30,13 @@ class LoginController extends Controller
     /**
      * Menampilkan halaman login.
      */
-    public function showLoginForm(): View | RedirectResponse
+    public function showLoginForm()
     {
-        if (Auth::guard('web')->check()) {
+        if (Auth::check()) {
             return redirect()->route('dashboard');
         }
 
-        return view('welcome');
+        return view('login');
     }
 
     /**
