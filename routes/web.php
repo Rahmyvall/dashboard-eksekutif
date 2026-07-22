@@ -6,21 +6,9 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Halaman utama
-|--------------------------------------------------------------------------
-*/
-
 Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
-
-/*
-|--------------------------------------------------------------------------
-| Login
-|--------------------------------------------------------------------------
-*/
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [
@@ -33,12 +21,6 @@ Route::middleware('guest')->group(function (): void {
         'login',
     ])->name('login.process');
 });
-
-/*
-|--------------------------------------------------------------------------
-| Dashboard dan logout
-|--------------------------------------------------------------------------
-*/
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', [
