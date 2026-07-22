@@ -33,6 +33,9 @@ class LoginController extends Controller
      */
     public function showLoginForm(): View | RedirectResponse
     {
+        /*
+         * Pengguna yang sudah login langsung menuju dashboard.
+         */
         if (Auth::guard('web')->check()) {
             return redirect()->route('dashboard');
         }
@@ -48,11 +51,7 @@ class LoginController extends Controller
     public function login(Request $request): RedirectResponse
     {
         /*
-         * Normalisasi data sebelum validasi.
-         *
-         * Request::boolean() mengubah nilai:
-         * - "1", "true", "on", "yes" menjadi true
-         * - nilai lainnya menjadi false
+         * Normalisasi email dan nilai checkbox remember.
          */
         $request->merge([
             'email'    => Str::lower(
@@ -62,7 +61,7 @@ class LoginController extends Controller
         ]);
 
         /*
-         * Validasi form login.
+         * Validasi data login.
          */
         $validated = $request->validate(
             [
@@ -78,7 +77,6 @@ class LoginController extends Controller
                     'max:255',
                 ],
                 'remember' => [
-                    'required',
                     'boolean',
                 ],
             ],
@@ -92,7 +90,6 @@ class LoginController extends Controller
                 'password.string'   => 'Password harus berupa teks.',
                 'password.max'      => 'Password maksimal 255 karakter.',
 
-                'remember.required' => 'Pilihan ingat saya tidak valid.',
                 'remember.boolean'  => 'Pilihan ingat saya tidak valid.',
             ]
         );
@@ -109,9 +106,6 @@ class LoginController extends Controller
 
         /*
          * Mencari pengguna berdasarkan email.
-         *
-         * Query ini tetap dapat menemukan email lama yang tersimpan
-         * menggunakan huruf kapital atau memiliki spasi.
          */
         $user = User::query()
             ->with('role')
@@ -135,9 +129,6 @@ class LoginController extends Controller
 
         /*
          * Memeriksa password.
-         *
-         * RuntimeException dapat terjadi ketika hash password
-         * di database bukan hash yang didukung aplikasi.
          */
         try {
             $passwordMatches = Hash::check(
@@ -150,14 +141,13 @@ class LoginController extends Controller
             $this->failCredentials(
                 $throttleKey,
                 $this->developmentMessage(
-                    'Format hash password di database tidak valid. '
-                    . 'Silakan reset password pengguna melalui Laravel.'
+                    'Format hash password di database tidak valid.'
                 )
             );
         }
 
         /*
-         * Password tidak sesuai.
+         * Password salah.
          */
         if (! $passwordMatches) {
             $this->failCredentials(
@@ -169,9 +159,7 @@ class LoginController extends Controller
         }
 
         /*
-         * Pastikan akun aktif.
-         *
-         * Method isActive() harus tersedia di model User.
+         * Memastikan akun aktif.
          */
         if (! $user->isActive()) {
             $this->denyAccess(
@@ -181,9 +169,7 @@ class LoginController extends Controller
         }
 
         /*
-         * Pastikan pengguna mempunyai role.
-         *
-         * Relasi role() harus tersedia di model User.
+         * Memastikan akun memiliki role.
          */
         if ($user->role === null) {
             $this->denyAccess(
@@ -193,9 +179,9 @@ class LoginController extends Controller
         }
 
         /*
-         * Pastikan role menggunakan guard web.
+         * Memastikan role menggunakan guard web.
          */
-        if ($user->role->guard_name !== 'web') {
+        if ((string) $user->role->guard_name !== 'web') {
             $this->denyAccess(
                 $throttleKey,
                 'Guard role akun tidak sesuai.'
@@ -203,68 +189,62 @@ class LoginController extends Controller
         }
 
         /*
-         * Dashboard eksekutif hanya dapat diakses oleh:
-         * - super_admin
-         * - executive
-         *
-         * Method canAccessExecutiveDashboard() harus tersedia
-         * pada model User.
+         * Memastikan role dapat mengakses dashboard eksekutif.
          */
         if (! $user->canAccessExecutiveDashboard()) {
             $roleName = (string) $user->role->name;
 
             $this->denyAccess(
                 $throttleKey,
-                'Role ' . $roleName
+                'Role '
+                . $roleName
                 . ' tidak memiliki akses ke Dashboard Eksekutif.'
             );
         }
 
         /*
-         * Perbarui hash apabila konfigurasi hashing berubah.
-         *
-         * Karena login tidak memakai Auth::attempt(), proses rehash
-         * perlu dilakukan secara manual.
+         * Memperbarui hash password jika konfigurasi hashing berubah.
          */
         if (Hash::needsRehash((string) $user->password)) {
             $user->forceFill([
                 'password' => Hash::make(
                     $validated['password']
                 ),
-            ]);
+            ])->save();
         }
 
         /*
-         * Simpan waktu login terakhir.
-         *
-         * Pastikan kolom last_login_at tersedia pada tabel users.
-         */
-        $user->forceFill([
-            'last_login_at' => now(),
-        ]);
-
-        $user->save();
-
-        /*
-         * Login menggunakan instance pengguna yang sudah diperiksa.
+         * Login menggunakan guard web.
          */
         Auth::guard('web')->login(
             $user,
-            (bool) $validated['remember']
+            (bool) ($validated['remember'] ?? false)
         );
 
         /*
-         * Regenerasi session untuk mencegah session fixation.
+         * Regenerasi session setelah autentikasi berhasil.
          */
         $request->session()->regenerate();
 
         /*
-         * Hapus catatan percobaan login gagal.
+         * Menghapus riwayat percobaan login gagal.
          */
         RateLimiter::clear($throttleKey);
 
+        /*
+         * Menyimpan waktu login terakhir.
+         *
+         * Pastikan tabel users memiliki kolom last_login_at.
+         */
+        $user->forceFill([
+            'last_login_at' => now(),
+        ])->save();
+
+        /*
+         * Selalu langsung menuju route dashboard.
+         */
         return redirect()
-            ->intended(route('dashboard'))
+            ->route('dashboard')
             ->with(
                 'success',
                 'Login berhasil. Selamat datang, '
@@ -322,7 +302,7 @@ class LoginController extends Controller
 
     /**
      * Menolak akses ketika kredensial benar,
-     * tetapi status akun atau role tidak sesuai.
+     * tetapi status atau role tidak sesuai.
      *
      * @throws ValidationException
      */
@@ -330,10 +310,6 @@ class LoginController extends Controller
         string $throttleKey,
         string $message
     ): never {
-        /*
-         * Password sudah benar, sehingga percobaan login gagal
-         * untuk pengguna tersebut dapat dibersihkan.
-         */
         RateLimiter::clear($throttleKey);
 
         throw ValidationException::withMessages([
@@ -342,10 +318,7 @@ class LoginController extends Controller
     }
 
     /**
-     * Menampilkan pesan detail saat development.
-     *
-     * Pada production digunakan pesan umum agar alamat
-     * email yang terdaftar tidak mudah ditebak.
+     * Pesan detail hanya ditampilkan pada environment local.
      */
     private function developmentMessage(
         string $message

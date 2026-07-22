@@ -1206,7 +1206,7 @@
                          </div>
                     @endif
 
-                    <form action="{{ route('login.process') }}" method="POST" id="loginForm" novalidate>
+                    <form id="loginForm" action="{{ route('login.process') }}" method="POST">
                          @csrf
 
                          {{-- Email --}}
@@ -1219,10 +1219,10 @@
                                    <i class="fas fa-envelope input-icon" aria-hidden="true"></i>
 
                                    <input type="email" id="email" name="email" value="{{ old('email') }}"
-                                        class="login-input {{ $errors->has('email') ? 'is-invalid' : '' }}"
+                                        class="login-input @error('email') is-invalid @enderror"
                                         placeholder="contoh@email.com" autocomplete="email" inputmode="email"
                                         spellcheck="false" maxlength="150" autofocus required
-                                        aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"
+                                        aria-invalid="@error('email') true @else false @enderror"
                                         @error('email')
                     aria-describedby="emailError"
                 @enderror>
@@ -1244,7 +1244,7 @@
                                         Password
                                    </label>
 
-                                   @if (Route::has('password.request'))
+                                   @if (\Illuminate\Support\Facades\Route::has('password.request'))
                                         <a href="{{ route('password.request') }}" class="forgot-password">
                                              Lupa password?
                                         </a>
@@ -1255,10 +1255,10 @@
                                    <i class="fas fa-lock input-icon" aria-hidden="true"></i>
 
                                    <input type="password" id="password" name="password"
-                                        class="login-input {{ $errors->has('password') ? 'is-invalid' : '' }}"
+                                        class="login-input @error('password') is-invalid @enderror"
                                         placeholder="Masukkan password" autocomplete="current-password"
                                         maxlength="255" required
-                                        aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
+                                        aria-invalid="@error('password') true @else false @enderror"
                                         @error('password')
                     aria-describedby="passwordError"
                 @enderror>
@@ -1328,10 +1328,8 @@
           document.addEventListener('DOMContentLoaded', function() {
                const loginForm = document.getElementById('loginForm');
                const loginButton = document.getElementById('loginButton');
-               const loginButtonIcon =
-                    document.getElementById('loginButtonIcon');
-               const loginButtonText =
-                    document.getElementById('loginButtonText');
+               const loginButtonIcon = document.getElementById('loginButtonIcon');
+               const loginButtonText = document.getElementById('loginButtonText');
 
                if (!loginForm || !loginButton) {
                     return;
@@ -1341,13 +1339,11 @@
                     loginButton.disabled = true;
 
                     if (loginButtonIcon) {
-                         loginButtonIcon.className =
-                              'fas fa-spinner fa-spin';
+                         loginButtonIcon.className = 'fas fa-spinner fa-spin';
                     }
 
                     if (loginButtonText) {
-                         loginButtonText.textContent =
-                              'Memproses login...';
+                         loginButtonText.textContent = 'Memproses login...';
                     }
                });
           });
