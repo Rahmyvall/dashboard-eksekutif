@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use RuntimeException;
 
 class LoginController extends Controller
@@ -30,13 +31,17 @@ class LoginController extends Controller
     /**
      * Menampilkan halaman login.
      */
-    public function showLoginForm()
+    public function showLoginForm(): View | RedirectResponse
     {
-        if (Auth::check()) {
+        if (Auth::guard('web')->check()) {
             return redirect()->route('dashboard');
         }
 
-        return view('login');
+        /*
+         * File yang digunakan:
+         * resources/views/welcome.blade.php
+         */
+        return view('welcome');
     }
 
     /**
@@ -47,7 +52,7 @@ class LoginController extends Controller
     public function login(Request $request): RedirectResponse
     {
         /*
-         * Normalisasi email dan nilai checkbox remember.
+         * Normalisasi email dan checkbox remember.
          */
         $request->merge([
             'email'    => Str::lower(
@@ -91,7 +96,7 @@ class LoginController extends Controller
         );
 
         /*
-         * Membuat kunci rate limiter berdasarkan email dan IP.
+         * Rate limiter berdasarkan email dan alamat IP.
          */
         $throttleKey = $this->throttleKey(
             $validated['email'],
@@ -142,9 +147,6 @@ class LoginController extends Controller
             );
         }
 
-        /*
-         * Password salah.
-         */
         if (! $passwordMatches) {
             $this->failCredentials(
                 $throttleKey,
@@ -156,6 +158,8 @@ class LoginController extends Controller
 
         /*
          * Memastikan akun aktif.
+         *
+         * Method isActive() harus tersedia di model User.
          */
         if (! $user->isActive()) {
             $this->denyAccess(
@@ -165,7 +169,9 @@ class LoginController extends Controller
         }
 
         /*
-         * Memastikan akun memiliki role.
+         * Memastikan pengguna mempunyai role.
+         *
+         * Relasi role() harus tersedia di model User.
          */
         if ($user->role === null) {
             $this->denyAccess(
@@ -186,6 +192,9 @@ class LoginController extends Controller
 
         /*
          * Memastikan role dapat mengakses dashboard eksekutif.
+         *
+         * Method canAccessExecutiveDashboard() harus tersedia
+         * di model User.
          */
         if (! $user->canAccessExecutiveDashboard()) {
             $roleName = (string) $user->role->name;
@@ -199,7 +208,7 @@ class LoginController extends Controller
         }
 
         /*
-         * Memperbarui hash password jika konfigurasi hashing berubah.
+         * Memperbarui hash password jika diperlukan.
          */
         if (Hash::needsRehash((string) $user->password)) {
             $user->forceFill([
@@ -218,26 +227,17 @@ class LoginController extends Controller
         );
 
         /*
-         * Regenerasi session setelah autentikasi berhasil.
+         * Regenerasi session untuk mencegah session fixation.
          */
         $request->session()->regenerate();
 
         /*
-         * Menghapus riwayat percobaan login gagal.
+         * Menghapus percobaan login gagal.
          */
         RateLimiter::clear($throttleKey);
 
         /*
-         * Menyimpan waktu login terakhir.
-         *
-         * Pastikan tabel users memiliki kolom last_login_at.
-         */
-        $user->forceFill([
-            'last_login_at' => now(),
-        ])->save();
-
-        /*
-         * Selalu langsung menuju route dashboard.
+         * Langsung menuju halaman dashboard.
          */
         return redirect()
             ->route('dashboard')
@@ -278,7 +278,7 @@ class LoginController extends Controller
     }
 
     /**
-     * Menangani email atau password yang tidak sesuai.
+     * Menangani kredensial yang tidak sesuai.
      *
      * @throws ValidationException
      */
@@ -344,7 +344,7 @@ class LoginController extends Controller
     }
 
     /**
-     * Memproses logout pengguna.
+     * Memproses logout.
      */
     public function logout(Request $request): RedirectResponse
     {
