@@ -2,8 +2,6 @@
 
 declare (strict_types = 1);
 
-use App\Models\User;
-
 return [
 
     /*
@@ -11,14 +9,22 @@ return [
     | Authentication Defaults
     |--------------------------------------------------------------------------
     |
-    | Guard web digunakan untuk autentikasi berbasis session.
-    | Broker users digunakan untuk fitur reset password.
+    | Default guard dan password broker yang digunakan aplikasi.
     |
     */
 
     'defaults'         => [
-        'guard'     => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+
+        'guard'     => env(
+            'AUTH_GUARD',
+            'web'
+        ),
+
+        'passwords' => env(
+            'AUTH_PASSWORD_BROKER',
+            'users'
+        ),
+
     ],
 
     /*
@@ -26,16 +32,20 @@ return [
     | Authentication Guards
     |--------------------------------------------------------------------------
     |
-    | Guard web menggunakan session dan mengambil pengguna melalui
-    | provider users.
+    | Guard web menggunakan session authentication.
     |
     */
 
     'guards'           => [
+
         'web' => [
+
             'driver'   => 'session',
+
             'provider' => 'users',
+
         ],
+
     ],
 
     /*
@@ -43,43 +53,54 @@ return [
     | User Providers
     |--------------------------------------------------------------------------
     |
-    | Provider users mengambil data pengguna melalui model Eloquent
-    | App\Models\User.
+    | User diambil menggunakan Eloquent Model.
     |
     */
 
     'providers'        => [
+
         'users' => [
+
             'driver' => 'eloquent',
-            'model'  => User::class,
+
+            'model'  => App\Models\User::class,
+
         ],
+
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Resetting Passwords
+    | Password Resetting
     |--------------------------------------------------------------------------
     |
-    | Konfigurasi token reset password pengguna.
+    | Konfigurasi fitur reset password.
     |
     */
 
     'passwords'        => [
+
         'users' => [
+
             'provider' => 'users',
+
             'table'    => env(
                 'AUTH_PASSWORD_RESET_TOKEN_TABLE',
                 'password_reset_tokens'
             ),
+
             'expire'   => env(
                 'AUTH_PASSWORD_RESET_TOKEN_EXPIRE',
                 60
             ),
+
             'throttle' => env(
                 'AUTH_PASSWORD_RESET_TOKEN_THROTTLE',
                 60
             ),
+
         ],
+
     ],
 
     /*
@@ -87,8 +108,7 @@ return [
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     |
-    | Masa berlaku konfirmasi password dalam detik.
-    | Nilai default 10800 detik atau 3 jam.
+    | Lama waktu sebelum password harus dikonfirmasi ulang.
     |
     */
 

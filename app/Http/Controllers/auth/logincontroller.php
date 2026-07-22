@@ -8,31 +8,33 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class LoginController extends Controller
 {
+    /**
+     * Tampilkan halaman login
+     */
     public function showLoginForm(): View
     {
         return view('welcome');
     }
 
+    /**
+     * Proses login
+     */
     public function login(Request $request): RedirectResponse
     {
-        $request->merge([
-            'email' => Str::lower(
-                trim((string) $request->input('email'))
-            ),
-        ]);
-
-        $credentials = $request->validate(
+        $validated = $request->validate(
             [
                 'email'    => [
                     'required',
                     'email',
                     'max:150',
                 ],
+
                 'password' => [
                     'required',
                     'string',
@@ -40,41 +42,114 @@ class LoginController extends Controller
                 ],
             ],
             [
-                'email.required'    => 'Email wajib diisi.',
-                'email.email'       => 'Format email tidak valid.',
-                'password.required' => 'Password wajib diisi.',
+                'email.required'    =>
+                'Email wajib diisi.',
+
+                'email.email'       =>
+                'Format email tidak valid.',
+
+                'password.required' =>
+                'Password wajib diisi.',
             ]
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Normalisasi Email
+        |--------------------------------------------------------------------------
+        */
+
+        $credentials = [
+            'email'    => Str::lower(
+                trim($validated['email'])
+            ),
+
+            'password' =>
+            $validated['password'],
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Authentication Laravel 13
+        |--------------------------------------------------------------------------
+        */
+
         if (
-            ! Auth::guard('web')->attempt(
+            ! Auth::attempt(
                 $credentials,
                 $request->boolean('remember')
             )
         ) {
+
+            Log::warning(
+                'Login gagal',
+                [
+                    'email' =>
+                    $credentials['email'],
+
+                    'ip'    =>
+                    $request->ip(),
+
+                    'time'  =>
+                    now(),
+                ]
+            );
+
             return back()
                 ->withErrors([
-                    'email' => 'Email atau password tidak sesuai.',
+                    'email' =>
+                    'Email atau password salah.',
                 ])
                 ->onlyInput('email');
         }
 
-        $request->session()->regenerate();
+        /*
+        |--------------------------------------------------------------------------
+        | Regenerate Session
+        |--------------------------------------------------------------------------
+        */
+
+        $request
+            ->session()
+            ->regenerate();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect Setelah Login
+        |--------------------------------------------------------------------------
+        */
 
         return redirect()
-            ->route('dashboard')
-            ->with('success', 'Login berhasil.');
+            ->intended(
+                route('dashboard')
+            )
+            ->with(
+                'success',
+                'Selamat datang kembali.'
+            );
     }
 
+    /**
+     * Logout
+     */
     public function logout(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        Auth::logout();
+
+        $request
+            ->session()
+            ->invalidate();
+
+        $request
+            ->session()
+            ->regenerateToken();
 
         return redirect()
             ->route('login')
-            ->with('success', 'Logout berhasil.');
+            ->with(
+                'success',
+                'Anda telah logout.'
+            );
     }
 }

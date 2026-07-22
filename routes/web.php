@@ -4,6 +4,9 @@ declare (strict_types = 1);
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,21 +15,30 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/health', function () {
+Route::get('/health', function (): JsonResponse {
+
     return response()->json([
-        'status'  => 'ok',
-        'message' => 'Laravel berjalan',
+        'status'      => 'success',
+        'message'     => 'Laravel berjalan dengan normal.',
+        'application' => config('app.name'),
+        'environment' => app()->environment(),
+        'timestamp'   => now()->toIso8601String(),
     ]);
+
 })->name('health');
 
 /*
 |--------------------------------------------------------------------------
-| Landing Page
+| Home
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return redirect()->route('login');
+Route::get('/', function (): RedirectResponse {
+
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
+
 })->name('home');
 
 /*
@@ -35,31 +47,60 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::get('/login', [
-    LoginController::class,
-    'showLoginForm',
-])->name('login');
+Route::middleware('guest')->group(function (): void {
 
-Route::post('/login', [
-    LoginController::class,
-    'login',
-])->name('login.process');
+    /*
+    |--------------------------------------------------------------------------
+    | Login Page
+    |--------------------------------------------------------------------------
+    */
 
-Route::post('/logout', [
-    LoginController::class,
-    'logout',
-])->middleware('auth')
-    ->name('logout');
+    Route::get('/login', [
+        LoginController::class,
+        'showLoginForm',
+    ])->name('login');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Login Process
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/login', [
+        LoginController::class,
+        'login',
+    ])->name('login.process');
+
+});
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard
+| Protected Routes
 |--------------------------------------------------------------------------
 */
 
-Route::get('/dashboard', [
-    DashboardController::class,
-    'index',
-])
-    ->middleware('auth')
-    ->name('dashboard');
+Route::middleware('auth')->group(function (): void {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/dashboard', [
+        DashboardController::class,
+        'index',
+    ])->name('dashboard');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logout
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/logout', [
+        LoginController::class,
+        'logout',
+    ])->name('logout');
+
+});
