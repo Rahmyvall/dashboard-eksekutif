@@ -33,9 +33,6 @@ class LoginController extends Controller
      */
     public function showLoginForm(): View | RedirectResponse
     {
-        /*
-         * Pengguna yang sudah login langsung menuju dashboard.
-         */
         if (Auth::guard('web')->check()) {
             return redirect()->route('dashboard');
         }

@@ -4,23 +4,16 @@ declare (strict_types = 1);
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Domain utama
+| Halaman utama
 |--------------------------------------------------------------------------
-|
-| Jika sudah login, menuju dashboard.
-| Jika belum login, menuju halaman login.
-|
 */
 
 Route::get('/', function () {
-    return Auth::check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
+    return redirect()->route('login');
 })->name('home');
 
 /*
@@ -43,7 +36,7 @@ Route::middleware('guest')->group(function (): void {
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard
+| Dashboard dan logout
 |--------------------------------------------------------------------------
 */
 
