@@ -10,17 +10,36 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
-Route::middleware('guest')->group(function (): void {
-    Route::get('/login', [
-        LoginController::class,
-        'showLoginForm',
-    ])->name('login');
+/*
+|--------------------------------------------------------------------------
+| Tes server
+|--------------------------------------------------------------------------
+*/
 
-    Route::post('/login', [
-        LoginController::class,
-        'login',
-    ])->name('login.process');
+Route::get('/test-server', function () {
+    return response('SERVER LARAVEL BERHASIL', 200);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Login sementara tanpa LoginController
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/login', function () {
+    return view('welcome');
+})->name('login');
+
+Route::post('/login', [
+    LoginController::class,
+    'login',
+])->name('login.process');
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', [
