@@ -35,7 +35,7 @@ Route::get('/health', function (): JsonResponse {
 
 Route::get('/', function (): RedirectResponse {
 
-    return auth()->check()
+    return Auth::check()
         ? redirect()->route('dashboard')
         : redirect()->route('login');
 
