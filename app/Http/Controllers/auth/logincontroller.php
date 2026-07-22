@@ -37,10 +37,6 @@ class LoginController extends Controller
             return redirect()->route('dashboard');
         }
 
-        /*
-         * File yang digunakan:
-         * resources/views/welcome.blade.php
-         */
         return view('welcome');
     }
 

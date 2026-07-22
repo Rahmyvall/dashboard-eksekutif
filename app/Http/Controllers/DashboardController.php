@@ -4,33 +4,18 @@ declare (strict_types = 1);
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     /**
-     * Menampilkan halaman Dashboard Eksekutif.
+     * Menampilkan halaman dashboard.
      */
-    public function index(): View | RedirectResponse
+    public function index(Request $request): View
     {
-        $user = Auth::guard('web')->user();
-
-        /*
-         * Proteksi tambahan apabila dashboard diakses
-         * tanpa session login.
-         */
-        if ($user === null) {
-            return redirect()
-                ->route('login')
-                ->withErrors([
-                    'email' => 'Silakan login terlebih dahulu.',
-                ]);
-        }
-
         return view('dashboard', [
-            'user' => $user,
+            'user' => $request->user(),
         ]);
     }
 }
