@@ -8,30 +8,30 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Pemeriksaan server
+| Health Check
 |--------------------------------------------------------------------------
 */
 
-Route::get('/health', static function () {
+Route::get('/health', function () {
     return response()->json([
         'status'  => 'ok',
         'message' => 'Laravel berjalan',
     ]);
-});
+})->name('health');
 
 /*
 |--------------------------------------------------------------------------
-| Halaman utama
+| Landing Page
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', static function () {
+Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
 /*
 |--------------------------------------------------------------------------
-| Autentikasi
+| Authentication
 |--------------------------------------------------------------------------
 */
 
@@ -48,7 +48,8 @@ Route::post('/login', [
 Route::post('/logout', [
     LoginController::class,
     'logout',
-])->middleware('auth')->name('logout');
+])->middleware('auth')
+    ->name('logout');
 
 /*
 |--------------------------------------------------------------------------
@@ -59,4 +60,6 @@ Route::post('/logout', [
 Route::get('/dashboard', [
     DashboardController::class,
     'index',
-])->middleware('auth')->name('dashboard');
+])
+    ->middleware('auth')
+    ->name('dashboard');
