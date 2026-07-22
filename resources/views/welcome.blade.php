@@ -1183,78 +1183,107 @@
                          </div>
                     @endif
 
-                    <form action="#" method="POST" id="loginForm">
+                    {{-- Pesan error umum dari proses login --}}
+                    @if (session('error'))
+                         <div class="alert alert-danger" role="alert">
+                              <i class="fas fa-exclamation-circle"></i>
+                              {{ session('error') }}
+                         </div>
+                    @endif
+
+                    @if (session('success'))
+                         <div class="alert alert-success" role="alert">
+                              <i class="fas fa-check-circle"></i>
+                              {{ session('success') }}
+                         </div>
+                    @endif
+
+                    {{-- Pesan sukses --}}
+                    @if (session('success'))
+                         <div class="alert alert-success" role="alert">
+                              <i class="fas fa-check-circle" aria-hidden="true"></i>
+                              {{ session('success') }}
+                         </div>
+                    @endif
+
+                    <form action="{{ route('login.process') }}" method="POST" id="loginForm" novalidate>
                          @csrf
 
-                         <!-- Email -->
+                         {{-- Email --}}
                          <div class="form-group">
-
                               <label for="email" class="form-label">
                                    Alamat Email
                               </label>
 
                               <div class="input-wrapper">
-
-                                   <i class="fas fa-envelope input-icon"></i>
+                                   <i class="fas fa-envelope input-icon" aria-hidden="true"></i>
 
                                    <input type="email" id="email" name="email" value="{{ old('email') }}"
-                                        class="login-input @error('email') is-invalid @enderror"
-                                        placeholder="contoh@email.com" autocomplete="email" autofocus required>
-
+                                        class="login-input {{ $errors->has('email') ? 'is-invalid' : '' }}"
+                                        placeholder="contoh@email.com" autocomplete="email" inputmode="email"
+                                        spellcheck="false" maxlength="150" autofocus required
+                                        aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"
+                                        @error('email')
+                    aria-describedby="emailError"
+                @enderror>
                               </div>
 
                               @error('email')
-                                   <span class="error-message">
-                                        <i class="fas fa-exclamation-circle mr-1"></i>
+                                   <span id="emailError" class="error-message" role="alert">
+                                        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+
                                         {{ $message }}
                                    </span>
                               @enderror
-
                          </div>
 
-                         <!-- Password -->
+                         {{-- Password --}}
                          <div class="form-group">
-
-                              <label for="password" class="form-label">
-                                   <span>Password</span>
+                              <div class="form-label password-label-wrapper">
+                                   <label for="password">
+                                        Password
+                                   </label>
 
                                    @if (Route::has('password.request'))
                                         <a href="{{ route('password.request') }}" class="forgot-password">
                                              Lupa password?
                                         </a>
                                    @endif
-                              </label>
+                              </div>
 
                               <div class="input-wrapper">
-
-                                   <i class="fas fa-lock input-icon"></i>
+                                   <i class="fas fa-lock input-icon" aria-hidden="true"></i>
 
                                    <input type="password" id="password" name="password"
-                                        class="login-input @error('password') is-invalid @enderror"
-                                        placeholder="Masukkan password" autocomplete="current-password" required>
+                                        class="login-input {{ $errors->has('password') ? 'is-invalid' : '' }}"
+                                        placeholder="Masukkan password" autocomplete="current-password"
+                                        maxlength="255" required
+                                        aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
+                                        @error('password')
+                    aria-describedby="passwordError"
+                @enderror>
 
                                    <button type="button" id="togglePassword" class="password-toggle"
-                                        aria-label="Tampilkan password" aria-pressed="false">
-                                        <i id="passwordIcon" class="far fa-eye"></i>
+                                        aria-label="Tampilkan password" aria-controls="password"
+                                        aria-pressed="false">
+                                        <i id="passwordIcon" class="far fa-eye" aria-hidden="true"></i>
                                    </button>
-
                               </div>
 
                               @error('password')
-                                   <span class="error-message">
-                                        <i class="fas fa-exclamation-circle mr-1"></i>
+                                   <span id="passwordError" class="error-message" role="alert">
+                                        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+
                                         {{ $message }}
                                    </span>
                               @enderror
-
                          </div>
 
-                         <!-- Remember me -->
+                         {{-- Remember me --}}
                          <div class="form-options">
-
                               <label for="remember" class="remember-wrapper">
                                    <input type="checkbox" id="remember" name="remember" value="1"
-                                        class="remember-checkbox" {{ old('remember') ? 'checked' : '' }}>
+                                        class="remember-checkbox" @checked(old('remember'))>
 
                                    <span class="remember-label">
                                         Ingat saya
@@ -1262,23 +1291,21 @@
                               </label>
 
                               <span class="secure-text">
-                                   <i class="fas fa-shield-alt"></i>
+                                   <i class="fas fa-shield-alt" aria-hidden="true"></i>
+
                                    Akses terlindungi
                               </span>
-
                          </div>
 
-                         <!-- Tombol login -->
+                         {{-- Tombol login --}}
                          <button type="submit" id="loginButton" class="login-button">
-                              <i class="fas fa-sign-in-alt"></i>
+                              <i id="loginButtonIcon" class="fas fa-sign-in-alt" aria-hidden="true"></i>
 
                               <span id="loginButtonText">
                                    Masuk ke Dashboard
                               </span>
                          </button>
-
                     </form>
-
                     <p class="login-footer">
                          &copy; {{ date('Y') }}
                          Dashboard Eksekutif<br>
@@ -1299,69 +1326,30 @@
 
      <script>
           document.addEventListener('DOMContentLoaded', function() {
-               'use strict';
-
-               const passwordInput = document.getElementById('password');
-               const togglePassword = document.getElementById('togglePassword');
-               const passwordIcon = document.getElementById('passwordIcon');
                const loginForm = document.getElementById('loginForm');
                const loginButton = document.getElementById('loginButton');
-               const loginButtonText = document.getElementById('loginButtonText');
+               const loginButtonIcon =
+                    document.getElementById('loginButtonIcon');
+               const loginButtonText =
+                    document.getElementById('loginButtonText');
 
-               /**
-                * Menampilkan atau menyembunyikan password.
-                */
-               if (togglePassword && passwordInput && passwordIcon) {
-                    togglePassword.addEventListener('click', function() {
-                         const passwordIsHidden =
-                              passwordInput.getAttribute('type') === 'password';
-
-                         passwordInput.setAttribute(
-                              'type',
-                              passwordIsHidden ? 'text' : 'password'
-                         );
-
-                         passwordIcon.classList.toggle(
-                              'fa-eye',
-                              !passwordIsHidden
-                         );
-
-                         passwordIcon.classList.toggle(
-                              'fa-eye-slash',
-                              passwordIsHidden
-                         );
-
-                         togglePassword.setAttribute(
-                              'aria-label',
-                              passwordIsHidden ?
-                              'Sembunyikan password' :
-                              'Tampilkan password'
-                         );
-
-                         togglePassword.setAttribute(
-                              'aria-pressed',
-                              passwordIsHidden ? 'true' : 'false'
-                         );
-                    });
+               if (!loginForm || !loginButton) {
+                    return;
                }
 
-               /**
-                * Mencegah tombol login diklik berulang kali.
-                */
-               if (loginForm && loginButton && loginButtonText) {
-                    loginForm.addEventListener('submit', function() {
-                         loginButton.disabled = true;
+               loginForm.addEventListener('submit', function() {
+                    loginButton.disabled = true;
 
-                         loginButtonText.textContent = 'Memproses login...';
+                    if (loginButtonIcon) {
+                         loginButtonIcon.className =
+                              'fas fa-spinner fa-spin';
+                    }
 
-                         const buttonIcon =
-                              loginButton.querySelector('i');
-
-                         if (buttonIcon) {
-                              buttonIcon.className = 'fas fa-spinner fa-spin';
-                         }
-                    });
-               }
+                    if (loginButtonText) {
+                         loginButtonText.textContent =
+                              'Memproses login...';
+                    }
+               });
           });
      </script>
 

@@ -77,53 +77,67 @@
 
                     <div class="avatar avatar-sm">
 
-                         <img src="{{ asset('backend/assets/img/favicon.png') }}" class="rounded-circle"
-                              alt="User Avatar">
+                         <img src="{{ asset('backend/assets/img/logo.png') }}" class="rounded-circle" alt="User Avatar">
 
                     </div>
 
                </a>
                <div class="dropdown-menu dropdown-menu-right">
                     <div class="dropdown-menu-header">
-
                          <div class="media align-items-center">
 
                               <div class="avatar">
-
-                                   <img src="{{ asset('backend/assets/img/favicon.png') }}" class="rounded-circle"
-                                        alt="Avatar">
-
+                                   <img src="{{ asset('backend/assets/img/logo.png') }}" class="rounded-circle"
+                                        alt="Avatar {{ auth()->user()->name ?? 'Administrator' }}">
                               </div>
 
-
                               <div class="media-body mg-l-10">
-
-                                   <h6>
-                                        Administrator
+                                   <h6 class="mg-b-0">
+                                        {{ auth()->user()->name ?? 'Administrator' }}
                                    </h6>
 
                                    <span>
-                                        Admin Dashboard
+                                        {{ auth()->user()->email ?? 'Admin Dashboard' }}
                                    </span>
-
                               </div>
 
                          </div>
+                    </div>
+
+                    <div class="dropdown-menu-body">
+
+                         <a href="#" class="dropdown-item">
+                              <i data-feather="user"></i>
+                              View Profile
+                         </a>
+
+                         <a href="#" class="dropdown-item">
+                              <i data-feather="edit-2"></i>
+                              Edit Profile
+                         </a>
+
+                         <a href="#" class="dropdown-item">
+                              <i data-feather="briefcase"></i>
+                              Account Settings
+                         </a>
+
+                         <a href="#" class="dropdown-item">
+                              <i data-feather="shield"></i>
+                              Privacy Settings
+                         </a>
+
+                         <form action="{{ route('logout') }}" method="POST" class="mg-0">
+                              @csrf
+
+                              <button type="submit" class="dropdown-item border-0 bg-transparent tx-left wd-100p"
+                                   onclick="return confirm('Apakah Anda yakin ingin keluar?')">
+                                   <i data-feather="log-out"></i>
+                                   Sign Out
+                              </button>
+                         </form>
 
                     </div>
-                    <div class="dropdown-menu-body">
-                         <a href="" class="dropdown-item"><i data-feather="user"></i> View
-                              Profile</a>
-                         <a href="" class="dropdown-item"><i data-feather="edit-2"></i> Edit
-                              Profile</a>
-                         <a href="" class="dropdown-item"><i data-feather="briefcase"></i> Account
-                              Settings</a>
-                         <a href="" class="dropdown-item"><i data-feather="shield"></i> Privacy
-                              Settings</a>
-                         <a href="" class="dropdown-item"><i data-feather="log-out"></i> Sign
-                              Out</a>
-                    </div>
-               </div><!-- dropdown-menu -->
+               </div>
 
           </div>
      </div><!-- header-right -->
