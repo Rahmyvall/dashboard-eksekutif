@@ -55,14 +55,6 @@
 
 
 
-                    <h4 class="content-title content-title-xs">
-
-                         @yield('page-title', 'Dashboard Eksekutif')
-
-                    </h4>
-
-
-
                     @hasSection('page-description')
                          <p class="text-muted mb-0">
 

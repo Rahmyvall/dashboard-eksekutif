@@ -7,27 +7,46 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-/**
- * @property int $id
- * @property int|null $role_id
- * @property string $name
- * @property string $email
- * @property string $password
- * @property string $status
- * @property Role|null $role
- */
 class User extends Authenticatable
 {
+    use HasApiTokens;
     use HasFactory;
     use Notifiable;
+    use SoftDeletes;
 
     /*
     |--------------------------------------------------------------------------
-    | Status User
+    | ROLE CONSTANT
+    |--------------------------------------------------------------------------
+    */
+
+    public const ROLE_SUPER_ADMIN = 'super_admin';
+
+    public const ROLE_DIREKTUR_UTAMA = 'executive';
+
+    public const ROLE_HRD = 'hr';
+
+    public const ROLE_MANAGER_DEPARTEMEN = 'manager_departemen';
+
+    public const ROLE_KARYAWAN = 'karyawan';
+
+    public const ROLE_ADMIN_PELAYANAN = 'admin_pelayanan';
+
+    public const ROLE_ADMIN_OPERASIONAL = 'admin_operasional';
+
+    public const ROLE_KEUANGAN = 'finance';
+
+    public const ROLE_AUDITOR = 'auditor';
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS
     |--------------------------------------------------------------------------
     */
 
@@ -39,35 +58,33 @@ class User extends Authenticatable
 
     /*
     |--------------------------------------------------------------------------
-    | Mass Assignment
+    | Fillable
     |--------------------------------------------------------------------------
     */
 
     protected $fillable = [
-        'role_id',
-        'name',
-        'email',
-        'password',
-        'status',
-        'last_login_at',
-    ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Hidden
-    |--------------------------------------------------------------------------
-    */
+        'name',
+
+        'email',
+
+        'password',
+
+        'status',
+
+        'last_login_at',
+
+        'last_login_ip',
+
+    ];
 
     protected $hidden = [
-        'password',
-        'remember_token',
-    ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Default Value
-    |--------------------------------------------------------------------------
-    */
+        'password',
+
+        'remember_token',
+
+    ];
 
     protected $attributes = [
 
@@ -77,69 +94,101 @@ class User extends Authenticatable
 
     /*
     |--------------------------------------------------------------------------
-    | Cast
+    | Casting
     |--------------------------------------------------------------------------
     */
 
     protected function casts(): array
     {
-        return [
 
-            'role_id'           => 'integer',
+        return [
 
             'email_verified_at' => 'datetime',
 
             'last_login_at'     => 'datetime',
 
+            /*
+             * Gunakan hashed untuk create/update melalui model.
+             * SQL langsung tetap harus bcrypt.
+             */
             'password'          => 'hashed',
 
         ];
+
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Mutator Email
+    | Email Mutator
     |--------------------------------------------------------------------------
     */
 
     protected function email(): Attribute
     {
+
         return Attribute::make(
 
             set: fn($value) =>
             strtolower(trim($value))
 
         );
+
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Relasi Role
+    | Relationship
     |--------------------------------------------------------------------------
     */
 
-    public function role(): BelongsTo
+    public function roles(): BelongsToMany
     {
-        return $this->belongsTo(
+
+        return $this->belongsToMany(
+
             Role::class,
+
+            'role_user',
+
+            'user_id',
+
             'role_id'
-        );
+
+        )
+            ->withTimestamps();
+
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Status Checking
+    | Status
     |--------------------------------------------------------------------------
     */
 
     public function isActive(): bool
     {
+
         return $this->status === self::STATUS_ACTIVE;
+
+    }
+
+    public function isInactive(): bool
+    {
+
+        return $this->status === self::STATUS_INACTIVE;
+
+    }
+
+    public function isSuspended(): bool
+    {
+
+        return $this->status === self::STATUS_SUSPENDED;
+
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Role Checking
+    | ROLE CHECK
     |--------------------------------------------------------------------------
     */
 
@@ -147,51 +196,149 @@ class User extends Authenticatable
         string | array $roles
     ): bool {
 
-        $this->loadMissing('role');
-
-        if ($this->role === null) {
-
-            return false;
-
-        }
-
         $roles = is_array($roles)
             ? $roles
             : [$roles];
 
-        return in_array(
-            $this->role->name,
-            $roles,
-            true
-        );
+        return $this->roles()
+
+            ->whereIn(
+                'roles.name',
+                $roles
+            )
+
+            ->exists();
 
     }
 
     public function isSuperAdmin(): bool
     {
+
         return $this->hasRole(
-            Role::SUPER_ADMIN
+            self::ROLE_SUPER_ADMIN
         );
+
     }
+
+    public function isDirekturUtama(): bool
+    {
+
+        return $this->hasRole(
+            self::ROLE_DIREKTUR_UTAMA
+        );
+
+    }
+
+    public function isHrd(): bool
+    {
+
+        return $this->hasRole(
+            self::ROLE_HRD
+        );
+
+    }
+
+    public function isAuditor(): bool
+    {
+
+        return $this->hasRole(
+            self::ROLE_AUDITOR
+        );
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACTIVE ROLE SESSION
+    |--------------------------------------------------------------------------
+    */
+
+    public function activeRole(): ?Role
+    {
+
+        $id = session(
+            'active_role_id'
+        );
+
+        if (! $id) {
+            return null;
+        }
+
+        return $this->roles()
+
+            ->where(
+                'roles.id',
+                $id
+            )
+
+            ->first();
+
+    }
+
+    public function activeRoleName(): ?string
+    {
+
+        return session(
+            'active_role_name'
+        );
+
+    }
+
+    public function hasActiveRole(
+        string | array $roles
+    ): bool {
+
+        return in_array(
+
+            $this->activeRoleName(),
+
+            (array) $roles,
+
+            true
+
+        );
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PERMISSION
+    |--------------------------------------------------------------------------
+    */
+
+    public function hasPermission(
+        string $permission
+    ): bool {
+
+        return $this->roles()
+
+            ->whereHas(
+                'permissions',
+                function ($q) use ($permission) {
+
+                    $q->where(
+                        'permissions.name',
+                        $permission
+                    );
+
+                }
+            )
+
+            ->exists();
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard Access
+    |--------------------------------------------------------------------------
+    */
 
     public function canAccessDashboard(): bool
     {
 
         return $this->isActive()
-        && $this->role !== null;
-
-    }
-
-    public function canAccessExecutiveDashboard(): bool
-    {
-
-        return $this->hasRole([
-
-            Role::SUPER_ADMIN,
-
-            Role::EXECUTIVE,
-
-        ]);
+        && $this->activeRole() != null;
 
     }
 
@@ -217,21 +364,57 @@ class User extends Authenticatable
         string | array $roles
     ): Builder {
 
-        $roles = is_array($roles)
-            ? $roles
-            : [$roles];
-
         return $query->whereHas(
-            'role',
-            function (Builder $q) use ($roles) {
+
+            'roles',
+
+            function ($q) use ($roles) {
 
                 $q->whereIn(
-                    'name',
-                    $roles
+
+                    'roles.name',
+
+                    (array) $roles
+
                 );
 
             }
+
         );
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Login Update
+    |--------------------------------------------------------------------------
+    */
+
+    public function updateLoginInfo(): void
+    {
+
+        $this->update([
+
+            'last_login_at' => now(),
+
+            'last_login_ip' => request()->ip(),
+
+        ]);
+
+    }
+
+    public static function statuses(): array
+    {
+
+        return [
+
+            self::STATUS_ACTIVE,
+
+            self::STATUS_INACTIVE,
+
+            self::STATUS_SUSPENDED,
+
+        ];
 
     }
 

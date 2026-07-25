@@ -17,7 +17,7 @@
 
 
      <title>
-          Dashboard Monitoring Kinerja & Kepuasan Pelanggan | @yield('page-title', 'Dashboard Eksekutif')
+          Dashboard Monitoring Kinerja & Kepuasan Pelanggan
      </title>
 
      {{-- CSS --}}
@@ -26,7 +26,7 @@
 
      <!-- vendor css -->
      <link href="{{ asset('backend/lib/@fortawesome/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
-
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
      <link href="{{ asset('backend/lib/ionicons/css/ionicons.min.css') }}" rel="stylesheet">
      <link href="{{ asset('backend/assets/css/custom.css') }}" rel="stylesheet">
      <link href="{{ asset('backend/lib/jqvmap/jqvmap.min.css') }}" rel="stylesheet">
@@ -36,145 +36,369 @@
      <!-- template css -->
      <link rel="stylesheet" href="{{ asset('backend/assets/css/cassie.css') }}">
      <style>
-          /* =========================================
-       PENGATURAN UMUM
-    ========================================= */
+          /* =====================================================
+ROOT VARIABLE
+===================================================== */
 
-          html,
-          body {
-               min-height: 100%;
+          :root {
+
+               --transition-theme: .3s ease;
+
           }
 
-          body,
-          .header,
-          .sidebar,
-          .sidebar-header,
-          .content,
-          .content-header,
-          .content-body,
-          .card,
-          .dropdown-menu,
-          .form-control {
-               transition:
-                    background-color 0.3s ease,
-                    color 0.3s ease,
-                    border-color 0.3s ease;
+
+
+          /* =====================================================
+DEFAULT WHITE THEME
+===================================================== */
+
+          body.white-theme {
+
+
+               --bg-page: #ffffff;
+
+               --bg-card: #ffffff;
+
+               --bg-header: #f8f9fa;
+
+               --bg-table: #ffffff;
+
+               --bg-table-head: #f1f3f5;
+
+               --bg-hover: #eef4ff;
+
+
+               --text-main: #212529;
+
+               --text-muted: #6c757d;
+
+               --border: #dee2e6;
+
+
           }
 
-          .flot-chart {
-               height: 350px !important;
+
+
+          /* =====================================================
+BLACK THEME
+===================================================== */
+          /* =====================================================
+SIDEBAR LOGO RESPONSIVE FIX
+LOGO MENYESUAIKAN TEXT DIBAWAHNYA
+===================================================== */
+
+
+          /* Container logo */
+
+          .sidebar-brand,
+          .sidebar-logo,
+          .sidebar-header .logo {
+
+
+               width: 100% !important;
+
+               display: flex !important;
+
+               flex-direction: column !important;
+
+               align-items: center !important;
+
+               justify-content: center !important;
+
+               text-align: center !important;
+
+               overflow: hidden !important;
+
+               padding: 12px 5px !important;
+
+
           }
 
-          /* =========================================
-       BLACK THEME
-    ========================================= */
+
+
+          /* =====================================================
+UKURAN GAMBAR LOGO
+===================================================== */
+
+
+          .sidebar-logo img,
+          .sidebar-logo-image,
+          .sidebar-brand img,
+          .sidebar-header img {
+
+
+               width: 105px !important;
+
+               height: 105px !important;
+
+
+               max-width: 105px !important;
+
+
+               object-fit: contain !important;
+
+
+               display: block !important;
+
+
+               margin: 0 auto 8px auto !important;
+
+
+          }
+
+
+
+          /* =====================================================
+JUDUL / TEXT LOGO
+===================================================== */
+
+
+          .sidebar-logo-text,
+          .sidebar-logo-headline,
+          .sidebar-brand span,
+          .sidebar-brand h1,
+          .sidebar-brand h2,
+          .sidebar-brand h3 {
+
+
+               display: block !important;
+
+
+               width: 100% !important;
+
+
+               max-width: 190px !important;
+
+
+               margin: 5px auto 0 auto !important;
+
+
+               padding: 0 !important;
+
+
+               text-align: center !important;
+
+
+               font-size: 13px !important;
+
+
+               font-weight: 600 !important;
+
+
+               line-height: 1.3 !important;
+
+
+               white-space: normal !important;
+
+
+               overflow-wrap: break-word !important;
+
+
+          }
+
+
+
+          /* Text kedua / deskripsi */
+
+          .sidebar-logo-text small,
+          .sidebar-brand small {
+
+
+               display: block !important;
+
+
+               margin-top: 3px !important;
+
+
+               font-size: 11px !important;
+
+
+               opacity: .85 !important;
+
+
+          }
+
+
+
+
+
+          /* =====================================================
+DESKTOP
+===================================================== */
+
+
+          @media(min-width:1200px) {
+
+
+               .sidebar-logo img,
+               .sidebar-logo-image,
+               .sidebar-brand img,
+               .sidebar-header img {
+
+
+                    width: 100px !important;
+
+                    height: 100px !important;
+
+
+               }
+
+
+          }
+
+
+
+          /* =====================================================
+TABLET
+===================================================== */
+
+
+          @media(max-width:1199px) {
+
+
+               .sidebar-logo img,
+               .sidebar-logo-image,
+               .sidebar-brand img,
+               .sidebar-header img {
+
+
+                    width: 70px !important;
+
+                    height: 70px !important;
+
+
+               }
+
+
+          }
+
+
+
+          /* =====================================================
+MOBILE
+===================================================== */
+
+
+          @media(max-width:576px) {
+
+
+               .sidebar-logo img,
+               .sidebar-logo-image,
+               .sidebar-brand img,
+               .sidebar-header img {
+
+
+                    width: 60px !important;
+
+                    height: 60px !important;
+
+
+               }
+
+
+
+               .sidebar-logo-text,
+               .sidebar-logo-headline {
+
+
+                    font-size: 12px !important;
+
+
+               }
+
+
+          }
 
           body.black-theme {
-               background-color: #121212 !important;
-               color: #ffffff !important;
+
+
+               --bg-page: #121212;
+
+               --bg-card: #1e1e1e;
+
+               --bg-header: #242424;
+
+               --bg-table: #1e1e1e;
+
+               --bg-table-head: #292929;
+
+               --bg-hover: #303030;
+
+
+               --text-main: #ffffff;
+
+               --text-muted: #bbbbbb;
+
+               --border: #887070;
+
+
           }
 
-          /* Header */
-          body.black-theme .header {
-               background-color: #1e1e1e !important;
-               color: #ffffff !important;
-               border-color: #333333 !important;
+
+
+          /* =====================================================
+GLOBAL
+===================================================== */
+
+
+          body {
+
+               transition:
+                    background var(--transition-theme),
+                    color var(--transition-theme);
+
           }
 
-          /* Sidebar */
-          body.black-theme .sidebar {
-               background: #181818 !important;
-               color: #ffffff !important;
+
+
+
+          body.white-theme,
+          body.black-theme {
+
+
+               background:
+                    var(--bg-page) !important;
+
+
+               color:
+                    var(--text-main) !important;
+
+
           }
 
-          body.black-theme .sidebar-header {
-               background-color: #181818 !important;
-               border-bottom: 1px solid #333333 !important;
+
+
+          /* =====================================================
+ALL TEXT
+===================================================== */
+
+
+          body.white-theme *,
+          body.black-theme * {
+
+
+               border-color:
+                    var(--border) !important;
+
+
           }
 
-          body.black-theme .sidebar-brand,
-          body.black-theme .sidebar-body {
-               background-color: transparent !important;
-          }
 
-          body.black-theme .sidebar-logo-text,
-          body.black-theme .sidebar-logo-headline,
-          body.black-theme .sidebar-logo-headline b,
-          body.black-theme .sidebar-logo span {
-               color: #ffffff !important;
-          }
 
-          /* Label sidebar */
-          body.black-theme .sidebar .nav-label,
-          body.black-theme .sidebar .content-label {
-               color: #9e9e9e !important;
-          }
+          body.white-theme h1,
+          body.white-theme h2,
+          body.white-theme h3,
+          body.white-theme h4,
+          body.white-theme h5,
+          body.white-theme h6,
+          body.white-theme p,
+          body.white-theme label,
+          body.white-theme span,
+          body.white-theme small,
+          body.white-theme td,
+          body.white-theme th,
 
-          /* Menu sidebar */
-          body.black-theme .sidebar .nav-sidebar .nav-link {
-               color: #d8d8d8 !important;
-               border-radius: 8px;
-               margin: 3px 10px;
-               padding: 11px 14px;
-          }
 
-          body.black-theme .sidebar .nav-sidebar .nav-link i,
-          body.black-theme .sidebar .nav-sidebar .nav-link svg {
-               color: #d8d8d8 !important;
-               stroke: #d8d8d8 !important;
-          }
-
-          body.black-theme .sidebar .nav-sidebar .nav-link:hover {
-               background-color: #292929 !important;
-               color: #ffffff !important;
-               transform: translateX(3px);
-          }
-
-          body.black-theme .sidebar .nav-sidebar .nav-link.active {
-               background-color: #343434 !important;
-               color: #ffffff !important;
-               font-weight: 600;
-               box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-          }
-
-          body.black-theme .sidebar .nav-sidebar .nav-link.active i,
-          body.black-theme .sidebar .nav-sidebar .nav-link.active svg {
-               color: #ffffff !important;
-               stroke: #ffffff !important;
-          }
-
-          /* Submenu sidebar */
-          body.black-theme .sidebar .nav-sub {
-               background-color: #202020 !important;
-               margin: 4px 10px 8px;
-               padding: 6px 0;
-               border-radius: 8px;
-          }
-
-          body.black-theme .sidebar .nav-sub-link {
-               color: #cfcfcf !important;
-          }
-
-          body.black-theme .sidebar .nav-sub-link:hover {
-               color: #ffffff !important;
-               background-color: #303030 !important;
-          }
-
-          body.black-theme .sidebar .nav-sub-link.active {
-               color: #ffffff !important;
-               background-color: #383838 !important;
-               border-left: 3px solid #ffffff;
-          }
-
-          /* Area content */
-          body.black-theme .content,
-          body.black-theme .content-header,
-          body.black-theme .content-body {
-               background-color: #121212 !important;
-               color: #ffffff !important;
-          }
-
-          body.black-theme .content-title,
           body.black-theme h1,
           body.black-theme h2,
           body.black-theme h3,
@@ -182,266 +406,601 @@
           body.black-theme h5,
           body.black-theme h6,
           body.black-theme p,
-          body.black-theme label {
-               color: #ffffff;
+          body.black-theme label,
+          body.black-theme span,
+          body.black-theme small,
+          body.black-theme td,
+          body.black-theme th {
+
+
+               color:
+                    var(--text-main) !important;
+
+
           }
 
-          /* Card */
+
+
+
+          /* =====================================================
+HEADER
+===================================================== */
+
+
+          body.black-theme .header,
+          body.white-theme .header,
+
+
+          body.black-theme .content-header,
+          body.white-theme .content-header {
+
+
+               background:
+                    var(--bg-card) !important;
+
+
+               color:
+                    var(--text-main) !important;
+
+
+          }
+
+
+
+
+          /* =====================================================
+CARD
+===================================================== */
+
+
           body.black-theme .card,
+          body.white-theme .card,
+
+
           body.black-theme .card-header,
+          body.white-theme .card-header,
+
+
           body.black-theme .card-body,
-          body.black-theme .card-footer {
-               background-color: #1e1e1e !important;
-               color: #ffffff !important;
-               border-color: #333333 !important;
+          body.white-theme .card-body,
+
+
+          body.black-theme .card-footer,
+          body.white-theme .card-footer {
+
+
+               background:
+                    var(--bg-card) !important;
+
+
+               color:
+                    var(--text-main) !important;
+
+
+               border-color:
+                    var(--border) !important;
+
+
           }
 
-          /* Table */
+
+
+
+          /* =====================================================
+TABLE BOOTSTRAP
+===================================================== */
+
+
+          body.black-theme table,
           body.black-theme .table {
-               color: #ffffff !important;
+
+
+               background:
+                    var(--bg-table) !important;
+
+
+               color:
+                    var(--text-main) !important;
+
+
           }
 
-          body.black-theme .table th,
-          body.black-theme .table td {
-               border-color: #3a3a3a !important;
+
+
+          body.black-theme table thead th,
+          body.black-theme .table thead th {
+
+
+               background:
+                    var(--bg-table-head) !important;
+
+
+               color:
+                    white !important;
+
+
           }
 
-          body.black-theme .table-striped tbody tr:nth-of-type(odd) {
-               background-color: #242424 !important;
+
+
+          body.black-theme table tbody td,
+          body.black-theme .table tbody td {
+
+
+               background:
+                    var(--bg-table) !important;
+
+
+               color:
+                    white !important;
+
+
           }
 
-          /* Breadcrumb */
-          body.black-theme .breadcrumb {
-               background-color: transparent !important;
+
+
+          body.black-theme table tbody tr:hover td {
+
+
+               background:
+                    var(--bg-hover) !important;
+
+
           }
 
-          body.black-theme .breadcrumb-item,
-          body.black-theme .breadcrumb-item a {
-               color: #cccccc !important;
+
+
+
+
+          /* WHITE TABLE */
+
+
+          body.white-theme table,
+          body.white-theme .table {
+
+
+               background: white !important;
+
+
+               color: #212529 !important;
+
+
           }
 
-          body.black-theme .breadcrumb-item.active {
-               color: #ffffff !important;
+
+
+          body.white-theme table thead th,
+          body.white-theme .table thead th {
+
+
+               background: #f1f3f5 !important;
+
+
+               color: #6f88a0 !important;
+
+
           }
 
-          /* Dropdown */
+
+
+
+          /* =====================================================
+DATATABLE
+===================================================== */
+
+
+          body.black-theme .dataTables_wrapper,
+
+
+          body.black-theme .dataTables_info,
+
+
+          body.black-theme .dataTables_filter,
+
+
+          body.black-theme .dataTables_length {
+
+
+               color: white !important;
+
+
+          }
+
+
+
+
+          body.black-theme table.dataTable tbody tr {
+
+
+               background: #1e1e1e !important;
+
+
+               color: white !important;
+
+
+          }
+
+
+
+
+          /* =====================================================
+INPUT
+===================================================== */
+
+
+          body.black-theme input,
+          body.black-theme select,
+          body.black-theme textarea,
+          body.black-theme .form-control {
+
+
+               background: #242424 !important;
+
+
+               color: white !important;
+
+
+               border-color: #555 !important;
+
+
+          }
+
+
+
+          body.white-theme input,
+          body.white-theme select,
+          body.white-theme textarea,
+          body.white-theme .form-control {
+
+
+               background: white !important;
+
+
+               color: #5f81a3 !important;
+
+
+          }
+
+
+
+          /* =====================================================
+SIDEBAR
+===================================================== */
+
+
+          body.black-theme .sidebar,
+          body.black-theme .sidebar-header {
+
+
+               background: #777070 !important;
+
+
+               color: white !important;
+
+
+          }
+
+
+
+          body.white-theme .sidebar,
+          body.white-theme .sidebar-header {
+
+
+               background: #78a9e0 !important;
+
+
+               color: white !important;
+
+
+          }
+
+
+
+          body.black-theme .sidebar .nav-link {
+
+
+               color: #ddd !important;
+
+
+          }
+
+
+
+          body.white-theme .sidebar .nav-link {
+
+
+               color: white !important;
+
+
+          }
+
+
+
+
+          /* =====================================================
+DROPDOWN
+===================================================== */
+
+
           body.black-theme .dropdown-menu {
-               background-color: #242424 !important;
-               border-color: #3a3a3a !important;
+
+
+               background: #504c4c !important;
+
+
           }
+
+
 
           body.black-theme .dropdown-item {
-               color: #ffffff !important;
+
+
+               color: white !important;
+
+
           }
 
-          body.black-theme .dropdown-item:hover,
-          body.black-theme .dropdown-item:focus {
-               background-color: #333333 !important;
-               color: #ffffff !important;
+
+
+          body.black-theme .dropdown-item:hover {
+
+
+               background: #9c9191 !important;
+
+
           }
 
-          /* Input */
-          body.black-theme .form-control,
-          body.black-theme .custom-select,
-          body.black-theme select,
-          body.black-theme textarea {
-               background-color: #2b2b2b !important;
-               color: #ffffff !important;
-               border-color: #444444 !important;
+
+
+
+          /* =====================================================
+BUTTON ICON
+===================================================== */
+
+
+          #themeToggle {
+
+
+               border: none;
+
+               background: transparent;
+
+               cursor: pointer;
+
+
+               color: inherit;
+
+
           }
 
-          body.black-theme .form-control::placeholder {
-               color: #aaaaaa !important;
-          }
 
-          body.black-theme .form-control:focus {
-               background-color: #303030 !important;
-               color: #ffffff !important;
-               border-color: #777777 !important;
-               box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.08);
-          }
+          #themeIcon {
 
-          /* =========================================
-       WHITE THEME
-    ========================================= */
 
-          body.white-theme {
-               background-color: #ffffff !important;
-               color: #212529 !important;
-          }
+               width: 20px;
 
-          body.white-theme .header {
-               background-color: #ffffff !important;
-               color: #212529 !important;
-          }
+               height: 20px;
 
-          body.white-theme .content,
-          body.white-theme .content-header,
-          body.white-theme .content-body {
-               background-color: #ffffff !important;
-               color: #212529 !important;
-          }
 
-          body.white-theme .card,
-          body.white-theme .card-header,
-          body.white-theme .card-body,
-          body.white-theme .card-footer {
-               background-color: #ffffff !important;
-               color: #212529 !important;
-          }
-
-          /* =========================================
-       LOGO SIDEBAR
-    ========================================= */
-
-          .sidebar-brand {
-               display: flex;
-               flex-direction: column;
-               align-items: center;
-               justify-content: center;
-               width: 100%;
-               text-align: center;
-          }
-
-          .sidebar-logo {
-               display: flex;
-               flex-direction: column;
-               align-items: center;
-               justify-content: center;
-               width: 100%;
-               padding: 15px 0;
-               margin: 0 auto;
-               text-align: center;
-               text-decoration: none;
-               box-sizing: border-box;
-          }
-
-          .sidebar-logo-image {
-               display: block;
-               width: auto;
-               max-width: 130px;
-               height: 80px;
-               margin: 0 auto;
-               padding: 0;
-               object-fit: contain;
-               object-position: center;
-          }
-
-          .sidebar-logo-text,
-          .sidebar-logo-headline {
-               display: block;
-               width: 100%;
-               margin: 6px auto 0;
-               padding: 0 10px;
-               font-size: 13px;
-               font-weight: 600;
-               line-height: 1.3;
-               text-align: center;
-               box-sizing: border-box;
-          }
-
-          /* =========================================
-       SIDEBAR BIRU KHUSUS WHITE THEME
-    ========================================= */
-
-          body.white-theme .sidebar {
-               background: linear-gradient(180deg,
-                         #78a9e0 0%,
-                         #78a9e0 55%,
-                         #78a9e0 100%) !important;
-               color: #ffffff !important;
-          }
-
-          body.white-theme .sidebar-header {
-               background-color: #78a9e0 !important;
-               border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-          }
-
-          body.white-theme .sidebar-brand,
-          body.white-theme .sidebar-body {
-               background-color: transparent !important;
-          }
-
-          body.white-theme .sidebar-logo-text,
-          body.white-theme .sidebar-logo-headline,
-          body.white-theme .sidebar-logo-headline b {
-               color: #ffffff !important;
-          }
-
-          body.white-theme .sidebar .nav-label,
-          body.white-theme .sidebar .content-label {
-               color: #e3f2fd !important;
-          }
-
-          body.white-theme .sidebar .nav-sidebar .nav-link {
-               color: #e3f2fd !important;
-               border-radius: 8px;
-               margin: 3px 10px;
-               padding: 11px 14px;
-               transition: all 0.25s ease;
-          }
-
-          body.white-theme .sidebar .nav-sidebar .nav-link i,
-          body.white-theme .sidebar .nav-sidebar .nav-link svg {
-               color: #e3f2fd !important;
-               stroke: #e3f2fd !important;
-          }
-
-          body.white-theme .sidebar .nav-sidebar .nav-link:hover {
-               background-color: rgba(255, 255, 255, 0.15) !important;
-               color: #ffffff !important;
-               transform: translateX(3px);
-          }
-
-          body.white-theme .sidebar .nav-sidebar .nav-link.active {
-               background-color: #ffffff !important;
-               color: #0d47a1 !important;
-               font-weight: 600;
-               box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-          }
-
-          body.white-theme .sidebar .nav-sidebar .nav-link.active i,
-          body.white-theme .sidebar .nav-sidebar .nav-link.active svg {
-               color: #0d47a1 !important;
-               stroke: #0d47a1 !important;
-          }
-
-          body.white-theme .sidebar .nav-sub {
-               background-color: rgba(0, 0, 0, 0.12) !important;
-               margin: 4px 10px 8px;
-               padding: 6px 0;
-               border-radius: 8px;
-          }
-
-          body.white-theme .sidebar .nav-sub-link {
-               color: #d9ecff !important;
-               padding: 9px 15px 9px 45px;
-          }
-
-          body.white-theme .sidebar .nav-sub-link:hover {
-               color: #ffffff !important;
-               background-color: rgba(255, 255, 255, 0.12) !important;
-          }
-
-          body.white-theme .sidebar .nav-sub-link.active {
-               color: #ffffff !important;
-               background-color: rgba(255, 255, 255, 0.2) !important;
-               font-weight: 600;
-               border-left: 3px solid #ffffff;
-          }
-
-          /* Scrollbar */
-          .sidebar-body::-webkit-scrollbar {
-               width: 5px;
-          }
-
-          .sidebar-body::-webkit-scrollbar-thumb {
-               background-color: rgba(255, 255, 255, 0.35);
-               border-radius: 10px;
-          }
-
-          .sidebar-body::-webkit-scrollbar-track {
-               background-color: transparent;
           }
      </style>
+
+
+
+
+
+     <script>
+          /* =====================================================
+                                                                                               THEME ENGINE
+                                                                                               ===================================================== */
+
+
+          (function() {
+
+
+               "use strict";
+
+
+               const KEY = "dashboard-theme";
+
+
+               const BLACK = "black-theme";
+
+               const WHITE = "white-theme";
+
+
+
+
+
+               function setTheme(theme) {
+
+
+
+                    document.body.classList.remove(
+                         BLACK,
+                         WHITE
+                    );
+
+
+
+                    document.body.classList.add(
+                         theme
+                    );
+
+
+
+                    localStorage.setItem(
+                         KEY,
+                         theme
+                    );
+
+
+
+                    changeIcon(theme);
+
+
+
+               }
+
+
+
+
+
+               function changeIcon(theme) {
+
+
+
+                    const icon =
+                         document.getElementById(
+                              "themeIcon"
+                         );
+
+
+
+                    const button =
+                         document.getElementById(
+                              "themeToggle"
+                         );
+
+
+
+                    if (!icon)
+                         return;
+
+
+
+
+                    if (theme === BLACK) {
+
+
+
+                         icon.setAttribute(
+                              "data-feather",
+                              "sun"
+                         );
+
+
+
+                         button.title =
+                              "Switch White Theme";
+
+
+
+                    } else {
+
+
+
+                         icon.setAttribute(
+                              "data-feather",
+                              "moon"
+                         );
+
+
+
+                         button.title =
+                              "Switch Black Theme";
+
+
+
+                    }
+
+
+
+
+                    if (window.feather) {
+
+                         feather.replace();
+
+                    }
+
+
+
+               }
+
+
+
+
+
+               function toggleTheme() {
+
+
+                    const dark =
+                         document.body.classList.contains(
+                              BLACK
+                         );
+
+
+
+                    if (dark) {
+
+                         setTheme(WHITE);
+
+                    } else {
+
+                         setTheme(BLACK);
+
+                    }
+
+
+
+               }
+
+
+
+
+
+
+
+               document.addEventListener(
+                    "DOMContentLoaded",
+                    function() {
+
+
+
+                         let saved =
+                              localStorage.getItem(KEY);
+
+
+
+                         if (saved) {
+
+                              setTheme(saved);
+
+                         } else {
+
+                              setTheme(WHITE);
+
+                         }
+
+
+
+
+                         const button =
+                              document.getElementById(
+                                   "themeToggle"
+                              );
+
+
+
+                         if (button) {
+
+
+                              button.addEventListener(
+                                   "click",
+                                   toggleTheme
+                              );
+
+
+                         }
+
+
+
+                    }
+
+               );
+
+
+
+          })();
+     </script>
 </head>

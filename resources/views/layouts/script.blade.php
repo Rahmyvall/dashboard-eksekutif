@@ -50,37 +50,55 @@
 <script src="{{ asset('backend/assets/js/dashboard-one.js') }}"></script>
 --}}
 
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 {{-- Theme Toggle --}}
 <script>
      document.addEventListener("DOMContentLoaded", function() {
-          const body = document.body;
           const themeToggle = document.getElementById("themeToggle");
+          const themeIcon = document.getElementById("themeIcon");
 
-          function setTheme(theme) {
-               body.classList.remove("white-theme", "black-theme");
-
-               if (theme === "black") {
-                    body.classList.add("black-theme");
-               } else {
-                    body.classList.add("white-theme");
-               }
-
-               localStorage.setItem("dashboardTheme", theme);
+          if (!themeToggle || !themeIcon) {
+               console.error("Tombol atau ikon theme toggle tidak ditemukan.");
+               return;
           }
 
-          const savedTheme = localStorage.getItem("dashboardTheme");
-          setTheme(savedTheme === "black" ? "black" : "white");
+          const savedTheme = localStorage.getItem("theme") || "light";
 
-          if (themeToggle) {
-               themeToggle.addEventListener("click", function() {
-                    const currentTheme = body.classList.contains("black-theme") ?
-                         "black" :
-                         "white";
+          document.documentElement.setAttribute("data-theme", savedTheme);
+          updateThemeButton(savedTheme);
 
-                    setTheme(currentTheme === "black" ? "white" : "black");
-               });
+          themeToggle.addEventListener("click", function() {
+               const currentTheme =
+                    document.documentElement.getAttribute("data-theme") || "light";
+
+               const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+               document.documentElement.setAttribute("data-theme", newTheme);
+               localStorage.setItem("theme", newTheme);
+
+               updateThemeButton(newTheme);
+          });
+
+          function updateThemeButton(theme) {
+               const isDark = theme === "dark";
+
+               themeToggle.setAttribute("aria-pressed", String(isDark));
+               themeToggle.setAttribute(
+                    "aria-label",
+                    isDark ? "Aktifkan tema terang" : "Aktifkan tema gelap"
+               );
+
+               themeToggle.setAttribute(
+                    "title",
+                    isDark ? "Aktifkan Tema Terang" : "Aktifkan Tema Gelap"
+               );
+
+               themeIcon.setAttribute("data-feather", isDark ? "sun" : "moon");
+
+               if (typeof feather !== "undefined") {
+                    feather.replace();
+               }
           }
      });
 </script>

@@ -2,6 +2,7 @@
 
 declare (strict_types = 1);
 
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Http\JsonResponse;
@@ -15,82 +16,177 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/health', function (): JsonResponse {
-
-    return response()->json([
-        'status'      => 'success',
-        'message'     => 'Laravel berjalan dengan normal.',
-        'application' => config('app.name'),
-        'environment' => app()->environment(),
-        'timestamp'   => now()->toIso8601String(),
-    ]);
-
-})->name('health');
-
-/*
-|--------------------------------------------------------------------------
-| Home
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/', function (): RedirectResponse {
-
-    return Auth::check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
-
-})->name('home');
+Route::get(
+    '/health',
+    static function (): JsonResponse {
+        return response()->json([
+            'status'      => 'success',
+            'message'     => 'Laravel berjalan dengan normal.',
+            'application' => config('app.name'),
+            'environment' => app()->environment(),
+            'timestamp'   => now()->toIso8601String(),
+        ]);
+    }
+)->name('health');
 
 /*
 |--------------------------------------------------------------------------
-| Authentication
+| Halaman Utama
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('guest')->group(function (): void {
+Route::get(
+    '/',
+    static function (): RedirectResponse {
+        if (Auth::guard('web')->check()) {
+            return redirect()->route('dashboard');
+        }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Login Page
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('/login', [
-        LoginController::class,
-        'showLoginForm',
-    ])->name('login');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Login Process
-    |--------------------------------------------------------------------------
-    */
-
-    Route::post('/login', [
-        LoginController::class,
-        'login',
-    ])->name('login.process');
-
-});
+        return redirect()->route('login');
+    }
+)->name('home');
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes
+| Authentication untuk Guest
+|--------------------------------------------------------------------------
+|
+| Route ini hanya dapat diakses pengguna yang belum login.
+|
+*/
+
+Route::middleware('guest')
+    ->group(function (): void {
+        /*
+        |--------------------------------------------------------------------------
+        | Halaman Login
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/login',
+            [LoginController::class, 'create']
+        )->name('login');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Proses Login
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post(
+            '/login',
+            [LoginController::class, 'store']
+        )->name('login.process');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Route Pengguna Terautentikasi
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function (): void {
-
+Route::middleware([
+    'auth',
+    'active.user',
+])->group(function (): void {
     /*
     |--------------------------------------------------------------------------
     | Dashboard
     |--------------------------------------------------------------------------
+    |
+    | Semua role tetap memakai satu route /dashboard.
+    | DashboardController akan menentukan view berdasarkan active_role_name
+    | yang tersimpan dalam session.
+    |
     */
 
-    Route::get('/dashboard', [
-        DashboardController::class,
-        'index',
-    ])->name('dashboard');
+    Route::get(
+        '/dashboard',
+        [DashboardController::class, 'index']
+    )->name('dashboard');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manajemen Pengguna
+    |--------------------------------------------------------------------------
+    |
+    | Hanya Super Admin dan HRD yang dapat mengakses manajemen pengguna.
+    |
+    */
+
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware('role:SUPER_ADMIN,HRD')
+        ->group(function (): void {
+            /*
+            |--------------------------------------------------------------------------
+            | Recycle Bin
+            |--------------------------------------------------------------------------
+            |
+            | Route statis ini wajib ditempatkan sebelum Route::resource().
+            | Jika diletakkan setelah resource, "users-trash" berpotensi dianggap
+            | sebagai nilai parameter {user}.
+            |
+            */
+
+            Route::get(
+                '/users-trash',
+                [AdminUserController::class, 'trash']
+            )->name('users.trash');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Restore User
+            |--------------------------------------------------------------------------
+            */
+
+            Route::post(
+                '/users/{id}/restore',
+                [AdminUserController::class, 'restore']
+            )
+                ->whereNumber('id')
+                ->name('users.restore');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Hapus Permanen
+            |--------------------------------------------------------------------------
+            |
+            | Hanya SUPER_ADMIN yang boleh menghapus user secara permanen.
+            |
+            */
+
+            Route::delete(
+                '/users/{id}/force-delete',
+                [AdminUserController::class, 'forceDelete']
+            )
+                ->whereNumber('id')
+                ->middleware('role:SUPER_ADMIN')
+                ->name('users.forceDelete');
+
+            /*
+            |--------------------------------------------------------------------------
+            | User CRUD
+            |--------------------------------------------------------------------------
+            |
+            | Menghasilkan route:
+            |
+            | admin.users.index
+            | admin.users.create
+            | admin.users.store
+            | admin.users.show
+            | admin.users.edit
+            | admin.users.update
+            | admin.users.destroy
+            |
+            */
+
+            Route::resource(
+                'users',
+                AdminUserController::class
+            );
+        });
 
     /*
     |--------------------------------------------------------------------------
@@ -98,9 +194,8 @@ Route::middleware('auth')->group(function (): void {
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/logout', [
-        LoginController::class,
-        'logout',
-    ])->name('logout');
-
+    Route::post(
+        '/logout',
+        [LoginController::class, 'destroy']
+    )->name('logout');
 });

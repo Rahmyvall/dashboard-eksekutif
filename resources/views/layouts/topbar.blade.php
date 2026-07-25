@@ -14,7 +14,8 @@
           <a href="" class="header-help-link"><i data-feather="help-circle"></i></a>
           <div class="dropdown dropdown-notification">
                <!-- Theme Toggle -->
-               <a href="#" class="header-help-link" id="themeToggle" title="Change Theme">
+               <a href="javascript:void(0);" class="header-help-link" id="themeToggle" data-theme-toggle
+                    title="Change Theme" aria-label="Change Theme" aria-pressed="false">
 
                     <i data-feather="moon" id="themeIcon"></i>
 
