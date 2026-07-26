@@ -1,1629 +1,2501 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Super Admin')
+@section('title', 'Dashboard Super Admin | Monitoring Kinerja & Kepuasan Pelanggan')
 
 @section('content')
      @php
-          $currentUser = $user ?? auth()->user();
-          $roleLabel = $activeRoleLabel ?? 'Super Admin';
-
           /*
         |--------------------------------------------------------------------------
-        | Data sementara
+        | DASHBOARD SUPER ADMIN
         |--------------------------------------------------------------------------
-        |
-        | Nilai di bawah dapat diganti dengan data dari DashboardController.
-        | Template tetap berjalan walaupun controller belum mengirim statistik.
-        |
+        | Data contoh di bawah dapat dipindahkan ke controller/service.
+        | Struktur variabel dipertahankan agar view dapat langsung digunakan
+        | sebagai prototipe sebelum seluruh modul terhubung ke database.
         */
 
-          $statistics = $statistics ?? [
-              'total_users' => 128,
-              'active_users' => 114,
-              'total_roles' => 9,
-              'total_permissions' => 48,
-              'system_uptime' => 99.98,
-              'open_alerts' => 3,
-          ];
+          $currentUser = auth()->user();
+          $currentUserName = $currentUser?->name ?? 'Super Admin';
+          $currentUserRole = strtoupper(str_replace('_', ' ', $currentUser?->role ?? 'SUPER_ADMIN'));
 
-          $systemModules = $systemModules ?? [
+          $usersUrl = Route::has('admin.users.index') ? route('admin.users.index') : '#';
+          $reportsUrl = Route::has('super-admin.reports.index') ? route('super-admin.reports.index') : '#';
+          $settingsUrl = Route::has('super-admin.settings.index') ? route('super-admin.settings.index') : '#';
+          $surveysUrl = Route::has('super-admin.surveys.index') ? route('super-admin.surveys.index') : '#';
+          $complaintsUrl = Route::has('super-admin.complaints.index') ? route('super-admin.complaints.index') : '#';
+
+          $dashboardStatistics = $dashboardStatistics ?? [
               [
-                  'name' => 'Autentikasi dan Akses',
-                  'description' => 'Login, session, role, dan permission',
-                  'status' => 'Normal',
-                  'status_type' => 'success',
-                  'usage' => 92,
-                  'icon' => 'shield',
-              ],
-              [
-                  'name' => 'Manajemen Pengguna',
-                  'description' => 'Data pengguna, status, dan aktivitas login',
-                  'status' => 'Normal',
-                  'status_type' => 'success',
-                  'usage' => 78,
-                  'icon' => 'users',
-              ],
-              [
-                  'name' => 'Operasional',
-                  'description' => 'Layanan, transaksi, dan proses harian',
-                  'status' => 'Perhatian',
-                  'status_type' => 'warning',
-                  'usage' => 68,
+                  'label' => 'Capaian Kinerja',
+                  'value' => 86.4,
+                  'suffix' => '%',
                   'icon' => 'activity',
+                  'description' => 'Rata-rata realisasi KPI seluruh unit kerja',
+                  'trend' => '+4,2%',
+                  'trend_type' => 'up',
+                  'theme' => 'indigo',
               ],
               [
-                  'name' => 'Pelaporan',
-                  'description' => 'Rekap, analitik, dan ekspor laporan',
-                  'status' => 'Normal',
-                  'status_type' => 'success',
-                  'usage' => 84,
-                  'icon' => 'bar-chart-2',
+                  'label' => 'Indeks Kepuasan',
+                  'value' => 88.7,
+                  'suffix' => '%',
+                  'icon' => 'smile',
+                  'description' => '1.284 respons pelanggan pada periode berjalan',
+                  'trend' => '+2,8%',
+                  'trend_type' => 'up',
+                  'theme' => 'green',
+              ],
+              [
+                  'label' => 'Keluhan Aktif',
+                  'value' => 14,
+                  'suffix' => '',
+                  'icon' => 'message-square',
+                  'description' => '5 keluhan melewati target waktu penyelesaian',
+                  'trend' => '-6',
+                  'trend_type' => 'up',
+                  'theme' => 'orange',
+              ],
+              [
+                  'label' => 'Pengguna Aktif',
+                  'value' => 126,
+                  'suffix' => '',
+                  'icon' => 'users',
+                  'description' => '8 role dan 12 unit kerja terhubung ke sistem',
+                  'trend' => '+9',
+                  'trend_type' => 'up',
+                  'theme' => 'blue',
               ],
           ];
 
-          $recentActivities = $recentActivities ?? [
+          $performanceTrend = $performanceTrend ?? [
+              ['month' => 'Jan', 'full_month' => 'Januari', 'target' => 90, 'actual' => 82, 'satisfaction' => 84],
+              ['month' => 'Feb', 'full_month' => 'Februari', 'target' => 90, 'actual' => 84, 'satisfaction' => 85],
+              ['month' => 'Mar', 'full_month' => 'Maret', 'target' => 91, 'actual' => 86, 'satisfaction' => 87],
+              ['month' => 'Apr', 'full_month' => 'April', 'target' => 91, 'actual' => 85, 'satisfaction' => 86],
+              ['month' => 'Mei', 'full_month' => 'Mei', 'target' => 92, 'actual' => 88, 'satisfaction' => 89],
+              ['month' => 'Jun', 'full_month' => 'Juni', 'target' => 92, 'actual' => 89, 'satisfaction' => 90],
+          ];
+
+          $actualAverage =
+              count($performanceTrend) > 0
+                  ? round(array_sum(array_column($performanceTrend, 'actual')) / count($performanceTrend), 1)
+                  : 0;
+
+          $targetAverage =
+              count($performanceTrend) > 0
+                  ? round(array_sum(array_column($performanceTrend, 'target')) / count($performanceTrend), 1)
+                  : 0;
+
+          $satisfactionSummary = $satisfactionSummary ?? [
+              'score' => 88.7,
+              'respondents' => 1284,
+              'response_rate' => 81.2,
+              'positive' => 76,
+              'neutral' => 17,
+              'negative' => 7,
+              'items' => [
+                  ['label' => 'Kualitas pelayanan', 'value' => 91, 'class' => 'success'],
+                  ['label' => 'Kecepatan respons', 'value' => 86, 'class' => 'info'],
+                  ['label' => 'Penyelesaian keluhan', 'value' => 82, 'class' => 'warning'],
+                  ['label' => 'Kemudahan akses layanan', 'value' => 89, 'class' => 'primary'],
+              ],
+          ];
+
+          $satisfactionAngle = round(min(100, max(0, (float) $satisfactionSummary['score'])) * 3.6, 1);
+
+          $monitoringPriorities = $monitoringPriorities ?? [
               [
-                  'title' => 'Role pengguna diperbarui',
-                  'description' => 'Akses akun Andi Pratama diubah menjadi HRD.',
+                  'title' => 'KPI unit belum mencapai target',
+                  'description' => 'Tiga unit kerja masih berada di bawah 80% dan memerlukan rencana perbaikan.',
+                  'icon' => 'trending-down',
+                  'status' => 'Mendesak',
+                  'status_class' => 'danger',
+                  'action' => 'Tinjau kinerja',
+                  'url' => $reportsUrl,
+              ],
+              [
+                  'title' => 'Keluhan melewati SLA',
+                  'description' => 'Lima keluhan pelanggan belum selesai setelah melewati batas waktu layanan.',
+                  'icon' => 'clock',
+                  'status' => 'Perhatian',
+                  'status_class' => 'warning',
+                  'action' => 'Buka keluhan',
+                  'url' => $complaintsUrl,
+              ],
+              [
+                  'title' => 'Respons survei masih rendah',
+                  'description' => 'Unit Layanan Digital mencatat tingkat respons survei sebesar 61%.',
+                  'icon' => 'bar-chart',
+                  'status' => 'Dipantau',
+                  'status_class' => 'info',
+                  'action' => 'Lihat survei',
+                  'url' => $surveysUrl,
+              ],
+              [
+                  'title' => 'Akun tidak aktif',
+                  'description' => 'Tujuh akun belum melakukan login selama lebih dari 60 hari.',
+                  'icon' => 'user-x',
+                  'status' => 'Administratif',
+                  'status_class' => 'neutral',
+                  'action' => 'Kelola akun',
+                  'url' => $usersUrl,
+              ],
+          ];
+
+          $unitMonitoring = $unitMonitoring ?? [
+              [
+                  'code' => 'UNIT-001',
+                  'unit' => 'Layanan Pelanggan',
+                  'leader' => 'Dewi Lestari',
+                  'target' => 92,
+                  'realization' => 94,
+                  'satisfaction' => 93,
+                  'complaints' => 2,
+                  'status' => 'Sangat Baik',
+                  'updated_at' => 'Hari ini, 06.45',
+              ],
+              [
+                  'code' => 'UNIT-002',
+                  'unit' => 'Operasional',
+                  'leader' => 'Bagus Pratama',
+                  'target' => 90,
+                  'realization' => 87,
+                  'satisfaction' => 86,
+                  'complaints' => 3,
+                  'status' => 'Baik',
+                  'updated_at' => 'Hari ini, 06.32',
+              ],
+              [
+                  'code' => 'UNIT-003',
+                  'unit' => 'Layanan Digital',
+                  'leader' => 'Rizky Maulana',
+                  'target' => 91,
+                  'realization' => 79,
+                  'satisfaction' => 81,
+                  'complaints' => 5,
+                  'status' => 'Perlu Perhatian',
+                  'updated_at' => 'Hari ini, 06.20',
+              ],
+              [
+                  'code' => 'UNIT-004',
+                  'unit' => 'Administrasi',
+                  'leader' => 'Nadia Putri',
+                  'target' => 88,
+                  'realization' => 86,
+                  'satisfaction' => 88,
+                  'complaints' => 1,
+                  'status' => 'Baik',
+                  'updated_at' => 'Kemarin, 17.40',
+              ],
+              [
+                  'code' => 'UNIT-005',
+                  'unit' => 'Pengaduan & Tindak Lanjut',
+                  'leader' => 'Arif Setiawan',
+                  'target' => 90,
+                  'realization' => 76,
+                  'satisfaction' => 78,
+                  'complaints' => 8,
+                  'status' => 'Kritis',
+                  'updated_at' => 'Kemarin, 16.55',
+              ],
+              [
+                  'code' => 'UNIT-006',
+                  'unit' => 'Quality Assurance',
+                  'leader' => 'Rina Maharani',
+                  'target' => 93,
+                  'realization' => 91,
+                  'satisfaction' => 90,
+                  'complaints' => 0,
+                  'status' => 'Sangat Baik',
+                  'updated_at' => 'Kemarin, 16.10',
+              ],
+          ];
+
+          $channelPerformance = $channelPerformance ?? [
+              [
+                  'name' => 'WhatsApp',
+                  'responses' => 438,
+                  'score' => 91,
+                  'icon' => 'message-circle',
+                  'class' => 'success',
+              ],
+              ['name' => 'Email', 'responses' => 286, 'score' => 87, 'icon' => 'mail', 'class' => 'info'],
+              ['name' => 'Telepon', 'responses' => 245, 'score' => 85, 'icon' => 'phone', 'class' => 'warning'],
+              [
+                  'name' => 'Layanan Langsung',
+                  'responses' => 315,
+                  'score' => 90,
+                  'icon' => 'map-pin',
+                  'class' => 'primary',
+              ],
+          ];
+
+          $roleSummary = $roleSummary ?? [
+              ['name' => 'Super Admin', 'users' => 2, 'active' => 2, 'icon' => 'shield'],
+              ['name' => 'Direktur Utama', 'users' => 1, 'active' => 1, 'icon' => 'briefcase'],
+              ['name' => 'Kepala Unit', 'users' => 12, 'active' => 12, 'icon' => 'layers'],
+              ['name' => 'Petugas Layanan', 'users' => 87, 'active' => 81, 'icon' => 'headphones'],
+              ['name' => 'Auditor', 'users' => 8, 'active' => 7, 'icon' => 'check-square'],
+              ['name' => 'Viewer', 'users' => 23, 'active' => 23, 'icon' => 'eye'],
+          ];
+
+          $systemActivities = $systemActivities ?? [
+              [
+                  'title' => 'Laporan kinerja diperbarui',
+                  'description' => 'Unit Layanan Pelanggan mengirim realisasi KPI periode Juli 2026.',
                   'time' => '8 menit lalu',
-                  'icon' => 'user-check',
-                  'type' => 'primary',
+                  'icon' => 'activity',
+                  'theme' => 'green',
               ],
               [
-                  'title' => 'Pengguna baru ditambahkan',
-                  'description' => 'Akun Siti Rahma berhasil dibuat dan diaktifkan.',
+                  'title' => 'Survei kepuasan baru diterbitkan',
+                  'description' => 'Survei layanan triwulan III telah aktif untuk seluruh kanal pelayanan.',
                   'time' => '24 menit lalu',
-                  'icon' => 'user-plus',
-                  'type' => 'success',
+                  'icon' => 'clipboard',
+                  'theme' => 'blue',
               ],
               [
-                  'title' => 'Percobaan login gagal',
-                  'description' => 'Terdeteksi 4 percobaan login gagal pada satu akun.',
-                  'time' => '1 jam lalu',
+                  'title' => 'Keluhan dieskalasi',
+                  'description' => 'Keluhan KLP-2607-014 dinaikkan ke Kepala Unit karena melewati SLA.',
+                  'time' => '41 menit lalu',
                   'icon' => 'alert-triangle',
-                  'type' => 'danger',
+                  'theme' => 'red',
               ],
               [
-                  'title' => 'Laporan sistem dibuat',
-                  'description' => 'Laporan aktivitas pengguna bulan berjalan tersedia.',
+                  'title' => 'Akun pengguna dibuat',
+                  'description' => 'Akun baru untuk petugas layanan Unit Operasional berhasil diaktifkan.',
+                  'time' => '1 jam lalu',
+                  'icon' => 'user-plus',
+                  'theme' => 'purple',
+              ],
+              [
+                  'title' => 'Pencadangan sistem selesai',
+                  'description' => 'Backup database harian berhasil tanpa kesalahan.',
                   'time' => '2 jam lalu',
-                  'icon' => 'file-text',
-                  'type' => 'purple',
+                  'icon' => 'database',
+                  'theme' => 'orange',
               ],
           ];
 
-          $roleDistribution = $roleDistribution ?? [
-              ['label' => 'Karyawan', 'value' => 64, 'percent' => 50],
-              ['label' => 'Manager Departemen', 'value' => 18, 'percent' => 14],
-              ['label' => 'Admin Operasional', 'value' => 14, 'percent' => 11],
-              ['label' => 'Admin Pelayanan', 'value' => 12, 'percent' => 9],
-              ['label' => 'Role Lainnya', 'value' => 20, 'percent' => 16],
+          $quickActions = [
+              [
+                  'label' => 'Kelola Pengguna',
+                  'description' => 'Akun, role, dan status',
+                  'icon' => 'users',
+                  'url' => $usersUrl,
+              ],
+              [
+                  'label' => 'Kelola Survei',
+                  'description' => 'Form dan periode survei',
+                  'icon' => 'clipboard',
+                  'url' => $surveysUrl,
+              ],
+              [
+                  'label' => 'Kelola Keluhan',
+                  'description' => 'SLA dan tindak lanjut',
+                  'icon' => 'message-square',
+                  'url' => $complaintsUrl,
+              ],
+              [
+                  'label' => 'Pengaturan Sistem',
+                  'description' => 'Konfigurasi aplikasi',
+                  'icon' => 'settings',
+                  'url' => $settingsUrl,
+              ],
           ];
-
-          $usersUrl = \Illuminate\Support\Facades\Route::has('admin.users.index') ? route('admin.users.index') : '#';
-
-          $createUserUrl = \Illuminate\Support\Facades\Route::has('admin.users.create')
-              ? route('admin.users.create')
-              : '#';
-
-          $trashUrl = \Illuminate\Support\Facades\Route::has('admin.users.trash') ? route('admin.users.trash') : '#';
      @endphp
 
      <style>
-          /*
-             |--------------------------------------------------------------------------
-             | Super Admin Dashboard
-             |--------------------------------------------------------------------------
-             */
+          .sad-dashboard {
+               --sad-primary: #4f46e5;
+               --sad-primary-dark: #3730a3;
+               --sad-primary-soft: rgba(79, 70, 229, 0.12);
+               --sad-secondary: #0f766e;
+               --sad-success: #16a34a;
+               --sad-warning: #d97706;
+               --sad-danger: #dc2626;
+               --sad-info: #2563eb;
+               --sad-purple: #7c3aed;
+               --sad-heading: #172033;
+               --sad-text: #5f6b7a;
+               --sad-muted: #8b95a5;
+               --sad-border: #e8ecf3;
+               --sad-background: #f4f6fa;
+               --sad-card: #ffffff;
+               --sad-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+               --sad-shadow-hover: 0 18px 42px rgba(15, 23, 42, 0.11);
 
-          .super-admin-page {
-               --sa-bg: #f4f7fb;
-               --sa-surface: #ffffff;
-               --sa-surface-soft: #f8fafc;
-               --sa-text: #0f172a;
-               --sa-muted: #64748b;
-               --sa-border: #e2e8f0;
-               --sa-primary: #2563eb;
-               --sa-primary-soft: #dbeafe;
-               --sa-success: #059669;
-               --sa-success-soft: #d1fae5;
-               --sa-warning: #d97706;
-               --sa-warning-soft: #fef3c7;
-               --sa-danger: #dc2626;
-               --sa-danger-soft: #fee2e2;
-               --sa-purple: #7c3aed;
-               --sa-purple-soft: #ede9fe;
-               --sa-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
-               color: var(--sa-text);
+               width: 100%;
+               min-height: 100vh;
+               padding: 24px;
+               background:
+                    radial-gradient(circle at top right, rgba(79, 70, 229, 0.08), transparent 28%),
+                    radial-gradient(circle at bottom left, rgba(15, 118, 110, 0.05), transparent 24%),
+                    var(--sad-background);
+               color: var(--sad-text);
           }
 
-          body.black-theme .super-admin-page {
-               --sa-bg: #0f1117;
-               --sa-surface: #171a22;
-               --sa-surface-soft: #20242e;
-               --sa-text: #f8fafc;
-               --sa-muted: #a8b2c1;
-               --sa-border: #2b313d;
-               --sa-primary-soft: rgba(37, 99, 235, 0.2);
-               --sa-success-soft: rgba(5, 150, 105, 0.18);
-               --sa-warning-soft: rgba(217, 119, 6, 0.18);
-               --sa-danger-soft: rgba(220, 38, 38, 0.18);
-               --sa-purple-soft: rgba(124, 58, 237, 0.2);
-               --sa-shadow: 0 18px 45px rgba(0, 0, 0, 0.26);
+          html[data-theme="dark"] .sad-dashboard,
+          body.dark-theme .sad-dashboard,
+          body.dark-mode .sad-dashboard {
+               --sad-heading: #f8fafc;
+               --sad-text: #cbd5e1;
+               --sad-muted: #94a3b8;
+               --sad-border: rgba(148, 163, 184, 0.16);
+               --sad-background: #0f172a;
+               --sad-card: #182235;
+               --sad-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+               --sad-shadow-hover: 0 18px 42px rgba(0, 0, 0, 0.3);
           }
 
-          .super-admin-page,
-          .super-admin-page * {
+          .sad-dashboard *,
+          .sad-dashboard *::before,
+          .sad-dashboard *::after {
                box-sizing: border-box;
           }
 
-          .super-admin-page .sa-shell {
-               padding-bottom: 30px;
+          .sad-dashboard a {
+               text-decoration: none;
           }
 
-          .super-admin-page .sa-card,
-          .super-admin-page .sa-hero,
-          .super-admin-page .sa-kpi-card,
-          .super-admin-page .sa-action-card {
-               transition:
-                    transform 0.25s ease,
-                    border-color 0.25s ease,
-                    background-color 0.25s ease,
-                    box-shadow 0.25s ease;
-          }
-
-          /*
-             |--------------------------------------------------------------------------
-             | Hero
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-hero {
+          .sad-hero {
                position: relative;
-               isolation: isolate;
                overflow: hidden;
-               margin-bottom: 22px;
-               padding: 30px;
-               border-radius: 26px;
-               color: #ffffff;
-               background:
-                    radial-gradient(circle at 82% 20%, rgba(255, 255, 255, 0.20), transparent 28%),
-                    radial-gradient(circle at 10% 100%, rgba(34, 211, 238, 0.22), transparent 33%),
-                    linear-gradient(135deg, #0f2f62 0%, #2563eb 56%, #7c3aed 100%);
-               box-shadow: 0 22px 52px rgba(37, 99, 235, 0.23);
-          }
-
-          .super-admin-page .sa-hero::before,
-          .super-admin-page .sa-hero::after {
-               position: absolute;
-               z-index: -1;
-               content: "";
-               border-radius: 999px;
-               border: 1px solid rgba(255, 255, 255, 0.16);
-          }
-
-          .super-admin-page .sa-hero::before {
-               top: -115px;
-               right: -70px;
-               width: 310px;
-               height: 310px;
-          }
-
-          .super-admin-page .sa-hero::after {
-               right: 140px;
-               bottom: -170px;
-               width: 360px;
-               height: 360px;
-          }
-
-          .super-admin-page .sa-hero-grid {
                display: flex;
                align-items: center;
                justify-content: space-between;
-               gap: 24px;
+               gap: 28px;
+               min-height: 230px;
+               margin-bottom: 24px;
+               padding: 36px 40px;
+               border-radius: 24px;
+               background:
+                    linear-gradient(125deg, rgba(30, 27, 75, 0.98), rgba(79, 70, 229, 0.96) 52%, rgba(15, 118, 110, 0.93));
+               box-shadow: 0 24px 52px rgba(67, 56, 202, 0.25);
           }
 
-          .super-admin-page .sa-eyebrow {
+          .sad-hero::before {
+               position: absolute;
+               top: -135px;
+               right: -78px;
+               width: 390px;
+               height: 390px;
+               border: 72px solid rgba(255, 255, 255, 0.07);
+               border-radius: 50%;
+               content: "";
+          }
+
+          .sad-hero::after {
+               position: absolute;
+               right: 230px;
+               bottom: -150px;
+               width: 290px;
+               height: 290px;
+               border-radius: 50%;
+               background: rgba(255, 255, 255, 0.055);
+               content: "";
+          }
+
+          .sad-hero-content,
+          .sad-hero-actions {
+               position: relative;
+               z-index: 2;
+          }
+
+          .sad-hero-content {
+               max-width: 760px;
+          }
+
+          .sad-role-badge {
                display: inline-flex;
                align-items: center;
-               gap: 8px;
-               margin-bottom: 13px;
-               padding: 7px 12px;
+               gap: 9px;
+               margin-bottom: 18px;
+               padding: 8px 13px;
                border: 1px solid rgba(255, 255, 255, 0.22);
                border-radius: 999px;
+               background: rgba(255, 255, 255, 0.13);
+               color: #ffffff;
                font-size: 11px;
-               font-weight: 700;
-               letter-spacing: 0.04em;
+               font-weight: 800;
+               letter-spacing: 0.05em;
                text-transform: uppercase;
-               background: rgba(255, 255, 255, 0.10);
+               backdrop-filter: blur(10px);
           }
 
-          .super-admin-page .sa-eyebrow-dot {
+          .sad-role-badge::before {
                width: 8px;
                height: 8px;
                border-radius: 50%;
-               background: #67e8f9;
-               box-shadow: 0 0 0 5px rgba(103, 232, 249, 0.15);
+               background: #86efac;
+               box-shadow: 0 0 0 5px rgba(134, 239, 172, 0.18);
+               content: "";
           }
 
-          .super-admin-page .sa-hero h1 {
-               margin: 0 0 9px;
-               font-size: clamp(26px, 3vw, 40px);
+          .sad-hero h1 {
+               margin: 0 0 12px;
+               color: #ffffff;
+               font-size: clamp(29px, 4vw, 43px);
+               font-weight: 800;
+               letter-spacing: -0.038em;
                line-height: 1.12;
-               color: #ffffff !important;
           }
 
-          .super-admin-page .sa-hero p {
-               max-width: 720px;
+          .sad-hero-description {
+               max-width: 700px;
                margin: 0;
+               color: rgba(255, 255, 255, 0.84);
                font-size: 14px;
                line-height: 1.75;
-               color: rgba(255, 255, 255, 0.78) !important;
           }
 
-          .super-admin-page .sa-hero-actions {
+          .sad-hero-meta {
                display: flex;
                flex-wrap: wrap;
-               justify-content: flex-end;
-               gap: 10px;
-               min-width: 280px;
+               gap: 10px 19px;
+               margin-top: 21px;
           }
 
-          .super-admin-page .sa-button {
+          .sad-hero-meta-item {
+               display: inline-flex;
+               align-items: center;
+               gap: 8px;
+               color: rgba(255, 255, 255, 0.88);
+               font-size: 11px;
+               font-weight: 700;
+          }
+
+          .sad-hero-meta-item svg {
+               width: 15px;
+               height: 15px;
+          }
+
+          .sad-hero-actions {
+               display: flex;
+               flex-shrink: 0;
+               flex-direction: column;
+               gap: 11px;
+               width: 218px;
+          }
+
+          .sad-button {
                display: inline-flex;
                align-items: center;
                justify-content: center;
-               gap: 8px;
-               min-height: 42px;
-               padding: 10px 16px;
-               border: 1px solid transparent;
+               gap: 9px;
+               min-height: 45px;
+               padding: 11px 17px;
+               border: 0;
                border-radius: 12px;
                font-size: 12px;
-               font-weight: 700;
-               text-decoration: none !important;
+               font-weight: 800;
                cursor: pointer;
+               transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
           }
 
-          .super-admin-page .sa-button-light {
-               color: #0f172a !important;
+          .sad-button:hover {
+               transform: translateY(-2px);
+          }
+
+          .sad-button svg {
+               width: 16px;
+               height: 16px;
+          }
+
+          .sad-button-primary {
                background: #ffffff;
-               box-shadow: 0 10px 24px rgba(15, 23, 42, 0.13);
+               color: var(--sad-primary-dark);
+               box-shadow: 0 11px 24px rgba(30, 27, 75, 0.22);
           }
 
-          .super-admin-page .sa-button-glass {
-               border-color: rgba(255, 255, 255, 0.25);
-               color: #ffffff !important;
-               background: rgba(255, 255, 255, 0.10);
+          .sad-button-secondary {
+               border: 1px solid rgba(255, 255, 255, 0.24);
+               background: rgba(255, 255, 255, 0.12);
+               color: #ffffff;
+               backdrop-filter: blur(10px);
           }
 
-          .super-admin-page .sa-button:hover {
-               transform: translateY(-1px);
-          }
-
-          /*
-             |--------------------------------------------------------------------------
-             | KPI
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-kpi-grid {
+          .sad-stat-grid {
                display: grid;
                grid-template-columns: repeat(4, minmax(0, 1fr));
                gap: 18px;
-               margin-bottom: 22px;
+               margin-bottom: 24px;
           }
 
-          .super-admin-page .sa-kpi-card {
+          .sad-main-grid {
+               display: grid;
+               grid-template-columns: minmax(0, 1.7fr) minmax(330px, 0.8fr);
+               gap: 22px;
+               margin-bottom: 24px;
+          }
+
+          .sad-secondary-grid {
+               display: grid;
+               grid-template-columns: minmax(315px, 0.76fr) minmax(0, 1.5fr);
+               gap: 22px;
+               margin-bottom: 24px;
+          }
+
+          .sad-bottom-grid {
+               display: grid;
+               grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+               gap: 22px;
+               margin-bottom: 24px;
+          }
+
+          .sad-footer-grid {
+               display: grid;
+               grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.72fr);
+               gap: 22px;
+          }
+
+          .sad-stat-card {
                position: relative;
                overflow: hidden;
-               min-height: 172px;
+               min-height: 174px;
                padding: 21px;
-               border: 1px solid var(--sa-border);
-               border-radius: 20px;
-               background: var(--sa-surface);
-               box-shadow: var(--sa-shadow);
+               border: 1px solid var(--sad-border);
+               border-radius: 18px;
+               background: var(--sad-card);
+               box-shadow: var(--sad-shadow);
+               transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
           }
 
-          .super-admin-page .sa-kpi-card:hover {
-               transform: translateY(-3px);
-               border-color: rgba(37, 99, 235, 0.35);
+          .sad-stat-card:hover {
+               transform: translateY(-4px);
+               border-color: rgba(79, 70, 229, 0.26);
+               box-shadow: var(--sad-shadow-hover);
           }
 
-          .super-admin-page .sa-kpi-top {
+          .sad-stat-card::after {
+               position: absolute;
+               top: -31px;
+               right: -31px;
+               width: 102px;
+               height: 102px;
+               border-radius: 50%;
+               content: "";
+          }
+
+          .sad-stat-card.theme-indigo::after {
+               background: rgba(79, 70, 229, 0.09);
+          }
+
+          .sad-stat-card.theme-green::after {
+               background: rgba(22, 163, 74, 0.09);
+          }
+
+          .sad-stat-card.theme-orange::after {
+               background: rgba(217, 119, 6, 0.09);
+          }
+
+          .sad-stat-card.theme-blue::after {
+               background: rgba(37, 99, 235, 0.09);
+          }
+
+          .sad-stat-top {
+               position: relative;
+               z-index: 2;
                display: flex;
                align-items: flex-start;
                justify-content: space-between;
-               gap: 14px;
+               gap: 15px;
           }
 
-          .super-admin-page .sa-kpi-icon {
+          .sad-stat-icon {
                display: inline-flex;
                align-items: center;
                justify-content: center;
-               width: 48px;
-               height: 48px;
-               border-radius: 15px;
+               width: 46px;
+               height: 46px;
+               border-radius: 14px;
           }
 
-          .super-admin-page .sa-kpi-icon svg {
+          .sad-stat-icon svg {
                width: 21px;
                height: 21px;
           }
 
-          .super-admin-page .sa-kpi-icon.primary {
-               color: var(--sa-primary);
-               background: var(--sa-primary-soft);
+          .theme-indigo .sad-stat-icon {
+               background: rgba(79, 70, 229, 0.12);
+               color: #4f46e5;
           }
 
-          .super-admin-page .sa-kpi-icon.success {
-               color: var(--sa-success);
-               background: var(--sa-success-soft);
+          .theme-green .sad-stat-icon {
+               background: rgba(22, 163, 74, 0.12);
+               color: #16a34a;
           }
 
-          .super-admin-page .sa-kpi-icon.purple {
-               color: var(--sa-purple);
-               background: var(--sa-purple-soft);
+          .theme-orange .sad-stat-icon {
+               background: rgba(217, 119, 6, 0.12);
+               color: #d97706;
           }
 
-          .super-admin-page .sa-kpi-icon.warning {
-               color: var(--sa-warning);
-               background: var(--sa-warning-soft);
+          .theme-blue .sad-stat-icon {
+               background: rgba(37, 99, 235, 0.12);
+               color: #2563eb;
           }
 
-          .super-admin-page .sa-kpi-label {
-               margin: 17px 0 6px;
-               font-size: 12px;
-               font-weight: 700;
-               color: var(--sa-muted);
+          .sad-stat-trend {
+               display: inline-flex;
+               align-items: center;
+               gap: 4px;
+               padding: 5px 8px;
+               border-radius: 999px;
+               font-size: 10px;
+               font-weight: 800;
           }
 
-          .super-admin-page .sa-kpi-value {
+          .sad-stat-trend svg {
+               width: 12px;
+               height: 12px;
+          }
+
+          .sad-stat-trend.up {
+               background: rgba(22, 163, 74, 0.1);
+               color: #15803d;
+          }
+
+          .sad-stat-trend.down {
+               background: rgba(220, 38, 38, 0.1);
+               color: #dc2626;
+          }
+
+          .sad-stat-label {
+               margin: 18px 0 7px;
+               color: var(--sad-muted);
+               font-size: 11px;
+               font-weight: 800;
+          }
+
+          .sad-stat-value {
+               display: flex;
+               align-items: baseline;
+               gap: 2px;
                margin: 0;
+               color: var(--sad-heading);
                font-size: 29px;
                font-weight: 800;
                letter-spacing: -0.03em;
-               color: var(--sa-text);
+               line-height: 1;
           }
 
-          .super-admin-page .sa-trend {
-               display: inline-flex;
-               align-items: center;
-               gap: 5px;
-               margin-top: 9px;
-               font-size: 11px;
-               font-weight: 700;
+          .sad-stat-description {
+               margin: 10px 0 0;
+               color: var(--sad-text);
+               font-size: 10px;
+               line-height: 1.55;
           }
 
-          .super-admin-page .sa-trend.positive {
-               color: var(--sa-success);
-          }
-
-          .super-admin-page .sa-trend.warning {
-               color: var(--sa-warning);
-          }
-
-          .super-admin-page .sa-trend.neutral {
-               color: var(--sa-muted);
-          }
-
-          /*
-             |--------------------------------------------------------------------------
-             | Cards and grids
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-main-grid {
-               display: grid;
-               grid-template-columns: minmax(0, 1.65fr) minmax(330px, 0.85fr);
-               gap: 20px;
-               margin-bottom: 20px;
-          }
-
-          .super-admin-page .sa-bottom-grid {
-               display: grid;
-               grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-               gap: 20px;
-          }
-
-          .super-admin-page .sa-card {
-               overflow: hidden;
-               border: 1px solid var(--sa-border);
+          .sad-card {
+               border: 1px solid var(--sad-border);
                border-radius: 20px;
-               background: var(--sa-surface);
-               box-shadow: var(--sa-shadow);
+               background: var(--sad-card);
+               box-shadow: var(--sad-shadow);
           }
 
-          .super-admin-page .sa-card-header {
+          .sad-card-header {
                display: flex;
                align-items: flex-start;
                justify-content: space-between;
-               gap: 16px;
-               padding: 20px 22px;
-               border-bottom: 1px solid var(--sa-border);
+               gap: 18px;
+               padding: 22px 23px 17px;
+               border-bottom: 1px solid var(--sad-border);
           }
 
-          .super-admin-page .sa-card-title {
-               margin: 0 0 5px;
+          .sad-card-heading {
+               display: flex;
+               align-items: flex-start;
+               gap: 13px;
+          }
+
+          .sad-card-heading-icon {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               flex-shrink: 0;
+               width: 39px;
+               height: 39px;
+               border-radius: 12px;
+               background: var(--sad-primary-soft);
+               color: var(--sad-primary);
+          }
+
+          .sad-card-heading-icon svg {
+               width: 18px;
+               height: 18px;
+          }
+
+          .sad-card-title {
+               margin: 0;
+               color: var(--sad-heading);
                font-size: 15px;
                font-weight: 800;
-               color: var(--sa-text);
+               letter-spacing: -0.015em;
           }
 
-          .super-admin-page .sa-card-subtitle {
-               margin: 0;
-               font-size: 11px;
-               line-height: 1.65;
-               color: var(--sa-muted);
+          .sad-card-subtitle {
+               margin: 5px 0 0;
+               color: var(--sad-muted);
+               font-size: 10px;
+               line-height: 1.55;
           }
 
-          .super-admin-page .sa-card-body {
-               padding: 22px;
-          }
-
-          .super-admin-page .sa-card-link {
+          .sad-card-action {
                display: inline-flex;
                align-items: center;
                gap: 6px;
-               white-space: nowrap;
-               font-size: 11px;
-               font-weight: 700;
-               color: var(--sa-primary);
-          }
-
-          /*
-             |--------------------------------------------------------------------------
-             | Chart
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-chart-summary {
-               display: grid;
-               grid-template-columns: repeat(3, minmax(0, 1fr));
-               gap: 12px;
-               margin-bottom: 18px;
-          }
-
-          .super-admin-page .sa-summary-box {
-               padding: 14px;
-               border: 1px solid var(--sa-border);
-               border-radius: 14px;
-               background: var(--sa-surface-soft);
-          }
-
-          .super-admin-page .sa-summary-box span {
-               display: block;
-               margin-bottom: 5px;
+               padding: 8px 10px;
+               border: 1px solid var(--sad-border);
+               border-radius: 10px;
+               background: transparent;
+               color: var(--sad-text);
                font-size: 10px;
-               font-weight: 700;
-               color: var(--sa-muted);
-          }
-
-          .super-admin-page .sa-summary-box strong {
-               display: block;
-               font-size: 18px;
-               color: var(--sa-text);
-          }
-
-          .super-admin-page .sa-chart-wrapper {
-               position: relative;
-               width: 100%;
-               min-height: 335px;
-          }
-
-          .super-admin-page #superAdminActivityChart {
-               width: 100%;
-               height: 335px;
-          }
-
-          .super-admin-page .sa-chart-fallback {
-               display: none;
-               align-items: center;
-               justify-content: center;
-               min-height: 335px;
-               padding: 20px;
-               border: 1px dashed var(--sa-border);
-               border-radius: 16px;
-               text-align: center;
-               color: var(--sa-muted);
-               background: var(--sa-surface-soft);
-          }
-
-          /*
-             |--------------------------------------------------------------------------
-             | Quick actions
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-action-list {
-               display: grid;
-               gap: 12px;
-          }
-
-          .super-admin-page .sa-action-card {
-               display: flex;
-               align-items: center;
-               gap: 13px;
-               padding: 14px;
-               border: 1px solid var(--sa-border);
-               border-radius: 15px;
-               color: var(--sa-text) !important;
-               text-decoration: none !important;
-               background: var(--sa-surface-soft);
-          }
-
-          .super-admin-page .sa-action-card:hover {
-               transform: translateX(3px);
-               border-color: rgba(37, 99, 235, 0.35);
-          }
-
-          .super-admin-page .sa-action-icon {
-               display: inline-flex;
-               flex: 0 0 42px;
-               align-items: center;
-               justify-content: center;
-               width: 42px;
-               height: 42px;
-               border-radius: 13px;
-               color: var(--sa-primary);
-               background: var(--sa-primary-soft);
-          }
-
-          .super-admin-page .sa-action-card h6 {
-               margin: 0 0 4px;
-               font-size: 12px;
                font-weight: 800;
-               color: var(--sa-text);
+               cursor: pointer;
+               white-space: nowrap;
           }
 
-          .super-admin-page .sa-action-card p {
-               margin: 0;
-               font-size: 10px;
-               line-height: 1.5;
-               color: var(--sa-muted);
+          .sad-card-action:hover {
+               border-color: var(--sad-primary);
+               color: var(--sad-primary);
           }
 
-          .super-admin-page .sa-action-arrow {
-               margin-left: auto;
-               color: var(--sa-muted);
+          .sad-card-action svg {
+               width: 14px;
+               height: 14px;
           }
 
-          /*
-             |--------------------------------------------------------------------------
-             | System health
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-health-box {
-               margin-top: 18px;
-               padding: 16px;
-               border-radius: 16px;
-               color: #ffffff;
-               background: linear-gradient(135deg, #047857, #10b981);
+          .sad-chart-body {
+               padding: 22px 23px 24px;
           }
 
-          .super-admin-page .sa-health-top {
+          .sad-chart-summary {
                display: flex;
                align-items: center;
                justify-content: space-between;
-               gap: 14px;
-               margin-bottom: 13px;
+               gap: 16px;
+               margin-bottom: 22px;
           }
 
-          .super-admin-page .sa-health-top span {
-               font-size: 11px;
-               font-weight: 700;
-               color: rgba(255, 255, 255, 0.80);
+          .sad-chart-legends {
+               display: flex;
+               flex-wrap: wrap;
+               gap: 16px;
           }
 
-          .super-admin-page .sa-health-top strong {
-               font-size: 22px;
-               color: #ffffff;
-          }
-
-          .super-admin-page .sa-health-track {
-               overflow: hidden;
-               height: 8px;
-               border-radius: 999px;
-               background: rgba(255, 255, 255, 0.20);
-          }
-
-          .super-admin-page .sa-health-track span {
-               display: block;
-               width: 99.98%;
-               height: 100%;
-               border-radius: inherit;
-               background: #ffffff;
-          }
-
-          /*
-             |--------------------------------------------------------------------------
-             | Module table
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-table-wrapper {
-               overflow-x: auto;
-          }
-
-          .super-admin-page .sa-table {
-               width: 100%;
-               min-width: 690px;
-               border-collapse: collapse;
-          }
-
-          .super-admin-page .sa-table th,
-          .super-admin-page .sa-table td {
-               padding: 14px 12px;
-               border-bottom: 1px solid var(--sa-border);
-               text-align: left;
-               vertical-align: middle;
-          }
-
-          .super-admin-page .sa-table th {
+          .sad-chart-legend {
+               display: inline-flex;
+               align-items: center;
+               gap: 7px;
+               color: var(--sad-text);
                font-size: 10px;
                font-weight: 800;
-               letter-spacing: 0.05em;
-               text-transform: uppercase;
-               color: var(--sa-muted);
           }
 
-          .super-admin-page .sa-module {
+          .sad-chart-legend-dot {
+               width: 9px;
+               height: 9px;
+               border-radius: 3px;
+          }
+
+          .sad-chart-legend-dot.target {
+               background: rgba(79, 70, 229, 0.24);
+          }
+
+          .sad-chart-legend-dot.actual {
+               background: var(--sad-primary);
+          }
+
+          .sad-chart-rate {
+               text-align: right;
+          }
+
+          .sad-chart-rate strong {
+               display: block;
+               color: var(--sad-heading);
+               font-size: 19px;
+               font-weight: 800;
+          }
+
+          .sad-chart-rate span {
+               color: var(--sad-muted);
+               font-size: 9px;
+          }
+
+          .sad-chart-area {
+               position: relative;
+               display: grid;
+               grid-template-columns: 34px minmax(0, 1fr);
+               gap: 11px;
+               height: 285px;
+          }
+
+          .sad-chart-y-axis {
+               display: flex;
+               flex-direction: column;
+               justify-content: space-between;
+               height: 245px;
+               padding-top: 2px;
+               color: var(--sad-muted);
+               font-size: 9px;
+               text-align: right;
+          }
+
+          .sad-chart-content {
+               position: relative;
+               height: 285px;
+          }
+
+          .sad-chart-lines {
+               position: absolute;
+               inset: 0 0 40px;
+               display: flex;
+               flex-direction: column;
+               justify-content: space-between;
+               pointer-events: none;
+          }
+
+          .sad-chart-line {
+               width: 100%;
+               border-top: 1px dashed var(--sad-border);
+          }
+
+          .sad-chart-columns {
+               position: absolute;
+               inset: 0;
+               display: grid;
+               grid-template-columns: repeat(6, minmax(38px, 1fr));
+               gap: 15px;
+          }
+
+          .sad-chart-column {
+               display: flex;
+               flex-direction: column;
+               align-items: center;
+               min-width: 0;
+          }
+
+          .sad-chart-bars {
+               display: flex;
+               align-items: flex-end;
+               justify-content: center;
+               gap: 6px;
+               width: 100%;
+               height: 245px;
+          }
+
+          .sad-chart-bar {
+               position: relative;
+               width: min(18px, 39%);
+               min-height: 4px;
+               border-radius: 6px 6px 3px 3px;
+               cursor: pointer;
+               transition: filter 0.2s ease, transform 0.2s ease;
+          }
+
+          .sad-chart-bar:hover {
+               z-index: 3;
+               filter: brightness(0.94);
+               transform: scaleX(1.08);
+          }
+
+          .sad-chart-bar.target {
+               background: rgba(79, 70, 229, 0.24);
+          }
+
+          .sad-chart-bar.actual {
+               background: linear-gradient(to top, #3730a3, #818cf8);
+               box-shadow: 0 5px 12px rgba(79, 70, 229, 0.2);
+          }
+
+          .sad-chart-tooltip {
+               position: absolute;
+               bottom: calc(100% + 8px);
+               left: 50%;
+               z-index: 10;
+               min-width: 72px;
+               padding: 6px 8px;
+               border-radius: 7px;
+               background: #172033;
+               color: #ffffff;
+               font-size: 9px;
+               font-weight: 800;
+               text-align: center;
+               white-space: nowrap;
+               opacity: 0;
+               pointer-events: none;
+               transform: translateX(-50%) translateY(3px);
+               transition: opacity 0.2s ease, transform 0.2s ease;
+          }
+
+          .sad-chart-bar:hover .sad-chart-tooltip {
+               opacity: 1;
+               transform: translateX(-50%) translateY(0);
+          }
+
+          .sad-chart-month {
+               margin-top: 13px;
+               color: var(--sad-muted);
+               font-size: 10px;
+               font-weight: 800;
+          }
+
+          .sad-satisfaction-body {
+               padding: 24px;
+          }
+
+          .sad-score-summary {
                display: flex;
                align-items: center;
-               gap: 11px;
+               gap: 22px;
+               margin-bottom: 24px;
+               padding-bottom: 23px;
+               border-bottom: 1px solid var(--sad-border);
           }
 
-          .super-admin-page .sa-module-icon {
-               display: inline-flex;
-               flex: 0 0 38px;
-               align-items: center;
-               justify-content: center;
-               width: 38px;
-               height: 38px;
-               border-radius: 12px;
-               color: var(--sa-primary);
-               background: var(--sa-primary-soft);
+          .sad-score-ring {
+               position: relative;
+               display: grid;
+               flex-shrink: 0;
+               width: 120px;
+               height: 120px;
+               place-items: center;
+               border-radius: 50%;
           }
 
-          .super-admin-page .sa-module strong {
-               display: block;
-               margin-bottom: 3px;
-               font-size: 11px;
-               color: var(--sa-text);
+          .sad-score-ring::before {
+               position: absolute;
+               width: 89px;
+               height: 89px;
+               border-radius: 50%;
+               background: var(--sad-card);
+               content: "";
           }
 
-          .super-admin-page .sa-module small {
-               display: block;
+          .sad-score-ring-value {
+               position: relative;
+               z-index: 2;
+               color: var(--sad-heading);
+               font-size: 23px;
+               font-weight: 800;
+          }
+
+          .sad-score-details h3 {
+               margin: 0 0 6px;
+               color: var(--sad-heading);
+               font-size: 14px;
+               font-weight: 800;
+          }
+
+          .sad-score-details p {
+               margin: 0 0 11px;
+               color: var(--sad-muted);
                font-size: 10px;
-               color: var(--sa-muted);
+               line-height: 1.55;
           }
 
-          .super-admin-page .sa-badge {
+          .sad-score-status {
                display: inline-flex;
                align-items: center;
                gap: 6px;
                padding: 6px 9px;
                border-radius: 999px;
-               font-size: 10px;
+               background: rgba(22, 163, 74, 0.1);
+               color: #15803d;
+               font-size: 9px;
                font-weight: 800;
           }
 
-          .super-admin-page .sa-badge.success {
-               color: var(--sa-success);
-               background: var(--sa-success-soft);
-          }
-
-          .super-admin-page .sa-badge.warning {
-               color: var(--sa-warning);
-               background: var(--sa-warning-soft);
-          }
-
-          .super-admin-page .sa-badge-dot {
+          .sad-score-status::before {
                width: 6px;
                height: 6px;
                border-radius: 50%;
-               background: currentColor;
+               background: #22c55e;
+               content: "";
           }
 
-          .super-admin-page .sa-progress {
+          .sad-sentiment-grid {
+               display: grid;
+               grid-template-columns: repeat(3, minmax(0, 1fr));
+               gap: 9px;
+               margin-bottom: 22px;
+          }
+
+          .sad-sentiment-card {
+               padding: 11px 9px;
+               border: 1px solid var(--sad-border);
+               border-radius: 11px;
+               text-align: center;
+          }
+
+          .sad-sentiment-card strong {
+               display: block;
+               margin-bottom: 4px;
+               color: var(--sad-heading);
+               font-size: 15px;
+               font-weight: 800;
+          }
+
+          .sad-sentiment-card span {
+               color: var(--sad-muted);
+               font-size: 8px;
+               font-weight: 800;
+               text-transform: uppercase;
+          }
+
+          .sad-health-list {
+               display: flex;
+               flex-direction: column;
+               gap: 16px;
+          }
+
+          .sad-health-top {
+               display: flex;
+               align-items: center;
+               justify-content: space-between;
+               gap: 12px;
+               margin-bottom: 8px;
+          }
+
+          .sad-health-label {
+               color: var(--sad-text);
+               font-size: 10px;
+               font-weight: 800;
+          }
+
+          .sad-health-value {
+               color: var(--sad-heading);
+               font-size: 10px;
+               font-weight: 800;
+          }
+
+          .sad-progress {
                overflow: hidden;
-               width: 120px;
+               width: 100%;
                height: 7px;
                border-radius: 999px;
-               background: var(--sa-border);
+               background: var(--sad-border);
           }
 
-          .super-admin-page .sa-progress span {
-               display: block;
+          .sad-progress-bar {
                height: 100%;
                border-radius: inherit;
-               background: linear-gradient(90deg, #2563eb, #06b6d4);
+               background: linear-gradient(90deg, var(--sad-primary-dark), #818cf8);
           }
 
-          /*
-             |--------------------------------------------------------------------------
-             | Activities
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-activity-list {
-               display: grid;
-               gap: 2px;
+          .sad-progress-bar.success {
+               background: linear-gradient(90deg, #15803d, #4ade80);
           }
 
-          .super-admin-page .sa-activity-item {
+          .sad-progress-bar.info {
+               background: linear-gradient(90deg, #1d4ed8, #60a5fa);
+          }
+
+          .sad-progress-bar.warning {
+               background: linear-gradient(90deg, #b45309, #fbbf24);
+          }
+
+          .sad-progress-bar.danger {
+               background: linear-gradient(90deg, #b91c1c, #f87171);
+          }
+
+          .sad-progress-bar.primary {
+               background: linear-gradient(90deg, #3730a3, #818cf8);
+          }
+
+          .sad-badge {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               gap: 5px;
+               padding: 5px 8px;
+               border-radius: 999px;
+               font-size: 8px;
+               font-weight: 800;
+               white-space: nowrap;
+          }
+
+          .sad-badge::before {
+               width: 5px;
+               height: 5px;
+               border-radius: 50%;
+               background: currentColor;
+               content: "";
+          }
+
+          .sad-badge.success {
+               background: rgba(22, 163, 74, 0.1);
+               color: #15803d;
+          }
+
+          .sad-badge.info {
+               background: rgba(37, 99, 235, 0.1);
+               color: #2563eb;
+          }
+
+          .sad-badge.warning {
+               background: rgba(217, 119, 6, 0.1);
+               color: #b45309;
+          }
+
+          .sad-badge.danger {
+               background: rgba(220, 38, 38, 0.1);
+               color: #dc2626;
+          }
+
+          .sad-badge.neutral {
+               background: rgba(100, 116, 139, 0.12);
+               color: #64748b;
+          }
+
+          .sad-priority-list {
+               display: flex;
+               flex-direction: column;
+          }
+
+          .sad-priority-item {
+               display: flex;
+               gap: 13px;
+               padding: 17px 21px;
+               border-bottom: 1px solid var(--sad-border);
+               transition: background 0.2s ease;
+          }
+
+          .sad-priority-item:last-child {
+               border-bottom: 0;
+          }
+
+          .sad-priority-item:hover {
+               background: rgba(79, 70, 229, 0.035);
+          }
+
+          .sad-priority-icon {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               flex-shrink: 0;
+               width: 38px;
+               height: 38px;
+               border-radius: 11px;
+               background: var(--sad-primary-soft);
+               color: var(--sad-primary);
+          }
+
+          .sad-priority-icon svg {
+               width: 17px;
+               height: 17px;
+          }
+
+          .sad-priority-content {
+               min-width: 0;
+               flex: 1;
+          }
+
+          .sad-priority-heading {
+               display: flex;
+               align-items: flex-start;
+               justify-content: space-between;
+               gap: 10px;
+          }
+
+          .sad-priority-title {
+               margin: 1px 0 0;
+               color: var(--sad-heading);
+               font-size: 11px;
+               font-weight: 800;
+          }
+
+          .sad-priority-description {
+               margin: 6px 0 11px;
+               color: var(--sad-muted);
+               font-size: 9px;
+               line-height: 1.6;
+          }
+
+          .sad-priority-action {
+               display: inline-flex;
+               align-items: center;
+               gap: 5px;
+               border: 0;
+               background: transparent;
+               color: var(--sad-primary);
+               font-size: 9px;
+               font-weight: 800;
+               cursor: pointer;
+          }
+
+          .sad-priority-action svg {
+               width: 12px;
+               height: 12px;
+          }
+
+          .sad-monitoring-card {
+               overflow: hidden;
+          }
+
+          .sad-table-toolbar {
+               display: flex;
+               align-items: center;
+               justify-content: space-between;
+               gap: 15px;
+               padding: 14px 20px;
+               border-bottom: 1px solid var(--sad-border);
+          }
+
+          .sad-filter-list {
+               display: flex;
+               flex-wrap: wrap;
+               gap: 7px;
+          }
+
+          .sad-filter-button {
+               padding: 7px 10px;
+               border: 1px solid var(--sad-border);
+               border-radius: 8px;
+               background: transparent;
+               color: var(--sad-muted);
+               font-size: 8px;
+               font-weight: 800;
+               cursor: pointer;
+               transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+          }
+
+          .sad-filter-button:hover,
+          .sad-filter-button.active {
+               border-color: var(--sad-primary);
+               background: var(--sad-primary);
+               color: #ffffff;
+          }
+
+          .sad-search {
+               position: relative;
+               width: 215px;
+          }
+
+          .sad-search svg {
+               position: absolute;
+               top: 50%;
+               left: 11px;
+               width: 14px;
+               height: 14px;
+               color: var(--sad-muted);
+               transform: translateY(-50%);
+          }
+
+          .sad-search input {
+               width: 100%;
+               height: 35px;
+               padding: 7px 11px 7px 33px;
+               border: 1px solid var(--sad-border);
+               border-radius: 9px;
+               outline: none;
+               background: transparent;
+               color: var(--sad-heading);
+               font-size: 9px;
+          }
+
+          .sad-search input:focus {
+               border-color: var(--sad-primary);
+               box-shadow: 0 0 0 3px var(--sad-primary-soft);
+          }
+
+          .sad-table-wrapper {
+               overflow-x: auto;
+          }
+
+          .sad-table {
+               width: 100%;
+               min-width: 940px;
+               border-collapse: collapse;
+          }
+
+          .sad-table th {
+               padding: 12px 15px;
+               border-bottom: 1px solid var(--sad-border);
+               background: rgba(148, 163, 184, 0.045);
+               color: var(--sad-muted);
+               font-size: 8px;
+               font-weight: 800;
+               letter-spacing: 0.045em;
+               text-align: left;
+               text-transform: uppercase;
+          }
+
+          .sad-table td {
+               padding: 15px;
+               border-bottom: 1px solid var(--sad-border);
+               color: var(--sad-text);
+               font-size: 9px;
+               vertical-align: middle;
+          }
+
+          .sad-table tbody tr {
+               transition: background 0.2s ease;
+          }
+
+          .sad-table tbody tr:hover {
+               background: rgba(79, 70, 229, 0.028);
+          }
+
+          .sad-table tbody tr:last-child td {
+               border-bottom: 0;
+          }
+
+          .sad-unit-cell {
+               display: flex;
+               align-items: center;
+               gap: 11px;
+               min-width: 220px;
+          }
+
+          .sad-unit-icon {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               flex-shrink: 0;
+               width: 36px;
+               height: 36px;
+               border-radius: 10px;
+               background: var(--sad-primary-soft);
+               color: var(--sad-primary);
+          }
+
+          .sad-unit-icon svg {
+               width: 15px;
+               height: 15px;
+          }
+
+          .sad-unit-name {
+               display: block;
+               margin-bottom: 3px;
+               color: var(--sad-heading);
+               font-size: 10px;
+               font-weight: 800;
+          }
+
+          .sad-unit-code {
+               color: var(--sad-muted);
+               font-size: 8px;
+          }
+
+          .sad-leader {
+               display: block;
+               color: var(--sad-heading);
+               font-weight: 800;
+          }
+
+          .sad-updated {
+               display: block;
+               margin-top: 3px;
+               color: var(--sad-muted);
+               font-size: 8px;
+          }
+
+          .sad-score-cell {
+               min-width: 108px;
+          }
+
+          .sad-score-cell-top {
+               display: flex;
+               justify-content: space-between;
+               margin-bottom: 6px;
+               color: var(--sad-muted);
+               font-size: 8px;
+          }
+
+          .sad-score-cell-top strong {
+               color: var(--sad-heading);
+          }
+
+          .sad-score-cell .sad-progress {
+               height: 6px;
+          }
+
+          .sad-complaint-count {
+               display: inline-flex;
+               align-items: center;
+               gap: 6px;
+               color: var(--sad-heading);
+               font-weight: 800;
+          }
+
+          .sad-complaint-count svg {
+               width: 13px;
+               height: 13px;
+               color: var(--sad-muted);
+          }
+
+          .sad-action-menu {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               width: 31px;
+               height: 31px;
+               border: 1px solid var(--sad-border);
+               border-radius: 8px;
+               background: transparent;
+               color: var(--sad-muted);
+               cursor: pointer;
+          }
+
+          .sad-action-menu:hover {
+               border-color: var(--sad-primary);
+               color: var(--sad-primary);
+          }
+
+          .sad-action-menu svg {
+               width: 15px;
+               height: 15px;
+          }
+
+          .sad-empty-state {
+               display: none;
+               padding: 38px 20px;
+               text-align: center;
+          }
+
+          .sad-empty-state svg {
+               width: 34px;
+               height: 34px;
+               margin-bottom: 10px;
+               color: var(--sad-muted);
+          }
+
+          .sad-empty-state h4 {
+               margin: 0 0 5px;
+               color: var(--sad-heading);
+               font-size: 12px;
+          }
+
+          .sad-empty-state p {
+               margin: 0;
+               color: var(--sad-muted);
+               font-size: 9px;
+          }
+
+          .sad-channel-list,
+          .sad-role-list,
+          .sad-activity-list {
+               padding: 4px 21px 10px;
+          }
+
+          .sad-channel-item,
+          .sad-role-item {
+               padding: 16px 0;
+               border-bottom: 1px solid var(--sad-border);
+          }
+
+          .sad-channel-item:last-child,
+          .sad-role-item:last-child {
+               border-bottom: 0;
+          }
+
+          .sad-channel-header,
+          .sad-role-header {
+               display: flex;
+               align-items: center;
+               justify-content: space-between;
+               gap: 12px;
+               margin-bottom: 10px;
+          }
+
+          .sad-channel-identity,
+          .sad-role-identity {
+               display: flex;
+               align-items: center;
+               gap: 10px;
+          }
+
+          .sad-channel-icon,
+          .sad-role-icon {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               flex-shrink: 0;
+               width: 34px;
+               height: 34px;
+               border-radius: 10px;
+               background: var(--sad-primary-soft);
+               color: var(--sad-primary);
+          }
+
+          .sad-channel-icon svg,
+          .sad-role-icon svg {
+               width: 15px;
+               height: 15px;
+          }
+
+          .sad-channel-name,
+          .sad-role-name {
+               display: block;
+               color: var(--sad-heading);
+               font-size: 10px;
+               font-weight: 800;
+          }
+
+          .sad-channel-meta,
+          .sad-role-meta {
+               display: block;
+               margin-top: 3px;
+               color: var(--sad-muted);
+               font-size: 8px;
+          }
+
+          .sad-channel-score,
+          .sad-role-count {
+               color: var(--sad-heading);
+               font-size: 12px;
+               font-weight: 800;
+          }
+
+          .sad-role-count small {
+               display: block;
+               margin-top: 2px;
+               color: var(--sad-muted);
+               font-size: 7px;
+               font-weight: 700;
+               text-align: right;
+          }
+
+          .sad-activity-item {
                position: relative;
                display: flex;
                gap: 13px;
-               padding: 12px 0;
+               padding: 17px 0;
           }
 
-          .super-admin-page .sa-activity-item:not(:last-child)::after {
+          .sad-activity-item:not(:last-child)::before {
                position: absolute;
-               top: 51px;
-               bottom: -5px;
-               left: 20px;
+               top: 52px;
+               bottom: -3px;
+               left: 18px;
                width: 1px;
+               background: var(--sad-border);
                content: "";
-               background: var(--sa-border);
           }
 
-          .super-admin-page .sa-activity-icon {
-               z-index: 1;
+          .sad-activity-icon {
+               position: relative;
+               z-index: 2;
                display: inline-flex;
-               flex: 0 0 40px;
                align-items: center;
                justify-content: center;
-               width: 40px;
-               height: 40px;
-               border-radius: 13px;
+               flex-shrink: 0;
+               width: 37px;
+               height: 37px;
+               border: 4px solid var(--sad-card);
+               border-radius: 50%;
           }
 
-          .super-admin-page .sa-activity-icon.primary {
-               color: var(--sa-primary);
-               background: var(--sa-primary-soft);
+          .sad-activity-icon svg {
+               width: 14px;
+               height: 14px;
           }
 
-          .super-admin-page .sa-activity-icon.success {
-               color: var(--sa-success);
-               background: var(--sa-success-soft);
+          .sad-activity-icon.green {
+               background: rgba(22, 163, 74, 0.12);
+               color: #16a34a;
           }
 
-          .super-admin-page .sa-activity-icon.danger {
-               color: var(--sa-danger);
-               background: var(--sa-danger-soft);
+          .sad-activity-icon.blue {
+               background: rgba(37, 99, 235, 0.12);
+               color: #2563eb;
           }
 
-          .super-admin-page .sa-activity-icon.purple {
-               color: var(--sa-purple);
-               background: var(--sa-purple-soft);
+          .sad-activity-icon.red {
+               background: rgba(220, 38, 38, 0.12);
+               color: #dc2626;
           }
 
-          .super-admin-page .sa-activity-content {
-               flex: 1;
+          .sad-activity-icon.orange {
+               background: rgba(217, 119, 6, 0.12);
+               color: #d97706;
+          }
+
+          .sad-activity-icon.purple {
+               background: rgba(124, 58, 237, 0.12);
+               color: #7c3aed;
+          }
+
+          .sad-activity-content {
                min-width: 0;
+               flex: 1;
           }
 
-          .super-admin-page .sa-activity-content h6 {
-               margin: 1px 0 4px;
-               font-size: 11px;
-               font-weight: 800;
-               color: var(--sa-text);
-          }
-
-          .super-admin-page .sa-activity-content p {
-               margin: 0;
+          .sad-activity-content h4 {
+               margin: 1px 0 5px;
+               color: var(--sad-heading);
                font-size: 10px;
-               line-height: 1.55;
-               color: var(--sa-muted);
+               font-weight: 800;
           }
 
-          .super-admin-page .sa-activity-time {
-               margin-top: 5px;
+          .sad-activity-content p {
+               margin: 0;
+               color: var(--sad-muted);
                font-size: 9px;
-               font-weight: 700;
-               color: var(--sa-muted);
+               line-height: 1.6;
           }
 
-          /*
-             |--------------------------------------------------------------------------
-             | Role distribution
-             |--------------------------------------------------------------------------
-             */
-
-          .super-admin-page .sa-role-list {
-               display: grid;
-               gap: 15px;
+          .sad-activity-time {
+               margin-top: 6px;
+               color: var(--sad-primary);
+               font-size: 8px;
+               font-weight: 800;
           }
 
-          .super-admin-page .sa-role-row {
+          .sad-quick-grid {
                display: grid;
-               grid-template-columns: minmax(125px, 1fr) 2fr auto;
+               grid-template-columns: repeat(2, minmax(0, 1fr));
+               gap: 12px;
+               padding: 21px;
+          }
+
+          .sad-quick-action {
+               display: flex;
                align-items: center;
                gap: 12px;
+               min-height: 82px;
+               padding: 14px;
+               border: 1px solid var(--sad-border);
+               border-radius: 14px;
+               background: transparent;
+               color: var(--sad-text);
+               transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
           }
 
-          .super-admin-page .sa-role-label {
-               font-size: 10px;
-               font-weight: 700;
-               color: var(--sa-text);
+          .sad-quick-action:hover {
+               transform: translateY(-2px);
+               border-color: var(--sad-primary);
+               background: var(--sad-primary-soft);
           }
 
-          .super-admin-page .sa-role-track {
-               overflow: hidden;
-               height: 8px;
-               border-radius: 999px;
-               background: var(--sa-border);
+          .sad-quick-icon {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               flex-shrink: 0;
+               width: 39px;
+               height: 39px;
+               border-radius: 11px;
+               background: var(--sad-primary-soft);
+               color: var(--sad-primary);
           }
 
-          .super-admin-page .sa-role-track span {
+          .sad-quick-icon svg {
+               width: 17px;
+               height: 17px;
+          }
+
+          .sad-quick-action strong {
                display: block;
-               height: 100%;
-               border-radius: inherit;
-               background: linear-gradient(90deg, #7c3aed, #2563eb);
-          }
-
-          .super-admin-page .sa-role-value {
-               min-width: 38px;
-               text-align: right;
+               color: var(--sad-heading);
                font-size: 10px;
                font-weight: 800;
-               color: var(--sa-muted);
           }
 
-          /*
-             |--------------------------------------------------------------------------
-             | Responsive
-             |--------------------------------------------------------------------------
-             */
+          .sad-quick-action span {
+               display: block;
+               margin-top: 4px;
+               color: var(--sad-muted);
+               font-size: 8px;
+          }
 
-          @media (max-width: 1199px) {
-               .super-admin-page .sa-kpi-grid {
+          @media (max-width: 1280px) {
+               .sad-stat-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                }
 
-               .super-admin-page .sa-main-grid,
-               .super-admin-page .sa-bottom-grid {
+               .sad-main-grid,
+               .sad-secondary-grid,
+               .sad-bottom-grid,
+               .sad-footer-grid {
                     grid-template-columns: 1fr;
                }
           }
 
-          @media (max-width: 767px) {
-               .super-admin-page .sa-hero {
-                    padding: 24px;
-                    border-radius: 20px;
+          @media (max-width: 768px) {
+               .sad-dashboard {
+                    padding: 15px;
                }
 
-               .super-admin-page .sa-hero-grid {
+               .sad-hero {
+                    align-items: flex-start;
+                    flex-direction: column;
+                    min-height: auto;
+                    padding: 27px 23px;
+                    border-radius: 19px;
+               }
+
+               .sad-hero-actions {
+                    flex-direction: row;
+                    width: 100%;
+               }
+
+               .sad-hero-actions .sad-button {
+                    flex: 1;
+               }
+
+               .sad-stat-grid {
+                    grid-template-columns: 1fr;
+                    gap: 13px;
+               }
+
+               .sad-stat-card {
+                    min-height: auto;
+               }
+
+               .sad-card-header,
+               .sad-table-toolbar {
                     align-items: flex-start;
                     flex-direction: column;
                }
 
-               .super-admin-page .sa-hero-actions {
-                    justify-content: flex-start;
-                    min-width: 0;
+               .sad-search {
+                    width: 100%;
                }
 
-               .super-admin-page .sa-kpi-grid {
-                    grid-template-columns: 1fr;
+               .sad-chart-area {
+                    grid-template-columns: 26px minmax(0, 1fr);
                }
 
-               .super-admin-page .sa-chart-summary {
-                    grid-template-columns: 1fr;
+               .sad-chart-columns {
+                    gap: 6px;
                }
 
-               .super-admin-page .sa-card-header {
+               .sad-chart-bars {
+                    gap: 3px;
+               }
+
+               .sad-score-summary {
+                    align-items: flex-start;
+               }
+          }
+
+          @media (max-width: 520px) {
+               .sad-hero-actions {
                     flex-direction: column;
                }
 
-               .super-admin-page .sa-role-row {
-                    grid-template-columns: 1fr auto;
+               .sad-chart-summary {
+                    align-items: flex-start;
+                    flex-direction: column;
                }
 
-               .super-admin-page .sa-role-track {
-                    grid-column: 1 / -1;
-                    grid-row: 2;
+               .sad-chart-rate {
+                    text-align: left;
+               }
+
+               .sad-score-summary {
+                    align-items: center;
+                    flex-direction: column;
+                    text-align: center;
+               }
+
+               .sad-sentiment-grid {
+                    grid-template-columns: 1fr;
+               }
+
+               .sad-quick-grid {
+                    grid-template-columns: 1fr;
                }
           }
      </style>
 
-     <div class="super-admin-page">
-          <div class="sa-shell">
+     <div class="sad-dashboard">
+          <section class="sad-hero">
+               <div class="sad-hero-content">
+                    <div class="sad-role-badge">{{ $currentUserRole }}</div>
 
-               {{-- Hero --}}
-               <section class="sa-hero">
-                    <div class="sa-hero-grid">
-                         <div>
-                              <div class="sa-eyebrow">
-                                   <span class="sa-eyebrow-dot"></span>
-                                   {{ $roleLabel }}
-                              </div>
+                    <h1>Monitoring Kinerja & Kepuasan Pelanggan</h1>
 
-                              <h1>
-                                   Pusat Kendali Super Admin
-                              </h1>
+                    <p class="sad-hero-description">
+                         Selamat datang, {{ $currentUserName }}. Pantau capaian kinerja unit,
+                         indeks kepuasan pelanggan, penyelesaian keluhan, aktivitas pengguna,
+                         serta kondisi sistem melalui satu pusat kendali Super Admin.
+                    </p>
 
-                              <p>
-                                   Selamat datang, {{ $currentUser?->name ?? 'Administrator' }}.
-                                   Kelola pengguna, role, permission, keamanan, dan kondisi sistem
-                                   melalui satu dashboard terintegrasi.
-                              </p>
-                         </div>
+                    <div class="sad-hero-meta">
+                         <span class="sad-hero-meta-item">
+                              <i data-feather="calendar"></i>
+                              {{ now()->translatedFormat('l, d F Y') }}
+                         </span>
 
-                         <div class="sa-hero-actions">
-                              <a href="{{ $createUserUrl }}" class="sa-button sa-button-light">
-                                   <i data-feather="user-plus"></i>
-                                   Tambah Pengguna
-                              </a>
+                         <span class="sad-hero-meta-item">
+                              <i data-feather="clock"></i>
+                              <span id="sadLiveClock">{{ now()->format('H:i:s') }} WIB</span>
+                         </span>
 
-                              <button type="button" class="sa-button sa-button-glass" id="refreshDashboardButton">
-                                   <i data-feather="refresh-cw"></i>
-                                   Segarkan Data
-                              </button>
-                         </div>
+                         <span class="sad-hero-meta-item">
+                              <i data-feather="database"></i>
+                              Sinkronisasi data aktif
+                         </span>
+
+                         <span class="sad-hero-meta-item">
+                              <i data-feather="shield"></i>
+                              Akses administrator tertinggi
+                         </span>
                     </div>
-               </section>
+               </div>
 
-               {{-- KPI --}}
-               <section class="sa-kpi-grid">
-                    <article class="sa-kpi-card">
-                         <div class="sa-kpi-top">
-                              <div class="sa-kpi-icon primary">
-                                   <i data-feather="users"></i>
-                              </div>
+               <div class="sad-hero-actions">
+                    <a href="{{ $usersUrl }}" class="sad-button sad-button-primary">
+                         <i data-feather="users"></i>
+                         Kelola Pengguna
+                    </a>
 
-                              <span class="sa-trend positive">
-                                   <i data-feather="arrow-up-right"></i>
-                                   8,2%
+                    <a href="{{ $reportsUrl }}" class="sad-button sad-button-secondary">
+                         <i data-feather="download"></i>
+                         Unduh Laporan
+                    </a>
+               </div>
+          </section>
+
+          <section class="sad-stat-grid">
+               @foreach ($dashboardStatistics as $statistic)
+                    <article class="sad-stat-card theme-{{ $statistic['theme'] }}">
+                         <div class="sad-stat-top">
+                              <span class="sad-stat-icon">
+                                   <i data-feather="{{ $statistic['icon'] }}"></i>
+                              </span>
+
+                              <span class="sad-stat-trend {{ $statistic['trend_type'] }}">
+                                   <i
+                                        data-feather="{{ $statistic['trend_type'] === 'up' ? 'trending-up' : 'trending-down' }}"></i>
+                                   {{ $statistic['trend'] }}
                               </span>
                          </div>
 
-                         <p class="sa-kpi-label">Total Pengguna</p>
+                         <p class="sad-stat-label">{{ $statistic['label'] }}</p>
 
-                         <h2 class="sa-kpi-value">
-                              {{ number_format((int) data_get($statistics, 'total_users', 0), 0, ',', '.') }}
+                         <h2 class="sad-stat-value">
+                              <span>{{ is_float($statistic['value']) ? number_format($statistic['value'], 1, ',', '.') : number_format($statistic['value'], 0, ',', '.') }}</span>
+                              <span>{{ $statistic['suffix'] }}</span>
                          </h2>
 
-                         <div class="sa-trend neutral">
-                              Seluruh akun yang terdaftar
-                         </div>
+                         <p class="sad-stat-description">{{ $statistic['description'] }}</p>
                     </article>
+               @endforeach
+          </section>
 
-                    <article class="sa-kpi-card">
-                         <div class="sa-kpi-top">
-                              <div class="sa-kpi-icon success">
-                                   <i data-feather="user-check"></i>
-                              </div>
-
-                              <span class="sa-trend positive">
-                                   <i data-feather="check-circle"></i>
-                                   Aktif
+          <section class="sad-main-grid">
+               <article class="sad-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="bar-chart-2"></i>
                               </span>
-                         </div>
 
-                         <p class="sa-kpi-label">Pengguna Aktif</p>
-
-                         <h2 class="sa-kpi-value">
-                              {{ number_format((int) data_get($statistics, 'active_users', 0), 0, ',', '.') }}
-                         </h2>
-
-                         <div class="sa-trend neutral">
-                              Akun dengan status aktif
-                         </div>
-                    </article>
-
-                    <article class="sa-kpi-card">
-                         <div class="sa-kpi-top">
-                              <div class="sa-kpi-icon purple">
-                                   <i data-feather="shield"></i>
-                              </div>
-
-                              <span class="sa-trend neutral">
-                                   RBAC
-                              </span>
-                         </div>
-
-                         <p class="sa-kpi-label">Role dan Permission</p>
-
-                         <h2 class="sa-kpi-value">
-                              {{ (int) data_get($statistics, 'total_roles', 0) }}
-                              <small style="font-size: 13px; color: var(--sa-muted);">
-                                   / {{ (int) data_get($statistics, 'total_permissions', 0) }}
-                              </small>
-                         </h2>
-
-                         <div class="sa-trend neutral">
-                              Role / permission tersedia
-                         </div>
-                    </article>
-
-                    <article class="sa-kpi-card">
-                         <div class="sa-kpi-top">
-                              <div class="sa-kpi-icon warning">
-                                   <i data-feather="alert-circle"></i>
-                              </div>
-
-                              <span class="sa-trend warning">
-                                   Perlu ditinjau
-                              </span>
-                         </div>
-
-                         <p class="sa-kpi-label">Peringatan Sistem</p>
-
-                         <h2 class="sa-kpi-value">
-                              {{ (int) data_get($statistics, 'open_alerts', 0) }}
-                         </h2>
-
-                         <div class="sa-trend neutral">
-                              Peringatan yang masih terbuka
-                         </div>
-                    </article>
-               </section>
-
-               {{-- Main --}}
-               <section class="sa-main-grid">
-                    <article class="sa-card">
-                         <header class="sa-card-header">
                               <div>
-                                   <h2 class="sa-card-title">
-                                        Aktivitas Sistem
-                                   </h2>
-
-                                   <p class="sa-card-subtitle">
-                                        Perbandingan login berhasil dan aktivitas administrasi
-                                        selama tujuh hari terakhir.
+                                   <h2 class="sad-card-title">Tren Capaian Kinerja</h2>
+                                   <p class="sad-card-subtitle">
+                                        Perbandingan target dan realisasi KPI organisasi selama enam bulan terakhir.
                                    </p>
                               </div>
-
-                              <span class="sa-badge success">
-                                   <span class="sa-badge-dot"></span>
-                                   Sistem normal
-                              </span>
-                         </header>
-
-                         <div class="sa-card-body">
-                              <div class="sa-chart-summary">
-                                   <div class="sa-summary-box">
-                                        <span>Login berhasil</span>
-                                        <strong>1.284</strong>
-                                   </div>
-
-                                   <div class="sa-summary-box">
-                                        <span>Perubahan data</span>
-                                        <strong>326</strong>
-                                   </div>
-
-                                   <div class="sa-summary-box">
-                                        <span>Login ditolak</span>
-                                        <strong>18</strong>
-                                   </div>
-                              </div>
-
-                              <div class="sa-chart-wrapper">
-                                   <div id="superAdminActivityChart"></div>
-
-                                   <div id="superAdminChartFallback" class="sa-chart-fallback">
-                                        Grafik tidak dapat ditampilkan karena library Flot
-                                        belum dimuat pada layout.
-                                   </div>
-                              </div>
-                         </div>
-                    </article>
-
-                    <aside class="sa-card">
-                         <header class="sa-card-header">
-                              <div>
-                                   <h2 class="sa-card-title">
-                                        Aksi Cepat
-                                   </h2>
-
-                                   <p class="sa-card-subtitle">
-                                        Akses fungsi administrasi utama.
-                                   </p>
-                              </div>
-                         </header>
-
-                         <div class="sa-card-body">
-                              <div class="sa-action-list">
-                                   <a href="{{ $usersUrl }}" class="sa-action-card">
-                                        <span class="sa-action-icon">
-                                             <i data-feather="users"></i>
-                                        </span>
-
-                                        <span>
-                                             <h6>Kelola Pengguna</h6>
-                                             <p>Lihat, ubah, dan nonaktifkan akun.</p>
-                                        </span>
-
-                                        <i data-feather="chevron-right" class="sa-action-arrow"></i>
-                                   </a>
-
-                                   <a href="{{ $createUserUrl }}" class="sa-action-card">
-                                        <span class="sa-action-icon">
-                                             <i data-feather="user-plus"></i>
-                                        </span>
-
-                                        <span>
-                                             <h6>Tambah Pengguna</h6>
-                                             <p>Buat akun dan tetapkan role pengguna.</p>
-                                        </span>
-
-                                        <i data-feather="chevron-right" class="sa-action-arrow"></i>
-                                   </a>
-
-                                   <a href="{{ $trashUrl }}" class="sa-action-card">
-                                        <span class="sa-action-icon">
-                                             <i data-feather="trash-2"></i>
-                                        </span>
-
-                                        <span>
-                                             <h6>Recycle Bin</h6>
-                                             <p>Pulihkan atau hapus akun permanen.</p>
-                                        </span>
-
-                                        <i data-feather="chevron-right" class="sa-action-arrow"></i>
-                                   </a>
-
-                                   <a href="#" class="sa-action-card">
-                                        <span class="sa-action-icon">
-                                             <i data-feather="key"></i>
-                                        </span>
-
-                                        <span>
-                                             <h6>Role dan Permission</h6>
-                                             <p>Atur matriks hak akses aplikasi.</p>
-                                        </span>
-
-                                        <i data-feather="chevron-right" class="sa-action-arrow"></i>
-                                   </a>
-                              </div>
-
-                              <div class="sa-health-box">
-                                   <div class="sa-health-top">
-                                        <span>System uptime</span>
-
-                                        <strong>
-                                             {{ number_format((float) data_get($statistics, 'system_uptime', 0), 2, ',', '.') }}%
-                                        </strong>
-                                   </div>
-
-                                   <div class="sa-health-track">
-                                        <span></span>
-                                   </div>
-                              </div>
-                         </div>
-                    </aside>
-               </section>
-
-               {{-- Module and activity --}}
-               <section class="sa-bottom-grid">
-                    <article class="sa-card">
-                         <header class="sa-card-header">
-                              <div>
-                                   <h2 class="sa-card-title">
-                                        Status Modul Sistem
-                                   </h2>
-
-                                   <p class="sa-card-subtitle">
-                                        Ringkasan kondisi dan penggunaan modul utama.
-                                   </p>
-                              </div>
-
-                              <a href="#" class="sa-card-link">
-                                   Lihat detail
-                                   <i data-feather="arrow-right"></i>
-                              </a>
-                         </header>
-
-                         <div class="sa-card-body">
-                              <div class="sa-table-wrapper">
-                                   <table class="sa-table">
-                                        <thead>
-                                             <tr>
-                                                  <th>Modul</th>
-                                                  <th>Status</th>
-                                                  <th>Penggunaan</th>
-                                                  <th>Nilai</th>
-                                             </tr>
-                                        </thead>
-
-                                        <tbody>
-                                             @forelse ($systemModules as $module)
-                                                  <tr>
-                                                       <td>
-                                                            <div class="sa-module">
-                                                                 <span class="sa-module-icon">
-                                                                      <i
-                                                                           data-feather="{{ data_get($module, 'icon', 'box') }}"></i>
-                                                                 </span>
-
-                                                                 <span>
-                                                                      <strong>
-                                                                           {{ data_get($module, 'name', '-') }}
-                                                                      </strong>
-
-                                                                      <small>
-                                                                           {{ data_get($module, 'description', '-') }}
-                                                                      </small>
-                                                                 </span>
-                                                            </div>
-                                                       </td>
-
-                                                       <td>
-                                                            <span
-                                                                 class="sa-badge {{ data_get($module, 'status_type', 'success') }}">
-                                                                 <span class="sa-badge-dot"></span>
-                                                                 {{ data_get($module, 'status', '-') }}
-                                                            </span>
-                                                       </td>
-
-                                                       <td>
-                                                            <div class="sa-progress">
-                                                                 <span
-                                                                      style="width: {{ min(100, max(0, (int) data_get($module, 'usage', 0))) }}%;"></span>
-                                                            </div>
-                                                       </td>
-
-                                                       <td>
-                                                            <strong style="font-size: 11px; color: var(--sa-text);">
-                                                                 {{ (int) data_get($module, 'usage', 0) }}%
-                                                            </strong>
-                                                       </td>
-                                                  </tr>
-                                             @empty
-                                                  <tr>
-                                                       <td colspan="4">
-                                                            Data modul belum tersedia.
-                                                       </td>
-                                                  </tr>
-                                             @endforelse
-                                        </tbody>
-                                   </table>
-                              </div>
-                         </div>
-                    </article>
-
-                    <article class="sa-card">
-                         <header class="sa-card-header">
-                              <div>
-                                   <h2 class="sa-card-title">
-                                        Aktivitas Terbaru
-                                   </h2>
-
-                                   <p class="sa-card-subtitle">
-                                        Perubahan penting yang terjadi di sistem.
-                                   </p>
-                              </div>
-                         </header>
-
-                         <div class="sa-card-body">
-                              <div class="sa-activity-list">
-                                   @forelse ($recentActivities as $activity)
-                                        <div class="sa-activity-item">
-                                             <span class="sa-activity-icon {{ data_get($activity, 'type', 'primary') }}">
-                                                  <i data-feather="{{ data_get($activity, 'icon', 'activity') }}"></i>
-                                             </span>
-
-                                             <div class="sa-activity-content">
-                                                  <h6>
-                                                       {{ data_get($activity, 'title', '-') }}
-                                                  </h6>
-
-                                                  <p>
-                                                       {{ data_get($activity, 'description', '-') }}
-                                                  </p>
-
-                                                  <div class="sa-activity-time">
-                                                       {{ data_get($activity, 'time', '-') }}
-                                                  </div>
-                                             </div>
-                                        </div>
-                                   @empty
-                                        <p class="sa-card-subtitle">
-                                             Belum ada aktivitas terbaru.
-                                        </p>
-                                   @endforelse
-                              </div>
-                         </div>
-                    </article>
-               </section>
-
-               {{-- Role distribution --}}
-               <section class="sa-card" style="margin-top: 20px;">
-                    <header class="sa-card-header">
-                         <div>
-                              <h2 class="sa-card-title">
-                                   Distribusi Pengguna Berdasarkan Role
-                              </h2>
-
-                              <p class="sa-card-subtitle">
-                                   Komposisi akun berdasarkan role yang terhubung melalui tabel pivot role_user.
-                              </p>
                          </div>
 
-                         <a href="{{ $usersUrl }}" class="sa-card-link">
-                              Kelola pengguna
-                              <i data-feather="arrow-right"></i>
-                         </a>
+                         <button type="button" class="sad-card-action">
+                              6 bulan terakhir
+                              <i data-feather="chevron-down"></i>
+                         </button>
                     </header>
 
-                    <div class="sa-card-body">
-                         <div class="sa-role-list">
-                              @foreach ($roleDistribution as $role)
-                                   <div class="sa-role-row">
-                                        <span class="sa-role-label">
-                                             {{ data_get($role, 'label', '-') }}
-                                        </span>
+                    <div class="sad-chart-body">
+                         <div class="sad-chart-summary">
+                              <div class="sad-chart-legends">
+                                   <span class="sad-chart-legend">
+                                        <span class="sad-chart-legend-dot target"></span>
+                                        Target KPI
+                                   </span>
 
-                                        <div class="sa-role-track">
-                                             <span
-                                                  style="width: {{ min(100, max(0, (int) data_get($role, 'percent', 0))) }}%;"></span>
+                                   <span class="sad-chart-legend">
+                                        <span class="sad-chart-legend-dot actual"></span>
+                                        Realisasi KPI
+                                   </span>
+                              </div>
+
+                              <div class="sad-chart-rate">
+                                   <strong>{{ number_format($actualAverage, 1, ',', '.') }}%</strong>
+                                   <span>Rata-rata realisasi dari target
+                                        {{ number_format($targetAverage, 1, ',', '.') }}%</span>
+                              </div>
+                         </div>
+
+                         <div class="sad-chart-area">
+                              <div class="sad-chart-y-axis">
+                                   <span>100</span>
+                                   <span>75</span>
+                                   <span>50</span>
+                                   <span>25</span>
+                                   <span>0</span>
+                              </div>
+
+                              <div class="sad-chart-content">
+                                   <div class="sad-chart-lines">
+                                        <span class="sad-chart-line"></span>
+                                        <span class="sad-chart-line"></span>
+                                        <span class="sad-chart-line"></span>
+                                        <span class="sad-chart-line"></span>
+                                        <span class="sad-chart-line"></span>
+                                   </div>
+
+                                   <div class="sad-chart-columns">
+                                        @foreach ($performanceTrend as $performance)
+                                             <div class="sad-chart-column">
+                                                  <div class="sad-chart-bars">
+                                                       <div class="sad-chart-bar target"
+                                                            style="height: {{ $performance['target'] }}%;">
+                                                            <span class="sad-chart-tooltip">Target
+                                                                 {{ $performance['target'] }}%</span>
+                                                       </div>
+
+                                                       <div class="sad-chart-bar actual"
+                                                            style="height: {{ $performance['actual'] }}%;">
+                                                            <span class="sad-chart-tooltip">
+                                                                 Realisasi {{ $performance['actual'] }}%<br>
+                                                                 Kepuasan {{ $performance['satisfaction'] }}%
+                                                            </span>
+                                                       </div>
+                                                  </div>
+
+                                                  <span class="sad-chart-month" title="{{ $performance['full_month'] }}">
+                                                       {{ $performance['month'] }}
+                                                  </span>
+                                             </div>
+                                        @endforeach
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </article>
+
+               <article class="sad-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="smile"></i>
+                              </span>
+
+                              <div>
+                                   <h2 class="sad-card-title">Indeks Kepuasan Pelanggan</h2>
+                                   <p class="sad-card-subtitle">
+                                        Ringkasan kualitas pengalaman pelanggan pada periode berjalan.
+                                   </p>
+                              </div>
+                         </div>
+                    </header>
+
+                    <div class="sad-satisfaction-body">
+                         <div class="sad-score-summary">
+                              <div class="sad-score-ring"
+                                   style="background: conic-gradient(
+                                var(--sad-success) 0deg {{ $satisfactionAngle }}deg,
+                                var(--sad-border) {{ $satisfactionAngle }}deg 360deg
+                            );">
+                                   <span class="sad-score-ring-value">
+                                        {{ number_format($satisfactionSummary['score'], 1, ',', '.') }}%
+                                   </span>
+                              </div>
+
+                              <div class="sad-score-details">
+                                   <h3>Kategori sangat baik</h3>
+                                   <p>
+                                        Berdasarkan {{ number_format($satisfactionSummary['respondents'], 0, ',', '.') }}
+                                        responden
+                                        dengan tingkat respons
+                                        {{ number_format($satisfactionSummary['response_rate'], 1, ',', '.') }}%.
+                                   </p>
+                                   <span class="sad-score-status">Tren positif</span>
+                              </div>
+                         </div>
+
+                         <div class="sad-sentiment-grid">
+                              <div class="sad-sentiment-card">
+                                   <strong>{{ $satisfactionSummary['positive'] }}%</strong>
+                                   <span>Positif</span>
+                              </div>
+                              <div class="sad-sentiment-card">
+                                   <strong>{{ $satisfactionSummary['neutral'] }}%</strong>
+                                   <span>Netral</span>
+                              </div>
+                              <div class="sad-sentiment-card">
+                                   <strong>{{ $satisfactionSummary['negative'] }}%</strong>
+                                   <span>Negatif</span>
+                              </div>
+                         </div>
+
+                         <div class="sad-health-list">
+                              @foreach ($satisfactionSummary['items'] as $item)
+                                   <div>
+                                        <div class="sad-health-top">
+                                             <span class="sad-health-label">{{ $item['label'] }}</span>
+                                             <span class="sad-health-value">{{ $item['value'] }}%</span>
                                         </div>
 
-                                        <span class="sa-role-value">
-                                             {{ (int) data_get($role, 'value', 0) }}
-                                        </span>
+                                        <div class="sad-progress">
+                                             <div class="sad-progress-bar {{ $item['class'] }}"
+                                                  style="width: {{ $item['value'] }}%;"></div>
+                                        </div>
                                    </div>
                               @endforeach
                          </div>
                     </div>
-               </section>
+               </article>
+          </section>
 
-          </div>
+          <section class="sad-secondary-grid">
+               <article class="sad-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="alert-octagon"></i>
+                              </span>
+
+                              <div>
+                                   <h2 class="sad-card-title">Prioritas Monitoring</h2>
+                                   <p class="sad-card-subtitle">
+                                        Temuan yang memerlukan keputusan atau tindak lanjut administrator.
+                                   </p>
+                              </div>
+                         </div>
+
+                         <span class="sad-badge danger">{{ count($monitoringPriorities) }} prioritas</span>
+                    </header>
+
+                    <div class="sad-priority-list">
+                         @foreach ($monitoringPriorities as $priority)
+                              <div class="sad-priority-item">
+                                   <span class="sad-priority-icon">
+                                        <i data-feather="{{ $priority['icon'] }}"></i>
+                                   </span>
+
+                                   <div class="sad-priority-content">
+                                        <div class="sad-priority-heading">
+                                             <h3 class="sad-priority-title">{{ $priority['title'] }}</h3>
+                                             <span
+                                                  class="sad-badge {{ $priority['status_class'] }}">{{ $priority['status'] }}</span>
+                                        </div>
+
+                                        <p class="sad-priority-description">{{ $priority['description'] }}</p>
+
+                                        <a href="{{ $priority['url'] }}" class="sad-priority-action">
+                                             {{ $priority['action'] }}
+                                             <i data-feather="arrow-right"></i>
+                                        </a>
+                                   </div>
+                              </div>
+                         @endforeach
+                    </div>
+               </article>
+
+               <article class="sad-card sad-monitoring-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="monitor"></i>
+                              </span>
+
+                              <div>
+                                   <h2 class="sad-card-title">Monitoring Kinerja Unit</h2>
+                                   <p class="sad-card-subtitle">
+                                        Capaian KPI, kepuasan pelanggan, dan keluhan setiap unit kerja.
+                                   </p>
+                              </div>
+                         </div>
+
+                         <a href="{{ $reportsUrl }}" class="sad-card-action">
+                              <i data-feather="file-text"></i>
+                              Laporan lengkap
+                         </a>
+                    </header>
+
+                    <div class="sad-table-toolbar">
+                         <div class="sad-filter-list">
+                              <button type="button" class="sad-filter-button active"
+                                   data-unit-filter="semua">Semua</button>
+                              <button type="button" class="sad-filter-button" data-unit-filter="sangat baik">Sangat
+                                   Baik</button>
+                              <button type="button" class="sad-filter-button" data-unit-filter="baik">Baik</button>
+                              <button type="button" class="sad-filter-button"
+                                   data-unit-filter="perlu perhatian">Perhatian</button>
+                              <button type="button" class="sad-filter-button" data-unit-filter="kritis">Kritis</button>
+                         </div>
+
+                         <label class="sad-search">
+                              <i data-feather="search"></i>
+                              <input type="search" id="unitMonitoringSearch"
+                                   placeholder="Cari unit, kode, atau kepala unit..." autocomplete="off">
+                         </label>
+                    </div>
+
+                    <div class="sad-table-wrapper">
+                         <table class="sad-table">
+                              <thead>
+                                   <tr>
+                                        <th>Unit Kerja</th>
+                                        <th>Kepala Unit</th>
+                                        <th>Realisasi KPI</th>
+                                        <th>Kepuasan</th>
+                                        <th>Keluhan</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                   </tr>
+                              </thead>
+
+                              <tbody id="unitMonitoringBody">
+                                   @foreach ($unitMonitoring as $unit)
+                                        @php
+                                             $statusClass = match ($unit['status']) {
+                                                 'Sangat Baik' => 'success',
+                                                 'Baik' => 'info',
+                                                 'Perlu Perhatian' => 'warning',
+                                                 'Kritis' => 'danger',
+                                                 default => 'neutral',
+                                             };
+
+                                             $progressClass = match (true) {
+                                                 $unit['realization'] >= 90 => 'success',
+                                                 $unit['realization'] >= 80 => 'info',
+                                                 $unit['realization'] >= 75 => 'warning',
+                                                 default => 'danger',
+                                             };
+                                        @endphp
+
+                                        <tr data-unit-row data-unit-status="{{ strtolower($unit['status']) }}"
+                                             data-unit-keyword="{{ strtolower($unit['unit'] . ' ' . $unit['code'] . ' ' . $unit['leader']) }}">
+                                             <td>
+                                                  <div class="sad-unit-cell">
+                                                       <span class="sad-unit-icon">
+                                                            <i data-feather="layers"></i>
+                                                       </span>
+
+                                                       <span>
+                                                            <strong class="sad-unit-name">{{ $unit['unit'] }}</strong>
+                                                            <span class="sad-unit-code">{{ $unit['code'] }}</span>
+                                                       </span>
+                                                  </div>
+                                             </td>
+
+                                             <td>
+                                                  <span class="sad-leader">{{ $unit['leader'] }}</span>
+                                                  <span class="sad-updated">Diperbarui {{ $unit['updated_at'] }}</span>
+                                             </td>
+
+                                             <td>
+                                                  <div class="sad-score-cell">
+                                                       <div class="sad-score-cell-top">
+                                                            <span>Target {{ $unit['target'] }}%</span>
+                                                            <strong>{{ $unit['realization'] }}%</strong>
+                                                       </div>
+                                                       <div class="sad-progress">
+                                                            <div class="sad-progress-bar {{ $progressClass }}"
+                                                                 style="width: {{ $unit['realization'] }}%;"></div>
+                                                       </div>
+                                                  </div>
+                                             </td>
+
+                                             <td>
+                                                  <div class="sad-score-cell">
+                                                       <div class="sad-score-cell-top">
+                                                            <span>Indeks</span>
+                                                            <strong>{{ $unit['satisfaction'] }}%</strong>
+                                                       </div>
+                                                       <div class="sad-progress">
+                                                            <div class="sad-progress-bar primary"
+                                                                 style="width: {{ $unit['satisfaction'] }}%;"></div>
+                                                       </div>
+                                                  </div>
+                                             </td>
+
+                                             <td>
+                                                  <span class="sad-complaint-count">
+                                                       <i data-feather="message-square"></i>
+                                                       {{ $unit['complaints'] }} aktif
+                                                  </span>
+                                             </td>
+
+                                             <td>
+                                                  <span class="sad-badge {{ $statusClass }}">{{ $unit['status'] }}</span>
+                                             </td>
+
+                                             <td>
+                                                  <button type="button" class="sad-action-menu"
+                                                       aria-label="Pilihan unit {{ $unit['unit'] }}">
+                                                       <i data-feather="more-horizontal"></i>
+                                                  </button>
+                                             </td>
+                                        </tr>
+                                   @endforeach
+                              </tbody>
+                         </table>
+
+                         <div class="sad-empty-state" id="unitMonitoringEmpty">
+                              <i data-feather="search"></i>
+                              <h4>Data unit tidak ditemukan</h4>
+                              <p>Gunakan kata kunci atau filter status yang berbeda.</p>
+                         </div>
+                    </div>
+               </article>
+          </section>
+
+          <section class="sad-bottom-grid">
+               <article class="sad-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="radio"></i>
+                              </span>
+
+                              <div>
+                                   <h2 class="sad-card-title">Kepuasan Berdasarkan Kanal</h2>
+                                   <p class="sad-card-subtitle">
+                                        Perbandingan skor pengalaman pelanggan pada setiap kanal layanan.
+                                   </p>
+                              </div>
+                         </div>
+
+                         <a href="{{ $surveysUrl }}" class="sad-card-action">
+                              Kelola survei
+                              <i data-feather="arrow-up-right"></i>
+                         </a>
+                    </header>
+
+                    <div class="sad-channel-list">
+                         @foreach ($channelPerformance as $channel)
+                              <div class="sad-channel-item">
+                                   <div class="sad-channel-header">
+                                        <div class="sad-channel-identity">
+                                             <span class="sad-channel-icon">
+                                                  <i data-feather="{{ $channel['icon'] }}"></i>
+                                             </span>
+
+                                             <span>
+                                                  <strong class="sad-channel-name">{{ $channel['name'] }}</strong>
+                                                  <span class="sad-channel-meta">
+                                                       {{ number_format($channel['responses'], 0, ',', '.') }} respons
+                                                       pelanggan
+                                                  </span>
+                                             </span>
+                                        </div>
+
+                                        <span class="sad-channel-score">{{ $channel['score'] }}%</span>
+                                   </div>
+
+                                   <div class="sad-progress">
+                                        <div class="sad-progress-bar {{ $channel['class'] }}"
+                                             style="width: {{ $channel['score'] }}%;"></div>
+                                   </div>
+                              </div>
+                         @endforeach
+                    </div>
+               </article>
+
+               <article class="sad-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="shield"></i>
+                              </span>
+
+                              <div>
+                                   <h2 class="sad-card-title">Pengguna dan Hak Akses</h2>
+                                   <p class="sad-card-subtitle">
+                                        Ringkasan pengguna berdasarkan role dan status keaktifan.
+                                   </p>
+                              </div>
+                         </div>
+
+                         <a href="{{ $usersUrl }}" class="sad-card-action">
+                              Kelola pengguna
+                              <i data-feather="arrow-up-right"></i>
+                         </a>
+                    </header>
+
+                    <div class="sad-role-list">
+                         @foreach ($roleSummary as $role)
+                              <div class="sad-role-item">
+                                   <div class="sad-role-header">
+                                        <div class="sad-role-identity">
+                                             <span class="sad-role-icon">
+                                                  <i data-feather="{{ $role['icon'] }}"></i>
+                                             </span>
+
+                                             <span>
+                                                  <strong class="sad-role-name">{{ $role['name'] }}</strong>
+                                                  <span class="sad-role-meta">{{ $role['active'] }} akun aktif</span>
+                                             </span>
+                                        </div>
+
+                                        <span class="sad-role-count">
+                                             {{ $role['users'] }}
+                                             <small>pengguna</small>
+                                        </span>
+                                   </div>
+
+                                   <div class="sad-progress">
+                                        <div class="sad-progress-bar {{ $role['active'] === $role['users'] ? 'success' : 'info' }}"
+                                             style="width: {{ $role['users'] > 0 ? round(($role['active'] / $role['users']) * 100) : 0 }}%;">
+                                        </div>
+                                   </div>
+                              </div>
+                         @endforeach
+                    </div>
+               </article>
+          </section>
+
+          <section class="sad-footer-grid">
+               <article class="sad-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="bell"></i>
+                              </span>
+
+                              <div>
+                                   <h2 class="sad-card-title">Aktivitas Sistem Terbaru</h2>
+                                   <p class="sad-card-subtitle">
+                                        Audit singkat perubahan data dan aktivitas penting dalam aplikasi.
+                                   </p>
+                              </div>
+                         </div>
+
+                         <button type="button" class="sad-card-action" id="markSystemRead">Tandai dibaca</button>
+                    </header>
+
+                    <div class="sad-activity-list" id="systemActivityList">
+                         @foreach ($systemActivities as $activity)
+                              <div class="sad-activity-item" data-system-activity>
+                                   <span class="sad-activity-icon {{ $activity['theme'] }}">
+                                        <i data-feather="{{ $activity['icon'] }}"></i>
+                                   </span>
+
+                                   <div class="sad-activity-content">
+                                        <h4>{{ $activity['title'] }}</h4>
+                                        <p>{{ $activity['description'] }}</p>
+                                        <div class="sad-activity-time">{{ $activity['time'] }}</div>
+                                   </div>
+                              </div>
+                         @endforeach
+                    </div>
+               </article>
+
+               <article class="sad-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="zap"></i>
+                              </span>
+
+                              <div>
+                                   <h2 class="sad-card-title">Akses Cepat Super Admin</h2>
+                                   <p class="sad-card-subtitle">
+                                        Pintasan menuju modul pengelolaan utama aplikasi.
+                                   </p>
+                              </div>
+                         </div>
+                    </header>
+
+                    <div class="sad-quick-grid">
+                         @foreach ($quickActions as $action)
+                              <a href="{{ $action['url'] }}" class="sad-quick-action">
+                                   <span class="sad-quick-icon">
+                                        <i data-feather="{{ $action['icon'] }}"></i>
+                                   </span>
+
+                                   <span>
+                                        <strong>{{ $action['label'] }}</strong>
+                                        <span>{{ $action['description'] }}</span>
+                                   </span>
+                              </a>
+                         @endforeach
+                    </div>
+               </article>
+          </section>
      </div>
-@endsection
 
-@push('script')
      <script>
           document.addEventListener('DOMContentLoaded', function() {
-               const refreshButton = document.getElementById(
-                    'refreshDashboardButton'
-               );
-
                if (typeof feather !== 'undefined') {
                     feather.replace();
                }
 
-               if (refreshButton) {
-                    refreshButton.addEventListener('click', function() {
-                         refreshButton.disabled = true;
+               const filterButtons = document.querySelectorAll('[data-unit-filter]');
+               const unitRows = document.querySelectorAll('[data-unit-row]');
+               const unitSearch = document.getElementById('unitMonitoringSearch');
+               const unitEmpty = document.getElementById('unitMonitoringEmpty');
+               let activeStatus = 'semua';
 
-                         const originalHtml = refreshButton.innerHTML;
+               function filterUnitMonitoring() {
+                    const keyword = unitSearch ? unitSearch.value.trim().toLowerCase() : '';
+                    let visibleRows = 0;
 
-                         refreshButton.innerHTML =
-                              '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>' +
-                              ' Menyegarkan...';
+                    unitRows.forEach(function(row) {
+                         const rowStatus = row.dataset.unitStatus || '';
+                         const rowKeyword = row.dataset.unitKeyword || '';
+                         const statusMatches = activeStatus === 'semua' || rowStatus === activeStatus;
+                         const keywordMatches = keyword === '' || rowKeyword.includes(keyword);
+                         const shouldShow = statusMatches && keywordMatches;
 
-                         window.setTimeout(function() {
-                              window.location.reload();
-                         }, 450);
+                         row.style.display = shouldShow ? '' : 'none';
 
-                         window.setTimeout(function() {
-                              refreshButton.disabled = false;
-                              refreshButton.innerHTML = originalHtml;
+                         if (shouldShow) {
+                              visibleRows += 1;
+                         }
+                    });
 
-                              if (typeof feather !== 'undefined') {
-                                   feather.replace();
-                              }
-                         }, 2500);
+                    if (unitEmpty) {
+                         unitEmpty.style.display = visibleRows === 0 ? 'block' : 'none';
+                    }
+               }
+
+               filterButtons.forEach(function(button) {
+                    button.addEventListener('click', function() {
+                         filterButtons.forEach(function(item) {
+                              item.classList.remove('active');
+                         });
+
+                         button.classList.add('active');
+                         activeStatus = button.dataset.unitFilter || 'semua';
+                         filterUnitMonitoring();
+                    });
+               });
+
+               if (unitSearch) {
+                    unitSearch.addEventListener('input', filterUnitMonitoring);
+               }
+
+               const markReadButton = document.getElementById('markSystemRead');
+               const activityItems = document.querySelectorAll('[data-system-activity]');
+
+               if (markReadButton) {
+                    markReadButton.addEventListener('click', function() {
+                         activityItems.forEach(function(activity) {
+                              activity.style.opacity = '0.55';
+                         });
+
+                         markReadButton.textContent = 'Sudah dibaca';
+                         markReadButton.disabled = true;
                     });
                }
+
+               const liveClock = document.getElementById('sadLiveClock');
+
+               function updateClock() {
+                    if (!liveClock) {
+                         return;
+                    }
+
+                    const currentTime = new Date();
+                    liveClock.textContent = currentTime.toLocaleTimeString('id-ID', {
+                         hour: '2-digit',
+                         minute: '2-digit',
+                         second: '2-digit',
+                         hour12: false,
+                         timeZone: 'Asia/Jakarta'
+                    }) + ' WIB';
+               }
+
+               updateClock();
+               window.setInterval(updateClock, 1000);
           });
      </script>
-
-     <script>
-          document.addEventListener('DOMContentLoaded', function() {
-               const chartElement = document.getElementById(
-                    'superAdminActivityChart'
-               );
-
-               const fallbackElement = document.getElementById(
-                    'superAdminChartFallback'
-               );
-
-               if (
-                    !chartElement ||
-                    typeof window.jQuery === 'undefined' ||
-                    typeof window.jQuery.plot !== 'function'
-               ) {
-                    if (chartElement) {
-                         chartElement.style.display = 'none';
-                    }
-
-                    if (fallbackElement) {
-                         fallbackElement.style.display = 'flex';
-                    }
-
-                    return;
-               }
-
-               const $ = window.jQuery;
-               const $chart = $(chartElement);
-
-               const loginData = [
-                    [1, 142],
-                    [2, 168],
-                    [3, 154],
-                    [4, 191],
-                    [5, 207],
-                    [6, 226],
-                    [7, 196]
-               ];
-
-               const administrationData = [
-                    [1, 31],
-                    [2, 42],
-                    [3, 38],
-                    [4, 56],
-                    [5, 61],
-                    [6, 53],
-                    [7, 45]
-               ];
-
-               function isDarkTheme() {
-                    return document.body.classList.contains('black-theme');
-               }
-
-               function renderChart() {
-                    const darkTheme = isDarkTheme();
-
-                    const textColor = darkTheme ?
-                         '#a8b2c1' :
-                         '#64748b';
-
-                    const gridColor = darkTheme ?
-                         '#2b313d' :
-                         '#e2e8f0';
-
-                    $.plot(
-                         $chart,
-                         [{
-                                   label: 'Login berhasil',
-                                   data: loginData,
-                                   color: '#2563eb'
-                              },
-                              {
-                                   label: 'Aktivitas administrasi',
-                                   data: administrationData,
-                                   color: '#7c3aed'
-                              }
-                         ], {
-                              series: {
-                                   lines: {
-                                        show: true,
-                                        lineWidth: 2.5,
-                                        fill: true,
-                                        fillColor: {
-                                             colors: [{
-                                                       opacity: 0.13
-                                                  },
-                                                  {
-                                                       opacity: 0.01
-                                                  }
-                                             ]
-                                        }
-                                   },
-                                   points: {
-                                        show: true,
-                                        radius: 3,
-                                        lineWidth: 2,
-                                        fill: true,
-                                        fillColor: darkTheme ?
-                                             '#171a22' :
-                                             '#ffffff'
-                                   },
-                                   shadowSize: 0
-                              },
-
-                              grid: {
-                                   borderWidth: 0,
-                                   hoverable: true,
-                                   clickable: false,
-                                   labelMargin: 12
-                              },
-
-                              legend: {
-                                   show: true,
-                                   position: 'nw',
-                                   backgroundOpacity: 0,
-                                   labelBoxBorderColor: 'transparent'
-                              },
-
-                              xaxis: {
-                                   ticks: [
-                                        [1, 'Sen'],
-                                        [2, 'Sel'],
-                                        [3, 'Rab'],
-                                        [4, 'Kam'],
-                                        [5, 'Jum'],
-                                        [6, 'Sab'],
-                                        [7, 'Min']
-                                   ],
-                                   tickColor: 'transparent',
-                                   font: {
-                                        size: 10,
-                                        color: textColor
-                                   }
-                              },
-
-                              yaxis: {
-                                   min: 0,
-                                   tickColor: gridColor,
-                                   font: {
-                                        size: 10,
-                                        color: textColor
-                                   },
-                                   tickFormatter: function(value) {
-                                        return Math.round(value);
-                                   }
-                              }
-                         }
-                    );
-               }
-
-               $('#superAdminChartTooltip').remove();
-
-               const $tooltip = $('<div id="superAdminChartTooltip"></div>')
-                    .css({
-                         position: 'absolute',
-                         display: 'none',
-                         padding: '8px 10px',
-                         borderRadius: '8px',
-                         background: '#0f172a',
-                         color: '#ffffff',
-                         fontSize: '11px',
-                         fontWeight: '700',
-                         pointerEvents: 'none',
-                         zIndex: 9999,
-                         boxShadow: '0 12px 30px rgba(15, 23, 42, 0.25)'
-                    })
-                    .appendTo('body');
-
-               $chart.off('plothover.superAdmin');
-
-               $chart.on(
-                    'plothover.superAdmin',
-                    function(event, position, item) {
-                         if (!item) {
-                              $tooltip.hide();
-                              return;
-                         }
-
-                         $tooltip
-                              .html(
-                                   item.series.label +
-                                   ': <strong>' +
-                                   Math.round(item.datapoint[1]) +
-                                   '</strong>'
-                              )
-                              .css({
-                                   left: item.pageX + 12,
-                                   top: item.pageY - 42
-                              })
-                              .show();
-                    }
-               );
-
-               renderChart();
-
-               let resizeTimer = null;
-
-               window.addEventListener('resize', function() {
-                    window.clearTimeout(resizeTimer);
-
-                    resizeTimer = window.setTimeout(function() {
-                         renderChart();
-                    }, 180);
-               });
-
-               const themeObserver = new MutationObserver(function() {
-                    renderChart();
-               });
-
-               themeObserver.observe(document.body, {
-                    attributes: true,
-                    attributeFilter: ['class']
-               });
-          });
-     </script>
-@endpush
+@endsection

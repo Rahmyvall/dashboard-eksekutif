@@ -1,177 +1,212 @@
-extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Dashboard Auditor')
+@section('title', 'Dashboard Auditor | Monitoring Kinerja & Kepuasan Pelanggan')
 
 @section('content')
      @php
-          $roleConfig = [
-              'page_title' => 'Dashboard Auditor',
-              'role_label' => 'Internal Audit',
-              'headline' => 'Audit, Risk & Compliance Center',
-              'description' =>
-                  'Pantau pelaksanaan audit, temuan, tindak lanjut, kepatuhan, dan risiko pengendalian internal melalui satu dashboard terintegrasi.',
-              'accent' => '#b45309',
-              'accent_secondary' => '#7c2d12',
+          $currentUser = auth()->user();
+          $currentUserName = $currentUser?->name ?? 'Auditor';
 
-              'statistics' => [
-                  [
-                      'label' => 'Audit Berjalan',
-                      'value' => '7',
-                      'icon' => 'search',
-                      'note' => '3 audit prioritas tinggi',
-                  ],
-                  [
-                      'label' => 'Temuan Terbuka',
-                      'value' => '18',
-                      'icon' => 'alert-triangle',
-                      'note' => '5 temuan risiko tinggi',
-                  ],
-                  [
-                      'label' => 'Tindak Lanjut Selesai',
-                      'value' => '82%',
-                      'icon' => 'check-circle',
-                      'note' => '+6% dari periode lalu',
-                  ],
-                  [
-                      'label' => 'Tingkat Kepatuhan',
-                      'value' => '94,6%',
-                      'icon' => 'shield',
-                      'note' => 'Kategori sangat baik',
-                  ],
+          $statistics = [
+              [
+                  'label' => 'Kepatuhan KPI',
+                  'value' => 94,
+                  'suffix' => '%',
+                  'icon' => 'check-circle',
+                  'note' => 'Evaluasi kinerja sesuai standar',
               ],
-
-              'chart' => [
-                  'title' => 'Progres Audit dan Tindak Lanjut',
-                  'subtitle' => 'Perbandingan target penyelesaian audit dengan realisasi selama tujuh periode.',
-                  'series_1_label' => 'Target',
-                  'series_2_label' => 'Realisasi',
-                  'rows' => [
-                      [
-                          'label' => 'Sen',
-                          'series_1' => 62,
-                          'series_2' => 54,
-                      ],
-                      [
-                          'label' => 'Sel',
-                          'series_1' => 68,
-                          'series_2' => 61,
-                      ],
-                      [
-                          'label' => 'Rab',
-                          'series_1' => 74,
-                          'series_2' => 67,
-                      ],
-                      [
-                          'label' => 'Kam',
-                          'series_1' => 80,
-                          'series_2' => 72,
-                      ],
-                      [
-                          'label' => 'Jum',
-                          'series_1' => 86,
-                          'series_2' => 78,
-                      ],
-                      [
-                          'label' => 'Sab',
-                          'series_1' => 92,
-                          'series_2' => 81,
-                      ],
-                      [
-                          'label' => 'Min',
-                          'series_1' => 100,
-                          'series_2' => 82,
-                      ],
-                  ],
+              [
+                  'label' => 'Temuan Audit Aktif',
+                  'value' => 12,
+                  'suffix' => '',
+                  'icon' => 'alert-triangle',
+                  'note' => '4 temuan prioritas tinggi',
               ],
-
-              'priority_title' => 'Prioritas Audit',
-
-              'priorities' => [
-                  [
-                      'title' => 'Temuan risiko tinggi',
-                      'description' => 'Lima temuan membutuhkan rencana koreksi dan batas waktu yang jelas.',
-                      'icon' => 'alert-octagon',
-                  ],
-                  [
-                      'title' => 'Review akses pengguna',
-                      'description' => 'Validasi kesesuaian role dan permission untuk akun berisiko.',
-                      'icon' => 'key',
-                  ],
-                  [
-                      'title' => 'Audit transaksi keuangan',
-                      'description' => 'Pemeriksaan sampel transaksi bulan berjalan sedang dilaksanakan.',
-                      'icon' => 'credit-card',
-                  ],
-                  [
-                      'title' => 'Monitoring tindak lanjut',
-                      'description' => 'Tujuh rekomendasi mendekati batas waktu penyelesaian.',
-                      'icon' => 'clock',
-                  ],
+              [
+                  'label' => 'Kepuasan Pelanggan',
+                  'value' => 88.7,
+                  'suffix' => '%',
+                  'icon' => 'smile',
+                  'note' => 'Berdasarkan survei terbaru',
               ],
-
-              'table' => [
-                  'title' => 'Daftar Temuan Audit',
-                  'headers' => ['Nomor Temuan', 'Area', 'Tingkat Risiko', 'Status'],
-                  'rows' => [
-                      [
-                          'col1' => 'AUD-2026-071',
-                          'col2' => 'Manajemen Akses',
-                          'col3' => 'Tinggi',
-                          'col4' => 'Tindak Lanjut',
-                      ],
-                      [
-                          'col1' => 'AUD-2026-072',
-                          'col2' => 'Keuangan',
-                          'col3' => 'Sedang',
-                          'col4' => 'Dalam Review',
-                      ],
-                      [
-                          'col1' => 'AUD-2026-073',
-                          'col2' => 'Operasional',
-                          'col3' => 'Sedang',
-                          'col4' => 'Diperbaiki',
-                      ],
-                      [
-                          'col1' => 'AUD-2026-074',
-                          'col2' => 'Pelayanan',
-                          'col3' => 'Rendah',
-                          'col4' => 'Ditutup',
-                      ],
-                  ],
+              [
+                  'label' => 'Laporan Selesai',
+                  'value' => 86,
+                  'suffix' => '%',
+                  'icon' => 'file-text',
+                  'note' => 'Realisasi audit periode berjalan',
               ],
+          ];
 
-              'activity_title' => 'Aktivitas Audit Terbaru',
-
-              'activities' => [
-                  [
-                      'title' => 'Temuan baru dicatat',
-                      'description' => 'Satu temuan risiko tinggi pada manajemen akses telah ditambahkan.',
-                      'time' => '11 menit lalu',
-                      'icon' => 'alert-triangle',
-                  ],
-                  [
-                      'title' => 'Bukti tindak lanjut diterima',
-                      'description' => 'Unit operasional mengunggah dokumen perbaikan untuk diverifikasi.',
-                      'time' => '32 menit lalu',
-                      'icon' => 'upload-cloud',
-                  ],
-                  [
-                      'title' => 'Audit keuangan dimulai',
-                      'description' => 'Pemeriksaan sampel transaksi bulan berjalan telah dimulai.',
-                      'time' => '1 jam lalu',
-                      'icon' => 'search',
-                  ],
-                  [
-                      'title' => 'Rekomendasi dinyatakan selesai',
-                      'description' => 'Dua rekomendasi telah diverifikasi dan ditutup.',
-                      'time' => 'Kemarin',
-                      'icon' => 'check-circle',
-                  ],
+          $auditFindings = [
+              [
+                  'title' => 'SLA pelayanan melewati target',
+                  'unit' => 'Pelayanan',
+                  'level' => 'Tinggi',
+                  'status' => 'Perlu Tindak Lanjut',
               ],
+              [
+                  'title' => 'Dokumentasi KPI belum lengkap',
+                  'unit' => 'Operasional',
+                  'level' => 'Sedang',
+                  'status' => 'Dalam Review',
+              ],
+              [
+                  'title' => 'Validasi data pelanggan',
+                  'unit' => 'Customer Service',
+                  'level' => 'Rendah',
+                  'status' => 'Selesai',
+              ],
+          ];
+
+          $unitPerformance = [
+              ['name' => 'Pelayanan Pelanggan', 'score' => 92],
+              ['name' => 'Operasional', 'score' => 86],
+              ['name' => 'Keuangan', 'score' => 90],
+              ['name' => 'SDM', 'score' => 84],
+          ];
+
+          $activities = [
+              ['title' => 'Audit KPI periode Juli selesai', 'time' => '10 menit lalu', 'icon' => 'clipboard'],
+              ['title' => 'Temuan baru dibuat', 'time' => '35 menit lalu', 'icon' => 'alert-circle'],
+              ['title' => 'Laporan audit dikirim ke Direktur', 'time' => '1 jam lalu', 'icon' => 'send'],
           ];
      @endphp
 
-     @include('dashboards.partials.role-dashboard', [
-         'roleConfig' => $roleConfig,
-     ])
+     <div class="auditor-dashboard">
+          <style>
+               .auditor-dashboard {
+                    padding: 24px;
+                    background: #f5f7fb;
+                    color: #334155;
+                    min-height: 100vh
+               }
+
+               .aud-card {
+                    background: #fff;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 18px;
+                    padding: 22px;
+                    margin-bottom: 20px;
+                    box-shadow: 0 8px 25px rgba(15, 23, 42, .06)
+               }
+
+               .aud-hero {
+                    background: linear-gradient(135deg, #0f766e, #2563eb);
+                    color: white;
+                    padding: 35px;
+                    border-radius: 24px;
+                    margin-bottom: 24px
+               }
+
+               .aud-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 18px
+               }
+
+               .aud-title {
+                    font-size: 32px;
+                    font-weight: 800
+               }
+
+               .aud-card h2 {
+                    font-size: 18px;
+                    color: #0f172a
+               }
+
+               .aud-value {
+                    font-size: 32px;
+                    font-weight: 800;
+                    color: #2563eb
+               }
+
+               .aud-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 12px 0
+               }
+
+               .aud-bar {
+                    height: 8px;
+                    background: #e5e7eb;
+                    border-radius: 20px;
+                    overflow: hidden
+               }
+
+               .aud-bar span {
+                    display: block;
+                    height: 100%;
+                    background: #2563eb
+               }
+
+               .badge {
+                    padding: 5px 10px;
+                    border-radius: 20px;
+                    background: #fee2e2;
+                    color: #b91c1c;
+                    font-size: 12px
+               }
+
+               @media(max-width:900px) {
+                    .aud-grid {
+                         grid-template-columns: 1fr 1fr
+                    }
+               }
+
+               @media(max-width:600px) {
+                    .aud-grid {
+                         grid-template-columns: 1fr
+                    }
+               }
+          </style>
+
+          <section class="aud-hero">
+               <div> AUDITOR DASHBOARD</div>
+               <h1 class="aud-title">Monitoring Audit Kinerja & Kepuasan Pelanggan</h1>
+               <p>Selamat datang {{ $currentUserName }}. Pantau kepatuhan proses, kualitas layanan, KPI unit kerja, dan
+                    tindak lanjut temuan audit.</p>
+          </section>
+
+          <section class="aud-grid">
+               @foreach ($statistics as $item)
+                    <div class="aud-card"><i data-feather="{{ $item['icon'] }}"></i>
+                         <p>{{ $item['label'] }}</p>
+                         <div class="aud-value">{{ $item['value'] }}{{ $item['suffix'] }}</div>
+                         <small>{{ $item['note'] }}</small>
+                    </div>
+               @endforeach
+          </section>
+
+          <div class="aud-card">
+               <h2>Monitoring Temuan Audit</h2>
+               @foreach ($auditFindings as $item)
+                    <div class="aud-row">
+                         <div><b>{{ $item['title'] }}</b><br><small>{{ $item['unit'] }}</small></div><span
+                              class="badge">{{ $item['level'] }}</span>
+                    </div>
+               @endforeach
+          </div>
+
+          <div class="aud-card">
+               <h2>Kinerja Unit Terhadap Standar</h2>
+               @foreach ($unitPerformance as $item)
+                    <div class="aud-row"><b>{{ $item['name'] }}</b><span>{{ $item['score'] }}%</span></div>
+                    <div class="aud-bar"><span style="width:{{ $item['score'] }}%"></span></div>
+               @endforeach
+          </div>
+
+          <div class="aud-card">
+               <h2>Aktivitas Audit Terbaru</h2>
+               @foreach ($activities as $item)
+                    <p><i data-feather="{{ $item['icon'] }}"></i> {{ $item['title'] }} - {{ $item['time'] }}</p>
+               @endforeach
+          </div>
+     </div>
+
+     <script>
+          document.addEventListener('DOMContentLoaded', () => {
+               if (typeof feather !== 'undefined') feather.replace();
+          });
+     </script>
 @endsection

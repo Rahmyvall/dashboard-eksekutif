@@ -3,168 +3,637 @@
 @section('title', 'Dashboard Manager Departemen')
 
 @section('content')
+
+
      @php
-          $roleConfig = [
-              'page_title' => 'Dashboard Manager Departemen',
-              'role_label' => 'Manager Departemen',
-              'headline' => 'Department Performance Dashboard',
-              'description' =>
-                  'Pantau target departemen, produktivitas anggota tim, progres pekerjaan, dan kendala operasional harian.',
-              'accent' => '#0f766e',
-              'accent_secondary' => '#2563eb',
-              'statistics' => [
-                  [
-                      'label' => 'Anggota Tim',
-                      'value' => '24',
-                      'icon' => 'users',
-                      'note' => '22 aktif hari ini',
-                  ],
-                  [
-                      'label' => 'Target Tercapai',
-                      'value' => '88%',
-                      'icon' => 'target',
-                      'note' => '+5% dari minggu lalu',
-                  ],
-                  [
-                      'label' => 'Tugas Berjalan',
-                      'value' => '36',
-                      'icon' => 'clipboard',
-                      'note' => '18 prioritas tinggi',
-                  ],
-                  [
-                      'label' => 'Tugas Terlambat',
-                      'value' => '5',
-                      'icon' => 'alert-octagon',
-                      'note' => 'Perlu tindak lanjut',
-                  ],
+
+          $currentUserName = auth()->user()->name ?? 'Manager Departemen';
+
+          $statistics = [
+              [
+                  'label' => 'Total Anggota',
+                  'value' => 32,
+                  'icon' => 'users',
+                  'theme' => 'blue',
               ],
-              'chart' => [
-                  'title' => 'Kinerja Departemen',
-                  'subtitle' => 'Perbandingan target dan realisasi selama tujuh periode.',
-                  'series_1_label' => 'Target',
-                  'series_2_label' => 'Realisasi',
-                  'rows' => [
-                      [
-                          'label' => 'Sen',
-                          'series_1' => 70,
-                          'series_2' => 64,
-                      ],
-                      [
-                          'label' => 'Sel',
-                          'series_1' => 75,
-                          'series_2' => 72,
-                      ],
-                      [
-                          'label' => 'Rab',
-                          'series_1' => 78,
-                          'series_2' => 74,
-                      ],
-                      [
-                          'label' => 'Kam',
-                          'series_1' => 82,
-                          'series_2' => 79,
-                      ],
-                      [
-                          'label' => 'Jum',
-                          'series_1' => 86,
-                          'series_2' => 84,
-                      ],
-                      [
-                          'label' => 'Sab',
-                          'series_1' => 90,
-                          'series_2' => 86,
-                      ],
-                      [
-                          'label' => 'Min',
-                          'series_1' => 94,
-                          'series_2' => 88,
-                      ],
-                  ],
+
+              [
+                  'label' => 'Proyek Aktif',
+                  'value' => 12,
+                  'icon' => 'briefcase',
+                  'theme' => 'purple',
               ],
-              'priority_title' => 'Prioritas Departemen',
-              'priorities' => [
-                  [
-                      'title' => 'Penyelesaian backlog',
-                      'description' => 'Lima pekerjaan terlambat perlu diselesaikan hari ini.',
-                      'icon' => 'layers',
-                  ],
-                  [
-                      'title' => 'Review target mingguan',
-                      'description' => 'Evaluasi target dilakukan bersama seluruh koordinator.',
-                      'icon' => 'target',
-                  ],
-                  [
-                      'title' => 'Pembagian beban kerja',
-                      'description' => 'Redistribusi pekerjaan untuk dua anggota tim.',
-                      'icon' => 'shuffle',
-                  ],
-                  [
-                      'title' => 'Koordinasi lintas unit',
-                      'description' => 'Satu pekerjaan menunggu keputusan unit terkait.',
-                      'icon' => 'git-merge',
-                  ],
+
+              [
+                  'label' => 'Target Tercapai',
+                  'value' => '86%',
+                  'icon' => 'target',
+                  'theme' => 'green',
               ],
-              'table' => [
-                  'title' => 'Ringkasan Kinerja Tim',
-                  'headers' => ['Tim', 'Target', 'Realisasi', 'Status'],
-                  'rows' => [
-                      [
-                          'col1' => 'Tim A',
-                          'col2' => '25',
-                          'col3' => '24',
-                          'col4' => 'Baik',
-                      ],
-                      [
-                          'col1' => 'Tim B',
-                          'col2' => '22',
-                          'col3' => '20',
-                          'col4' => 'Baik',
-                      ],
-                      [
-                          'col1' => 'Tim C',
-                          'col2' => '18',
-                          'col3' => '15',
-                          'col4' => 'Perhatian',
-                      ],
-                      [
-                          'col1' => 'Tim D',
-                          'col2' => '20',
-                          'col3' => '19',
-                          'col4' => 'Baik',
-                      ],
-                  ],
-              ],
-              'activity_title' => 'Aktivitas Departemen',
-              'activities' => [
-                  [
-                      'title' => 'Tugas prioritas selesai',
-                      'description' => 'Tim A menyelesaikan pekerjaan prioritas lebih awal.',
-                      'time' => '15 menit lalu',
-                      'icon' => 'check-circle',
-                  ],
-                  [
-                      'title' => 'Target mingguan diperbarui',
-                      'description' => 'Target seluruh tim telah disesuaikan.',
-                      'time' => '40 menit lalu',
-                      'icon' => 'target',
-                  ],
-                  [
-                      'title' => 'Kendala operasional dilaporkan',
-                      'description' => 'Satu kendala membutuhkan dukungan unit operasional.',
-                      'time' => '1 jam lalu',
-                      'icon' => 'alert-triangle',
-                  ],
-                  [
-                      'title' => 'Rapat koordinasi dibuat',
-                      'description' => 'Rapat lintas unit dijadwalkan besok pagi.',
-                      'time' => 'Kemarin',
-                      'icon' => 'calendar',
-                  ],
+
+              [
+                  'label' => 'Menunggu Approval',
+                  'value' => 7,
+                  'icon' => 'clock',
+                  'theme' => 'orange',
               ],
           ];
+
+          $departmentPerformance = [
+              [
+                  'name' => 'Produktivitas Tim',
+                  'value' => 88,
+              ],
+
+              [
+                  'name' => 'Kehadiran',
+                  'value' => 94,
+              ],
+
+              [
+                  'name' => 'Penyelesaian Target',
+                  'value' => 86,
+              ],
+
+              [
+                  'name' => 'Kualitas Pekerjaan',
+                  'value' => 91,
+              ],
+          ];
+
+          $teamMembers = [
+              [
+                  'name' => 'Andi Saputra',
+                  'position' => 'Supervisor',
+                  'performance' => 92,
+                  'status' => 'Sangat Baik',
+              ],
+
+              [
+                  'name' => 'Rizky Maulana',
+                  'position' => 'Staff Senior',
+                  'performance' => 85,
+                  'status' => 'Baik',
+              ],
+
+              [
+                  'name' => 'Dimas Pratama',
+                  'position' => 'Staff',
+                  'performance' => 78,
+                  'status' => 'Perlu Evaluasi',
+              ],
+          ];
+
+          $tasks = [
+              [
+                  'title' => 'Review laporan bulanan',
+                  'deadline' => 'Hari ini',
+                  'status' => 'Pending',
+                  'type' => 'warning',
+              ],
+
+              [
+                  'title' => 'Evaluasi KPI karyawan',
+                  'deadline' => 'Besok',
+                  'status' => 'Berjalan',
+                  'type' => 'info',
+              ],
+
+              [
+                  'title' => 'Persetujuan rencana kerja',
+                  'deadline' => '25 Juli',
+                  'status' => 'Selesai',
+                  'type' => 'success',
+              ],
+          ];
+
+          $activities = [
+              [
+                  'title' => 'Karyawan mengirim laporan',
+                  'description' => 'Laporan kinerja mingguan telah masuk',
+                  'time' => '15 menit lalu',
+                  'icon' => 'file-text',
+              ],
+
+              [
+                  'title' => 'Target departemen diperbarui',
+                  'description' => 'Target Q3 berhasil disesuaikan',
+                  'time' => '1 jam lalu',
+                  'icon' => 'trending-up',
+              ],
+          ];
+
      @endphp
 
-     @include('dashboards.partials.role-dashboard', [
-         'roleConfig' => $roleConfig,
-     ])
+
+
+     <style>
+          .manager-dashboard {
+
+
+               --primary: #7c3aed;
+               --primary-dark: #6d28d9;
+               --success: #16a34a;
+               --warning: #d97706;
+               --danger: #dc2626;
+
+               --background: #f8fafc;
+               --card: #ffffff;
+               --border: #e5e7eb;
+
+
+               padding: 25px;
+               background: var(--background);
+
+               min-height: 100vh;
+
+
+          }
+
+
+
+          .manager-header {
+
+
+               background:
+
+                    linear-gradient(135deg,
+                         #4c1d95,
+                         #7c3aed);
+
+
+               color: white;
+
+               padding: 35px;
+
+               border-radius: 25px;
+
+               margin-bottom: 25px;
+
+
+          }
+
+
+
+          .manager-grid {
+
+
+               display: grid;
+
+               grid-template-columns:
+
+                    repeat(4, 1fr);
+
+               gap: 20px;
+
+
+          }
+
+
+
+          .manager-card {
+
+
+               background: white;
+
+               border: 1px solid var(--border);
+
+               border-radius: 20px;
+
+               padding: 22px;
+
+               box-shadow:
+
+                    0 10px 30px rgba(15, 23, 42, .06);
+
+
+          }
+
+
+
+          .manager-icon {
+
+
+               width: 50px;
+
+               height: 50px;
+
+               border-radius: 15px;
+
+
+               display: flex;
+
+               align-items: center;
+
+               justify-content: center;
+
+
+               background: #f3e8ff;
+
+               color: #7c3aed;
+
+
+          }
+
+
+
+          .manager-number {
+
+
+               font-size: 32px;
+
+               font-weight: 800;
+
+               margin-top: 15px;
+
+
+          }
+
+
+
+          .progress {
+
+
+               height: 8px;
+
+               background: #e5e7eb;
+
+               border-radius: 20px;
+
+               overflow: hidden;
+
+
+          }
+
+
+
+          .progress span {
+
+
+               display: block;
+
+               height: 100%;
+
+               background: #7c3aed;
+
+
+          }
+
+
+
+          .badge {
+
+
+               padding: 5px 10px;
+
+               border-radius: 20px;
+
+               font-size: 12px;
+
+               font-weight: 700;
+
+
+          }
+
+
+          .badge-success {
+
+               background: #dcfce7;
+
+               color: #15803d;
+
+          }
+
+
+          .badge-warning {
+
+               background: #fef3c7;
+
+               color: #b45309;
+
+          }
+
+
+          .badge-info {
+
+               background: #dbeafe;
+
+               color: #1d4ed8;
+
+          }
+
+
+
+
+          @media(max-width:900px) {
+
+
+               .manager-grid {
+
+                    grid-template-columns: 1fr;
+
+               }
+
+
+          }
+     </style>
+
+
+
+
+     <div class="manager-dashboard">
+
+
+
+          <section class="manager-header">
+
+
+               <h1>
+
+                    Department Performance Center
+
+               </h1>
+
+
+               <p>
+
+                    Selamat datang {{ $currentUserName }}.
+
+                    Pantau performa tim, target departemen,
+                    approval pekerjaan, dan evaluasi karyawan.
+
+               </p>
+
+
+          </section>
+
+
+
+
+          <section class="manager-grid">
+
+
+               @foreach ($statistics as $stat)
+                    <div class="manager-card">
+
+
+                         <div class="manager-icon">
+
+                              <i data-feather="{{ $stat['icon'] }}"></i>
+
+                         </div>
+
+
+                         <h4>
+
+                              {{ $stat['label'] }}
+
+                         </h4>
+
+
+                         <div class="manager-number">
+
+                              {{ $stat['value'] }}
+
+                         </div>
+
+
+                    </div>
+               @endforeach
+
+
+
+          </section>
+
+
+
+
+          <br>
+
+
+
+          <div class="manager-grid">
+
+
+               <div class="manager-card" style="grid-column:span 2">
+
+
+                    <h3>
+
+                         Performance Departemen
+
+                    </h3>
+
+
+
+                    @foreach ($departmentPerformance as $item)
+                         <p>
+
+                              {{ $item['name'] }}
+
+                              <strong style="float:right">
+
+                                   {{ $item['value'] }}%
+
+                              </strong>
+
+                         </p>
+
+
+                         <div class="progress">
+
+                              <span style="width:{{ $item['value'] }}%">
+                              </span>
+
+                         </div>
+
+
+                         <br>
+                    @endforeach
+
+
+               </div>
+
+
+
+
+
+               <div class="manager-card">
+
+
+                    <h3>
+
+                         Quick Approval
+
+                    </h3>
+
+
+                    @foreach ($tasks as $task)
+                         <div style="
+padding:12px 0;
+border-bottom:1px solid #eee;
+">
+
+
+                              <strong>
+
+                                   {{ $task['title'] }}
+
+                              </strong>
+
+
+                              <p>
+
+                                   {{ $task['deadline'] }}
+
+                              </p>
+
+
+                              <span class="badge badge-{{ $task['type'] }}">
+
+                                   {{ $task['status'] }}
+
+                              </span>
+
+
+                         </div>
+                    @endforeach
+
+
+               </div>
+
+
+
+          </div>
+
+
+
+
+          <br>
+
+
+
+
+          <div class="manager-card">
+
+
+               <h3>
+
+                    Monitoring Anggota Tim
+
+               </h3>
+
+
+
+               @foreach ($teamMembers as $member)
+                    <div style="
+padding:15px 0;
+border-bottom:1px solid #eee;
+">
+
+
+                         <strong>
+
+                              {{ $member['name'] }}
+
+                         </strong>
+
+
+                         <p>
+
+                              {{ $member['position'] }}
+
+                         </p>
+
+
+                         <div class="progress">
+
+                              <span style="
+width:{{ $member['performance'] }}%
+">
+
+                              </span>
+
+
+                         </div>
+
+
+                         <small>
+
+                              {{ $member['performance'] }}%
+                              -
+                              {{ $member['status'] }}
+
+                         </small>
+
+
+                    </div>
+               @endforeach
+
+
+
+          </div>
+
+
+
+
+
+          <br>
+
+
+
+          <div class="manager-card">
+
+
+               <h3>
+
+                    Aktivitas Terbaru
+
+               </h3>
+
+
+               @foreach ($activities as $activity)
+                    <div style="
+padding:15px 0;
+">
+
+
+                         <i data-feather="{{ $activity['icon'] }}"></i>
+
+
+                         <strong>
+
+                              {{ $activity['title'] }}
+
+                         </strong>
+
+
+                         <p>
+
+                              {{ $activity['description'] }}
+
+                         </p>
+
+
+                         <small>
+
+                              {{ $activity['time'] }}
+
+                         </small>
+
+
+                    </div>
+               @endforeach
+
+
+
+          </div>
+
+
+
+
+     </div>
+
+
+
 @endsection
