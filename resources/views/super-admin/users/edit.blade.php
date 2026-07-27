@@ -61,8 +61,8 @@
           }
 
           /* =========================
-                HERO HEADER
-             ========================= */
+                          HERO HEADER
+                       ========================= */
           .edit-header {
                position: relative;
                overflow: hidden;
@@ -165,8 +165,8 @@
           }
 
           /* =========================
-                ALERT
-             ========================= */
+                          ALERT
+                       ========================= */
           .validation-alert {
                display: flex;
                gap: 14px;
@@ -195,8 +195,8 @@
           }
 
           /* =========================
-                MAIN CARD
-             ========================= */
+                          MAIN CARD
+                       ========================= */
           .edit-card {
                position: relative;
                overflow: hidden;
@@ -221,8 +221,8 @@
           }
 
           /* =========================
-                PROFILE PANEL
-             ========================= */
+                          PROFILE PANEL
+                       ========================= */
           .profile-card {
                position: relative;
                overflow: hidden;
@@ -375,8 +375,8 @@
           }
 
           /* =========================
-                FORM AREA
-             ========================= */
+                          FORM AREA
+                       ========================= */
           .form-panel {
                position: relative;
                z-index: 2;
@@ -623,8 +623,8 @@
           }
 
           /* =========================
-                SECURITY INFO
-             ========================= */
+                          SECURITY INFO
+                       ========================= */
           .security-box {
                display: flex;
                align-items: center;
@@ -663,8 +663,8 @@
           }
 
           /* =========================
-                ACTION BUTTONS
-             ========================= */
+                          ACTION BUTTONS
+                       ========================= */
           .form-actions {
                display: flex;
                justify-content: flex-end;
@@ -719,8 +719,8 @@
           }
 
           /* =========================
-                RESPONSIVE
-             ========================= */
+                          RESPONSIVE
+                       ========================= */
           @media (max-width: 1199.98px) {
                .profile-card {
                     min-height: auto;
@@ -796,7 +796,7 @@
                     <p>Perbarui identitas, status akun, dan pengaturan keamanan pengguna dalam satu halaman.</p>
                </div>
 
-               <a href="{{ route('admin.users.index') }}" class="btn-back">
+               <a href="{{ route('super-admin.users.index') }}" class="btn-back">
                     <i class="bi bi-arrow-left me-2"></i>
                     Kembali
                </a>
@@ -821,7 +821,7 @@
           @endif
 
           <div class="edit-card">
-               <form method="POST" action="{{ route('admin.users.update', $user->id) }}">
+               <form method="POST" action="{{ route('super-admin.users.update', $user->id) }}">
                     @csrf
                     @method('PUT')
 
@@ -1041,7 +1041,7 @@
                     </div>
 
                     <div class="form-actions">
-                         <a href="{{ route('admin.users.index') }}" class="btn btn-cancel">
+                         <a href="{{ route('super-admin.users.index') }}" class="btn btn-cancel">
                               <i class="bi bi-x-circle me-2"></i>
                               Batal
                          </a>

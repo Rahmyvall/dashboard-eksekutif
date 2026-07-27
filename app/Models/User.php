@@ -15,6 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
@@ -28,9 +29,9 @@ class User extends Authenticatable
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
 
-    public const ROLE_DIREKTUR_UTAMA = 'executive';
+    public const ROLE_DIREKTUR_UTAMA = 'direktur_utama';
 
-    public const ROLE_HRD = 'hr';
+    public const ROLE_HRD = 'hrd_manager';
 
     public const ROLE_MANAGER_DEPARTEMEN = 'manager_departemen';
 
@@ -40,9 +41,9 @@ class User extends Authenticatable
 
     public const ROLE_ADMIN_OPERASIONAL = 'admin_operasional';
 
-    public const ROLE_KEUANGAN = 'finance';
+    public const ROLE_KEUANGAN = 'finance_staff';
 
-    public const ROLE_AUDITOR = 'auditor';
+    public const ROLE_AUDITOR = 'auditor_internal';
 
     /*
     |--------------------------------------------------------------------------
@@ -94,7 +95,7 @@ class User extends Authenticatable
 
     /*
     |--------------------------------------------------------------------------
-    | Casting
+    | Cast
     |--------------------------------------------------------------------------
     */
 
@@ -107,11 +108,8 @@ class User extends Authenticatable
 
             'last_login_at'     => 'datetime',
 
-            /*
-             * Gunakan hashed untuk create/update melalui model.
-             * SQL langsung tetap harus bcrypt.
-             */
-            'password'          => 'hashed',
+            // jangan pakai hashed jika insert password via SQL
+            // 'password' => 'hashed',
 
         ];
 
@@ -137,7 +135,7 @@ class User extends Authenticatable
 
     /*
     |--------------------------------------------------------------------------
-    | Relationship
+    | Relationship Role
     |--------------------------------------------------------------------------
     */
 
@@ -155,13 +153,14 @@ class User extends Authenticatable
             'role_id'
 
         )
+
             ->withTimestamps();
 
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Status
+    | Status Checking
     |--------------------------------------------------------------------------
     */
 
@@ -196,15 +195,32 @@ class User extends Authenticatable
         string | array $roles
     ): bool {
 
-        $roles = is_array($roles)
-            ? $roles
-            : [$roles];
+        return $this->roles()
+
+            ->whereIn(
+
+                'roles.name',
+
+                (array) $roles
+
+            )
+
+            ->exists();
+
+    }
+
+    public function hasAnyRole(
+        string | array $roles
+    ): bool {
 
         return $this->roles()
 
             ->whereIn(
+
                 'roles.name',
-                $roles
+
+                (array) $roles
+
             )
 
             ->exists();
@@ -249,26 +265,31 @@ class User extends Authenticatable
 
     /*
     |--------------------------------------------------------------------------
-    | ACTIVE ROLE SESSION
+    | Active Role Session
     |--------------------------------------------------------------------------
     */
 
     public function activeRole(): ?Role
     {
 
-        $id = session(
+        $roleId = session(
             'active_role_id'
         );
 
-        if (! $id) {
+        if (! $roleId) {
+
             return null;
+
         }
 
         return $this->roles()
 
             ->where(
+
                 'roles.id',
-                $id
+
+                $roleId
+
             )
 
             ->first();
@@ -302,7 +323,7 @@ class User extends Authenticatable
 
     /*
     |--------------------------------------------------------------------------
-    | PERMISSION
+    | Permission
     |--------------------------------------------------------------------------
     */
 
@@ -310,21 +331,7 @@ class User extends Authenticatable
         string $permission
     ): bool {
 
-        return $this->roles()
-
-            ->whereHas(
-                'permissions',
-                function ($q) use ($permission) {
-
-                    $q->where(
-                        'permissions.name',
-                        $permission
-                    );
-
-                }
-            )
-
-            ->exists();
+        return false;
 
     }
 
@@ -338,7 +345,10 @@ class User extends Authenticatable
     {
 
         return $this->isActive()
-        && $this->activeRole() != null;
+
+        &&
+
+        $this->roles()->exists();
 
     }
 
@@ -353,8 +363,11 @@ class User extends Authenticatable
     ): Builder {
 
         return $query->where(
+
             'status',
+
             self::STATUS_ACTIVE
+
         );
 
     }

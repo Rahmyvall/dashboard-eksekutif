@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Role extends Model
 {
 
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /*
     |--------------------------------------------------------------------------
@@ -32,9 +33,17 @@ class Role extends Model
 
         'name',
 
+        'display_name',
+
         'guard_name',
 
         'description',
+
+        'status',
+
+        'is_system',
+
+        'sort_order',
 
     ];
 
@@ -50,16 +59,22 @@ class Role extends Model
 
             'id'         => 'integer',
 
+            'is_system'  => 'boolean',
+
+            'sort_order' => 'integer',
+
             'created_at' => 'datetime',
 
             'updated_at' => 'datetime',
+
+            'deleted_at' => 'datetime',
 
         ];
     }
 
     /*
     |--------------------------------------------------------------------------
-    | ROLE CONSTANT
+    | Role Constant
     |--------------------------------------------------------------------------
     */
 
@@ -83,20 +98,22 @@ class Role extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Relationship User
+    | Status Constant
     |--------------------------------------------------------------------------
-    |
-    | roles
-    |   |
-    | role_user
-    |   |
-    | users
-    |
+    */
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_INACTIVE = 'inactive';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationship Users
+    |--------------------------------------------------------------------------
     */
 
     public function users(): BelongsToMany
     {
-
         return $this->belongsToMany(
 
             User::class,
@@ -109,25 +126,16 @@ class Role extends Model
 
         )
             ->withTimestamps();
-
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Relationship Permission
+    | Relationship Permissions
     |--------------------------------------------------------------------------
-    |
-    | roles
-    |   |
-    | permission_role
-    |   |
-    | permissions
-    |
     */
 
     public function permissions(): BelongsToMany
     {
-
         return $this->belongsToMany(
 
             Permission::class,
@@ -140,102 +148,80 @@ class Role extends Model
 
         )
             ->withTimestamps();
-
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Check Role
+    | Role Checking
     |--------------------------------------------------------------------------
     */
 
-    public function hasName(
-        string $role
-    ): bool {
-
+    public function hasName(string $role): bool
+    {
         return $this->name === $role;
-
     }
 
     public function isSuperAdmin(): bool
     {
-
         return $this->hasName(
             self::SUPER_ADMIN
         );
-
     }
 
     public function isDirekturUtama(): bool
     {
-
         return $this->hasName(
             self::DIREKTUR_UTAMA
         );
-
     }
 
     public function isHrd(): bool
     {
-
         return $this->hasName(
             self::HRD
         );
-
     }
 
     public function isManagerDepartemen(): bool
     {
-
         return $this->hasName(
             self::MANAGER_DEPARTEMEN
         );
-
     }
 
     public function isKaryawan(): bool
     {
-
         return $this->hasName(
             self::KARYAWAN
         );
-
     }
 
     public function isAdminPelayanan(): bool
     {
-
         return $this->hasName(
             self::ADMIN_PELAYANAN
         );
-
     }
 
     public function isAdminOperasional(): bool
     {
-
         return $this->hasName(
             self::ADMIN_OPERASIONAL
         );
-
     }
 
     public function isKeuangan(): bool
     {
-
         return $this->hasName(
             self::KEUANGAN
         );
-
     }
 
     public function isAuditor(): bool
     {
-
         return $this->hasName(
             self::AUDITOR
         );
-
     }
 
     /*
@@ -256,7 +242,6 @@ class Role extends Model
             )
 
             ->exists();
-
     }
 
     /*
@@ -278,6 +263,55 @@ class Role extends Model
 
         );
 
+    }
+
+    public function scopeActive(
+        Builder $query
+    ): Builder {
+
+        return $query->where(
+            'status',
+            self::STATUS_ACTIVE
+        );
+
+    }
+
+    public function scopeSystem(
+        Builder $query
+    ): Builder {
+
+        return $query->where(
+            'is_system',
+            true
+        );
+
+    }
+
+    public function scopeCustom(
+        Builder $query
+    ): Builder {
+
+        return $query->where(
+            'is_system',
+            false
+        );
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helper
+    |--------------------------------------------------------------------------
+    */
+
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
+    public function isSystemRole(): bool
+    {
+        return $this->is_system === true;
     }
 
     /*
@@ -315,14 +349,15 @@ class Role extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Label Role
+    | Role Label
     |--------------------------------------------------------------------------
     */
 
     public function label(): string
     {
 
-        return match ($this->name) {
+        return $this->display_name ??
+        match ($this->name) {
 
             self::SUPER_ADMIN        =>
             'Super Admin',
@@ -361,6 +396,30 @@ class Role extends Model
             ),
 
         };
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Boot
+    |--------------------------------------------------------------------------
+    */
+
+    protected static function boot()
+    {
+
+        parent::boot();
+
+        // cegah hapus role sistem
+        static::deleting(function (Role $role) {
+
+            if ($role->isSystemRole()) {
+
+                return true;
+
+            }
+
+        });
 
     }
 

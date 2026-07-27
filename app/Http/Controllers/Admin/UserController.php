@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -24,12 +25,6 @@ class UserController extends Controller
     {
 
         $query = User::query();
-
-        /*
-        |--------------------------------------------------------------------------
-        | SEARCH
-        |--------------------------------------------------------------------------
-        */
 
         if ($request->filled('search')) {
 
@@ -53,12 +48,6 @@ class UserController extends Controller
 
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | FILTER STATUS
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->filled('status')) {
 
             $query->where(
@@ -72,56 +61,36 @@ class UserController extends Controller
 
             ->latest()
 
-            ->paginate(3)
+            ->paginate(10)
 
             ->withQueryString();
-
-        /*
-        |--------------------------------------------------------------------------
-        | STATISTIC
-        |--------------------------------------------------------------------------
-        */
 
         $statistics = [
 
             'total_users'    => User::count(),
 
             'active_users'   => User::where(
-
                 'status',
-
                 User::STATUS_ACTIVE
-
             )->count(),
 
             'inactive_users' => User::where(
-
                 'status',
-
                 User::STATUS_INACTIVE
-
             )->count(),
 
             'login_activity' => User::whereNotNull(
-
                 'last_login_at'
-
             )->count(),
 
         ];
 
         return view(
-
-            'admin.users.index',
-
+            'super-admin.users.index',
             compact(
-
                 'users',
-
                 'statistics'
-
             )
-
         );
 
     }
@@ -134,22 +103,22 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = Role::query()
-            ->orderBy('name', 'asc')
-            ->get();
+
+        $roles = Role::orderBy(
+            'name'
+        )->get();
 
         return view(
-            'admin.users.create',
+            'super-admin.users.create',
             [
+
                 'roles'    => $roles,
 
-                'statuses' => [
-                    User::STATUS_ACTIVE,
-                    User::STATUS_INACTIVE,
-                    User::STATUS_SUSPENDED,
-                ],
+                'statuses' => User::statuses(),
+
             ]
         );
+
     }
 
     /*
@@ -199,32 +168,49 @@ class UserController extends Controller
 
                 'required',
 
-                Rule::in([
+                Rule::in(
+                    User::statuses()
+                ),
 
-                    User::STATUS_ACTIVE,
+            ],
 
-                    User::STATUS_INACTIVE,
+            'role_id'  => [
 
-                    User::STATUS_SUSPENDED,
+                'required',
 
-                ]),
+                'exists:roles,id',
 
             ],
 
         ]);
 
-        User::create($validated);
+        $user = User::create([
+
+            'name'     => $validated['name'],
+
+            'email'    => $validated['email'],
+
+            'password' => Hash::make(
+                $validated['password']
+            ),
+
+            'status'   => $validated['status'],
+
+        ]);
+
+        $user->roles()->attach(
+            $validated['role_id']
+        );
 
         return redirect()
 
-            ->route('admin.users.index')
+            ->route(
+                'super-admin.users.index'
+            )
 
             ->with(
-
                 'success',
-
-                'Pengguna berhasil ditambahkan'
-
+                'Pengguna berhasil ditambahkan.'
             );
 
     }
@@ -239,11 +225,8 @@ class UserController extends Controller
     {
 
         return view(
-
-            'admin.users.show',
-
+            'super-admin.users.show',
             compact('user')
-
         );
 
     }
@@ -257,26 +240,21 @@ class UserController extends Controller
     public function edit(User $user)
     {
 
+        $roles = Role::orderBy(
+            'name'
+        )->get();
+
         return view(
-
-            'admin.users.edit',
-
+            'super-admin.users.edit',
             [
 
                 'user'     => $user,
 
-                'statuses' => [
+                'roles'    => $roles,
 
-                    User::STATUS_ACTIVE,
-
-                    User::STATUS_INACTIVE,
-
-                    User::STATUS_SUSPENDED,
-
-                ],
+                'statuses' => User::statuses(),
 
             ]
-
         );
 
     }
@@ -288,23 +266,16 @@ class UserController extends Controller
     */
 
     public function update(
-
         Request $request,
-
         User $user
-
     ) {
 
         $validated = $request->validate([
 
             'name'     => [
-
                 'required',
-
                 'string',
-
                 'max:150',
-
             ],
 
             'email'    => [
@@ -314,7 +285,6 @@ class UserController extends Controller
                 'email',
 
                 Rule::unique('users')
-
                     ->ignore($user->id),
 
             ],
@@ -333,69 +303,82 @@ class UserController extends Controller
 
                 'required',
 
-                Rule::in([
+                Rule::in(
+                    User::statuses()
+                ),
 
-                    User::STATUS_ACTIVE,
+            ],
 
-                    User::STATUS_INACTIVE,
+            'role_id'  => [
 
-                    User::STATUS_SUSPENDED,
+                'required',
 
-                ]),
+                'exists:roles,id',
 
             ],
 
         ]);
 
+        $data = [
+
+            'name'   => $validated['name'],
+
+            'email'  => $validated['email'],
+
+            'status' => $validated['status'],
+
+        ];
+
         if (
-
-            empty($validated['password'])
-
+            filled($validated['password'])
         ) {
 
-            unset(
-
+            $data['password'] =
+            Hash::make(
                 $validated['password']
-
             );
 
         }
 
-        $user->update($validated);
+        $user->update($data);
+
+        $user->roles()->sync([
+
+            $validated['role_id'],
+
+        ]);
 
         return redirect()
 
-            ->route('admin.users.index')
+            ->route(
+                'super-admin.users.index'
+            )
 
             ->with(
-
                 'success',
-
-                'Data pengguna berhasil diperbarui'
-
+                'Data pengguna berhasil diperbarui.'
             );
 
     }
 
     /*
     |--------------------------------------------------------------------------
-    | DELETE SOFT DELETE
+    | DELETE
     |--------------------------------------------------------------------------
     */
 
     public function destroy(User $user)
     {
 
-        if (Auth::id() === $user->id) {
+        if (
+            Auth::id() === $user->id
+        ) {
 
             return back()
 
                 ->with(
-
                     'error',
-
-                    'Tidak dapat menghapus akun sendiri'
-
+                    'Tidak dapat menghapus akun sendiri.'
                 );
 
         }
@@ -404,14 +387,13 @@ class UserController extends Controller
 
         return redirect()
 
-            ->route('admin.users.index')
+            ->route(
+                'super-admin.users.index'
+            )
 
             ->with(
-
                 'success',
-
-                'Pengguna berhasil dihapus'
-
+                'Pengguna berhasil dihapus.'
             );
 
     }
@@ -432,11 +414,8 @@ class UserController extends Controller
             ->paginate(10);
 
         return view(
-
-            'admin.users.trash',
-
+            'super-admin.users.trash',
             compact('users')
-
         );
 
     }
@@ -450,22 +429,21 @@ class UserController extends Controller
     public function restore($id)
     {
 
-        $user = User::withTrashed()
+        User::withTrashed()
 
-            ->findOrFail($id);
+            ->findOrFail($id)
 
-        $user->restore();
+            ->restore();
 
         return redirect()
 
-            ->route('admin.users.trash')
+            ->route(
+                'super-admin.users.trash'
+            )
 
             ->with(
-
                 'success',
-
-                'Pengguna berhasil dikembalikan'
-
+                'Pengguna berhasil dikembalikan.'
             );
 
     }
@@ -479,22 +457,21 @@ class UserController extends Controller
     public function forceDelete($id)
     {
 
-        $user = User::withTrashed()
+        User::withTrashed()
 
-            ->findOrFail($id);
+            ->findOrFail($id)
 
-        $user->forceDelete();
+            ->forceDelete();
 
         return redirect()
 
-            ->route('admin.users.trash')
+            ->route(
+                'super-admin.users.trash'
+            )
 
             ->with(
-
                 'success',
-
-                'Pengguna dihapus permanen'
-
+                'Pengguna dihapus permanen.'
             );
 
     }

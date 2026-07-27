@@ -1066,7 +1066,7 @@
                     </div>
 
                     <div class="hero-action">
-                         <a href="{{ route('admin.users.index') }}" class="btn-back-modern">
+                         <a href="{{ route('super-admin.users.index') }}" class="btn-back-modern">
                               <i class="bi bi-arrow-left"></i>
                               Kembali ke Daftar
                          </a>
@@ -1087,7 +1087,7 @@
                     </div>
                @endif
 
-               <form id="createUserForm" action="{{ route('admin.users.store') }}" method="POST"
+               <form id="createUserForm" action="{{ route('super-admin.users.store') }}" method="POST"
                     enctype="multipart/form-data" novalidate>
                     @csrf
 
@@ -1422,7 +1422,7 @@
                                    </div>
 
                                    <div class="footer-actions">
-                                        <a href="{{ route('admin.users.index') }}" class="btn-cancel-modern">
+                                        <a href="{{ route('super-admin.users.index') }}" class="btn-cancel-modern">
                                              <i class="bi bi-x-lg"></i>
                                              Batal
                                         </a>

@@ -787,7 +787,7 @@
                     </div>
 
                     <div class="col-lg-4 hero-action text-lg-end">
-                         <a href="{{ route('admin.users.create') }}" class="btn-add-user">
+                         <a href="{{ route('super-admin.users.create') }}" class="btn-add-user">
                               <i class="bi bi-person-plus-fill"></i>
                               Tambah Pengguna
                          </a>
@@ -928,7 +928,7 @@
                          </p>
                     </div>
 
-                    <a href="{{ route('admin.users.trash') }}" class="btn-trash">
+                    <a href="{{ route('super-admin.users.trash') }}" class="btn-trash">
                          <i class="bi bi-trash3-fill"></i>
                          Recycle Bin
                     </a>
@@ -1010,20 +1010,20 @@
 
                                         <td>
                                              <div class="action-group justify-content-center">
-                                                  <a href="{{ route('admin.users.show', $user->id) }}"
+                                                  <a href="{{ route('super-admin.users.show', $user->id) }}"
                                                        class="action-button action-view" title="Lihat detail"
                                                        aria-label="Lihat detail {{ $user->name }}">
                                                        <i class="bi bi-eye-fill"></i>
                                                   </a>
 
-                                                  <a href="{{ route('admin.users.edit', $user->id) }}"
+                                                  <a href="{{ route('super-admin.users.edit', $user->id) }}"
                                                        class="action-button action-edit" title="Edit pengguna"
                                                        aria-label="Edit pengguna {{ $user->name }}">
                                                        <i class="bi bi-pencil-square"></i>
                                                   </a>
 
                                                   <form method="POST"
-                                                       action="{{ route('admin.users.destroy', $user->id) }}"
+                                                       action="{{ route('super-admin.users.destroy', $user->id) }}"
                                                        class="m-0"
                                                        onsubmit="return confirm('Apakah Anda yakin ingin memindahkan pengguna ini ke Recycle Bin?')">
                                                        @csrf

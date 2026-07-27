@@ -613,15 +613,17 @@
 
                          <nav id="submenu-sistem" class="nav nav-sub" aria-label="Menu Pengaturan Sistem">
                               @if ($isSuperAdmin || $isHrd)
-                                   <a href="{{ $routeUrl('admin.users.index') }}"
-                                        class="nav-sub-link {{ $routeActive('admin.users.*') ? 'active' : '' }}">
+                                   <a href="{{ $routeUrl('super-admin.users.index') }}"
+                                        class="nav-sub-link {{ $routeActive('super-admin.users.*') ? 'active' : '' }}">
+
                                         Pengguna
+
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin)
                                    <a href="#"
-                                        class="nav-sub-link {{ $routeActive('roles.*', 'permissions.*') ? 'active' : '' }}">
+                                        class="nav-sub-link {{ request()->routeIs('admin.roles.*', 'admin.permissions.*') ? 'active' : '' }}">
                                         Role dan Hak Akses
                                    </a>
                               @endif

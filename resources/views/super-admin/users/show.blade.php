@@ -5,8 +5,8 @@
 @section('content')
      <style>
           /* =========================================================
-                     EXECUTIVE USER PROFILE — LIGHT & FULL COLOR UI
-                  ========================================================== */
+                          EXECUTIVE USER PROFILE — LIGHT & FULL COLOR UI
+                       ========================================================== */
           .user-profile-page {
                --primary: #4f46e5;
                --primary-soft: #eef2ff;
@@ -668,7 +668,7 @@
                          <p>Informasi akun, status, verifikasi, dan riwayat aktivitas pengguna dalam satu tampilan.</p>
                     </div>
 
-                    <a href="{{ route('admin.users.index') }}" class="btn-back-profile">
+                    <a href="{{ route('super-admin.users.index') }}" class="btn-back-profile">
                          <i class="bi bi-arrow-left"></i>
                          Kembali ke Daftar
                     </a>
@@ -880,7 +880,7 @@
 
                     {{-- ACTION --}}
                     <div class="profile-actions">
-                         <a href="{{ route('admin.users.edit', $user->id) }}" class="btn-edit-profile">
+                         <a href="{{ route('super-admin.users.edit', $user->id) }}" class="btn-edit-profile">
                               <i class="bi bi-pencil-square"></i>
                               Edit Pengguna
                          </a>

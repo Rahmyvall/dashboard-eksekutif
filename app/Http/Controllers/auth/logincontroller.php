@@ -17,7 +17,7 @@ class LoginController extends Controller
 {
 
     /**
-     * Menampilkan halaman login
+     * Halaman Login
      */
     public function create(): View | RedirectResponse
     {
@@ -30,28 +30,21 @@ class LoginController extends Controller
         }
 
         $roles = Role::query()
+
             ->select([
                 'id',
                 'name',
             ])
+
             ->orderBy('id')
+
             ->get();
 
         return view(
             'auth.login',
-            [
-                'roles' => $roles,
-            ]
+            compact('roles')
         );
 
-    }
-
-    /**
-     * Support route lama
-     */
-    public function showLoginForm(): View | RedirectResponse
-    {
-        return $this->create();
     }
 
     /**
@@ -64,7 +57,7 @@ class LoginController extends Controller
         $request->merge([
 
             'email' => strtolower(
-                trim($request->email)
+                trim((string) $request->email)
             ),
 
         ]);
@@ -74,7 +67,9 @@ class LoginController extends Controller
             'email'    => [
 
                 'required',
+
                 'email',
+
                 'max:150',
 
             ],
@@ -82,6 +77,7 @@ class LoginController extends Controller
             'password' => [
 
                 'required',
+
                 'string',
 
             ],
@@ -89,6 +85,7 @@ class LoginController extends Controller
             'role_id'  => [
 
                 'required',
+
                 'exists:roles,id',
 
             ],
@@ -96,6 +93,7 @@ class LoginController extends Controller
             'remember' => [
 
                 'nullable',
+
                 'boolean',
 
             ],
@@ -104,7 +102,7 @@ class LoginController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Hapus session role sebelumnya
+        | Reset Session Role
         |--------------------------------------------------------------------------
         */
 
@@ -118,17 +116,18 @@ class LoginController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Cari user
+        | Cari User
         |--------------------------------------------------------------------------
         */
 
-        $user = User::where(
+        $user = User::query()
 
-            'email',
+            ->where(
+                'email',
+                $validated['email']
+            )
 
-            $validated['email']
-
-        )->first();
+            ->first();
 
         if (! $user) {
 
@@ -146,16 +145,32 @@ class LoginController extends Controller
         }
 
         /*
-        |--------------------------------------------------------------------------
-        | Validasi password bcrypt
-        |--------------------------------------------------------------------------
-        */
+        /*
+|--------------------------------------------------------------------------
+| Validasi Password
+|--------------------------------------------------------------------------
+*/
+
+        $storedPassword = $user->password;
 
         if (
+
+            empty($storedPassword)
+
+            ||
+
+            ! Hash::needsRehash($storedPassword)
+
+            &&
+
             ! Hash::check(
+
                 $validated['password'],
-                $user->password
+
+                $storedPassword
+
             )
+
         ) {
 
             return back()
@@ -173,12 +188,14 @@ class LoginController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Status user
+        | Status User
         |--------------------------------------------------------------------------
         */
 
         if (
+
             $user->status !== User::STATUS_ACTIVE
+
         ) {
 
             return back()
@@ -194,11 +211,11 @@ class LoginController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Login User
+        | Login
         |--------------------------------------------------------------------------
         */
 
-        Auth::login(
+        Auth::guard('web')->login(
 
             $user,
 
@@ -212,7 +229,7 @@ class LoginController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Validasi Role User
+        | Cek Role User
         |--------------------------------------------------------------------------
         */
 
@@ -232,14 +249,14 @@ class LoginController extends Controller
 
         if (! $role) {
 
-            Auth::logout();
+            Auth::guard('web')->logout();
 
             return back()
 
                 ->withErrors([
 
                     'role_id' =>
-                    'Anda tidak memiliki akses role tersebut.',
+                    'Role tidak tersedia untuk akun ini.',
 
                 ]);
 
@@ -253,11 +270,9 @@ class LoginController extends Controller
 
         session([
 
-            'active_role_id'   =>
-            $role->id,
+            'active_role_id'   => $role->id,
 
-            'active_role_name' =>
-            $role->name,
+            'active_role_name' => $role->name,
 
         ]);
 
@@ -271,7 +286,7 @@ class LoginController extends Controller
 
             'last_login_at' => now(),
 
-            'last_login_ip' => request()->ip(),
+            'last_login_ip' => $request->ip(),
 
         ]);
 
@@ -290,38 +305,13 @@ class LoginController extends Controller
     }
 
     /**
-     * Support route login lama
-     */
-    public function login(
-        Request $request
-    ): RedirectResponse {
-
-        return $this->store($request);
-
-    }
-
-    /**
      * Logout
-     */
-    public function logout(
-        Request $request
-    ): RedirectResponse {
-
-        return $this->destroy($request);
-
-    }
-
-    /**
-     * Destroy session logout
-     *
-     * Digunakan oleh route:
-     * LoginController@destroy
      */
     public function destroy(
         Request $request
     ): RedirectResponse {
 
-        Auth::logout();
+        Auth::guard('web')->logout();
 
         $request->session()->forget([
 
@@ -346,6 +336,27 @@ class LoginController extends Controller
                 'Berhasil logout.'
 
             );
+
+    }
+
+    public function showLoginForm(): View | RedirectResponse
+    {
+        return $this->create();
+    }
+
+    public function login(
+        Request $request
+    ): RedirectResponse {
+
+        return $this->store($request);
+
+    }
+
+    public function logout(
+        Request $request
+    ): RedirectResponse {
+
+        return $this->destroy($request);
 
     }
 

@@ -5,8 +5,8 @@
 @section('content')
      <style>
           /* =====================================================
-                COLORFUL EXECUTIVE RECYCLE BIN
-                ===================================================== */
+                          COLORFUL EXECUTIVE RECYCLE BIN
+                          ===================================================== */
           .recycle-page {
                --primary: #4f46e5;
                --primary-light: #818cf8;
@@ -704,7 +704,7 @@
                               <strong>{{ $users->total() }} pengguna</strong>
                          </div>
 
-                         <a href="{{ route('admin.users.index') }}" class="btn-back">
+                         <a href="{{ route('super-admin.users.index') }}" class="btn-back">
                               <i class="bi bi-arrow-left"></i>
                               Kembali ke Pengguna
                          </a>
@@ -821,7 +821,7 @@
                                              <td>
                                                   <div class="action-group">
                                                        <form method="POST"
-                                                            action="{{ route('admin.users.restore', $user->id) }}">
+                                                            action="{{ route('super-admin.users.restore', $user->id) }}">
                                                             @csrf
 
                                                             <button type="submit" class="action-btn restore"
@@ -832,7 +832,7 @@
                                                        </form>
 
                                                        <form method="POST"
-                                                            action="{{ route('admin.users.forceDelete', $user->id) }}"
+                                                            action="{{ route('super-admin.users.forceDelete', $user->id) }}"
                                                             onsubmit="return confirm('Hapus permanen pengguna ini? Data tidak dapat dikembalikan.')">
                                                             @csrf
                                                             @method('DELETE')
