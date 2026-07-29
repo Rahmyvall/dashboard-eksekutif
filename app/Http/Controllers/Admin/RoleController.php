@@ -1,246 +1,298 @@
 <?php
+
+declare (strict_types = 1);
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Role;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class RoleController extends Controller
 {
-    /**
-     * Display role list
-     */
-    public function index(Request $request)
+
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
+
+    public function index(Request $request): View
     {
-        $query = Role::query();
 
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
+        $filters = $request->validate([
 
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'ILIKE', "%{$search}%")
-                    ->orWhere('display_name', 'ILIKE', "%{$search}%")
-                    ->orWhere('description', 'ILIKE', "%{$search}%");
+            'search' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+        ]);
+
+        $query = Role::query()
+            ->withCount([
+                'users',
+                'permissions',
+            ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEARCH
+        |--------------------------------------------------------------------------
+        */
+
+        if (! empty($filters['search'])) {
+
+            $keyword = strtolower(
+                trim($filters['search'])
+            );
+
+            $query->where(function (Builder $q) use ($keyword) {
+
+                $q->whereRaw(
+                    'LOWER(name) LIKE ?',
+                    [
+                        "%{$keyword}%",
+                    ]
+                )
+
+                    ->orWhereRaw(
+                        'LOWER(guard_name) LIKE ?',
+                        [
+                            "%{$keyword}%",
+                        ]
+                    );
+
             });
+
         }
 
-        // Filter status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | DATA
+        |--------------------------------------------------------------------------
+        */
 
         $roles = $query
-            ->orderBy('sort_order')
-            ->orderBy('name')
+
+            ->orderBy(
+                'name',
+                'asc'
+            )
+
             ->paginate(10)
+
             ->withQueryString();
 
-        // Statistics
+        /*
+        |--------------------------------------------------------------------------
+        | STATISTIC
+        |--------------------------------------------------------------------------
+        */
+
         $stats = [
-            'total_roles'    => Role::count(),
 
-            'active_roles'   => Role::where(
-                'status',
-                'active'
-            )->count(),
+            'total_roles' =>
+            Role::count(),
 
-            'inactive_roles' => Role::where(
-                'status',
-                'inactive'
-            )->count(),
-
-            'system_roles'   => Role::where(
-                'is_system',
-                true
-            )->count(),
-
-            'custom_roles'   => Role::where(
-                'is_system',
-                false
-            )->count(),
         ];
 
         return view(
-            'admin.roles.index',
+            'super-admin.roles.index',
             compact(
                 'roles',
                 'stats'
             )
         );
+
     }
 
-    /**
-     * Create role form
-     */
-    public function create()
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
+
+    public function create(): View
     {
         return view(
-            'admin.roles.create'
+            'super-admin.roles.create'
         );
     }
 
-    /**
-     * Store new role
-     */
-    public function store(Request $request)
+    /*
+    |--------------------------------------------------------------------------
+    | STORE
+    |--------------------------------------------------------------------------
+    */
+
+    public function store(Request $request): RedirectResponse
     {
+
         $validated = $request->validate([
 
-            'name'         => [
+            'name'       => [
+
                 'required',
+
                 'string',
-                'max:80',
-                Rule::unique('roles')
-                    ->where(function ($query) use ($request) {
-                        return $query->where(
-                            'guard_name',
-                            $request->guard_name ?? 'web'
-                        );
-                    }),
+
+                'max:255',
+
+                'regex:/^[a-z0-9_]+$/',
+
+                Rule::unique(
+                    'roles',
+                    'name'
+                ),
+
             ],
 
-            'display_name' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
+            'guard_name' => [
 
-            'guard_name'   => [
                 'required',
+
                 'string',
-                'max:50',
-            ],
 
-            'description'  => [
-                'nullable',
-                'string',
-            ],
+                'max:255',
 
-            'status'       => [
-                'required',
-                Rule::in([
-                    'active',
-                    'inactive',
-                ]),
-            ],
-
-            'sort_order'   => [
-                'nullable',
-                'integer',
             ],
 
         ]);
 
-        Role::create([
-             ...$validated,
-            'is_system' => false,
-        ]);
+        DB::transaction(function () use ($validated) {
+
+            Role::create(
+                $validated
+            );
+
+        });
 
         return redirect()
-            ->route('admin.roles.index')
+
+            ->route(
+                'super-admin.roles.index'
+            )
+
             ->with(
                 'success',
                 'Role berhasil ditambahkan.'
             );
+
     }
 
-    /**
-     * Show role detail
-     */
-    public function show(Role $role)
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW
+    |--------------------------------------------------------------------------
+    */
+
+    public function show(Role $role): View
     {
+
+        $role->loadCount([
+
+            'users',
+
+            'permissions',
+
+        ]);
+
+        $role->load([
+            'permissions',
+        ]);
+
         return view(
-            'admin.roles.show',
+            'super-admin.roles.show',
             compact('role')
         );
+
     }
 
-    /**
-     * Edit role
-     */
-    public function edit(Role $role)
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT
+    |--------------------------------------------------------------------------
+    */
+
+    public function edit(Role $role): View
     {
+
         return view(
-            'admin.roles.edit',
+            'super-admin.roles.edit',
             compact('role')
         );
+
     }
 
-    /**
-     * Update role
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
+
     public function update(
         Request $request,
         Role $role
-    ) {
+    ): RedirectResponse {
 
         $validated = $request->validate([
 
-            'name'         => [
+            'name'       => [
+
                 'required',
+
                 'string',
-                'max:80',
 
-                Rule::unique('roles')
-                    ->where(function ($query) use ($request) {
+                'max:255',
 
-                        return $query->where(
-                            'guard_name',
-                            $request->guard_name ?? 'web'
-                        );
+                'regex:/^[a-z0-9_]+$/',
 
-                    })
-                    ->ignore($role->id),
+                Rule::unique(
+                    'roles',
+                    'name'
+                )
+                    ->ignore(
+                        $role->id
+                    ),
 
             ],
 
-            'display_name' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
+            'guard_name' => [
 
-            'guard_name'   => [
                 'required',
+
                 'string',
-                'max:50',
-            ],
 
-            'description'  => [
-                'nullable',
-                'string',
-            ],
+                'max:255',
 
-            'status'       => [
-                'required',
-                Rule::in([
-                    'active',
-                    'inactive',
-                ]),
-            ],
-
-            'sort_order'   => [
-                'nullable',
-                'integer',
             ],
 
         ]);
 
-        // Role sistem tidak boleh diganti nama
-        if ($role->is_system) {
-
-            $validated['name'] = $role->name;
-
-        }
-
-        $role->update(
+        DB::transaction(function () use (
+            $role,
             $validated
-        );
+        ) {
+
+            $role->update(
+                $validated
+            );
+
+        });
 
         return redirect()
-            ->route('admin.roles.index')
+
+            ->route(
+                'super-admin.roles.index'
+            )
+
             ->with(
                 'success',
                 'Role berhasil diperbarui.'
@@ -248,27 +300,42 @@ class RoleController extends Controller
 
     }
 
-    /**
-     * Delete role
-     */
-    public function destroy(Role $role)
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
+    */
+
+    public function destroy(Role $role): RedirectResponse
     {
 
-        // Proteksi role bawaan
-        if ($role->is_system) {
+        if ($role->users()->exists()) {
 
             return back()
+
                 ->with(
                     'error',
-                    'Role sistem tidak dapat dihapus.'
+                    'Role masih digunakan user.'
                 );
 
         }
 
-        $role->delete();
+        DB::transaction(function () use ($role) {
+
+            $role
+                ->permissions()
+                ->detach();
+
+            $role->delete();
+
+        });
 
         return redirect()
-            ->route('admin.roles.index')
+
+            ->route(
+                'super-admin.roles.index'
+            )
+
             ->with(
                 'success',
                 'Role berhasil dihapus.'

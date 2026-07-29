@@ -1,25 +1,49 @@
 @php
      /*
     |--------------------------------------------------------------------------
+    | NILAI DEFAULT SIDEBAR
+    |--------------------------------------------------------------------------
+    |
+    | Nilai ini harus dibuat sebelum seluruh pemeriksaan role agar komponen
+    | sidebar tetap dapat dirender ketika session role kosong atau route
+    | dashboard khusus role belum tersedia.
+    |
+    */
+     $dashboardUrl = \Illuminate\Support\Facades\Route::has('dashboard') ? route('dashboard') : url('/');
+
+     $dashboardName = 'Dashboard';
+     $activeRole = '';
+     $activeRoleLabel = 'Pengguna';
+
+     /*
+    |--------------------------------------------------------------------------
     | USER DAN ROLE AKTIF
     |--------------------------------------------------------------------------
     */
      $user = auth()->user();
 
+     /*
+      * Ambil role aktif dari session terlebih dahulu. Jika tidak ada, gunakan
+      * role pertama dari Spatie Permission.
+      */
+     $spatieRole = '';
+
+     if ($user && method_exists($user, 'getRoleNames')) {
+         $spatieRole = (string) ($user->getRoleNames()->first() ?? '');
+     }
+
      $rawActiveRole =
          session('active_role_name') ??
          (session('active_role') ??
              (data_get($user, 'active_role_name') ??
-                 (data_get($user, 'role_name') ?? (data_get($user, 'role') ?? ''))));
+                 (data_get($user, 'role_name') ?? (data_get($user, 'role') ?? $spatieRole))));
 
-     // Mendukung active_role yang disimpan sebagai array/object/model.
      if (is_array($rawActiveRole) || is_object($rawActiveRole)) {
          $rawActiveRole =
              data_get($rawActiveRole, 'slug') ??
              (data_get($rawActiveRole, 'name') ?? (data_get($rawActiveRole, 'code') ?? ''));
      }
 
-     // Menyamakan format: "Direktur Utama", "direktur-utama" -> "direktur_utama".
      $normalizedRole = \Illuminate\Support\Str::of((string) $rawActiveRole)
          ->trim()
          ->lower()
@@ -27,19 +51,22 @@
          ->replaceMatches('/_+/', '_')
          ->toString();
 
-     // Alias role lama/Indonesia diarahkan ke satu nama role canonical.
+     /*
+      * Alias diarahkan ke nama role yang digunakan pada web.php/database.
+      */
      $roleAliases = [
          'superadmin' => 'super_admin',
          'super_admin' => 'super_admin',
 
-         'direktur' => 'executive',
-         'direktur_utama' => 'executive',
-         'executive' => 'executive',
+         'direktur' => 'direktur_utama',
+         'direktur_utama' => 'direktur_utama',
+         'executive' => 'direktur_utama',
 
-         'hrd' => 'hr',
-         'human_resource' => 'hr',
-         'human_resources' => 'hr',
-         'hr' => 'hr',
+         'hrd' => 'hrd_manager',
+         'hr' => 'hrd_manager',
+         'human_resource' => 'hrd_manager',
+         'human_resources' => 'hrd_manager',
+         'hrd_manager' => 'hrd_manager',
 
          'manager' => 'manager_departemen',
          'manager_department' => 'manager_departemen',
@@ -57,12 +84,14 @@
          'admin_operation' => 'admin_operasional',
          'admin_operasional' => 'admin_operasional',
 
-         'keuangan' => 'finance',
-         'financial' => 'finance',
-         'finance' => 'finance',
+         'keuangan' => 'finance_staff',
+         'financial' => 'finance_staff',
+         'finance' => 'finance_staff',
+         'finance_staff' => 'finance_staff',
 
-         'audit' => 'auditor',
-         'auditor' => 'auditor',
+         'audit' => 'auditor_internal',
+         'auditor' => 'auditor_internal',
+         'auditor_internal' => 'auditor_internal',
      ];
 
      $activeRole = $roleAliases[$normalizedRole] ?? $normalizedRole;
@@ -74,8 +103,6 @@
     */
      $hasRole = static fn(array $roles): bool => in_array($activeRole, $roles, true);
 
-     // Mengambil route pertama yang tersedia agar sidebar tidak error
-     // saat sebagian modul/route belum dibuat.
      $routeUrl = static function (string|array $routeNames, array $parameters = []): string {
          foreach ((array) $routeNames as $routeName) {
              if (\Illuminate\Support\Facades\Route::has($routeName)) {
@@ -94,14 +121,14 @@
     |--------------------------------------------------------------------------
     */
      $isSuperAdmin = $hasRole(['super_admin']);
-     $isDirektur = $hasRole(['executive']);
-     $isHrd = $hasRole(['hr']);
+     $isDirektur = $hasRole(['direktur_utama']);
+     $isHrd = $hasRole(['hrd_manager']);
      $isManager = $hasRole(['manager_departemen']);
      $isKaryawan = $hasRole(['karyawan']);
      $isPelayanan = $hasRole(['admin_pelayanan']);
      $isOperasional = $hasRole(['admin_operasional']);
-     $isKeuangan = $hasRole(['finance']);
-     $isAuditor = $hasRole(['auditor']);
+     $isKeuangan = $hasRole(['finance_staff']);
+     $isAuditor = $hasRole(['auditor_internal']);
 
      /*
     |--------------------------------------------------------------------------
@@ -110,42 +137,48 @@
     */
      $dashboardNames = [
          'super_admin' => 'Dashboard Super Admin',
-         'executive' => 'Dashboard Direktur Utama',
-         'hr' => 'Dashboard HRD',
+         'direktur_utama' => 'Dashboard Direktur Utama',
+         'hrd_manager' => 'Dashboard HRD Manager',
          'manager_departemen' => 'Dashboard Manager Departemen',
          'karyawan' => 'Dashboard Karyawan',
          'admin_pelayanan' => 'Dashboard Admin Pelayanan',
          'admin_operasional' => 'Dashboard Admin Operasional',
-         'finance' => 'Dashboard Keuangan',
-         'auditor' => 'Dashboard Auditor',
+         'finance_staff' => 'Dashboard Finance Staff',
+         'auditor_internal' => 'Dashboard Auditor Internal',
      ];
 
      $dashboardRouteCandidates = [
-         'super_admin' => ['dashboard.super-admin', 'super-admin.dashboard', 'dashboard'],
-         'executive' => ['dashboard.direktur-utama', 'direktur-utama.dashboard', 'dashboard'],
-         'hr' => ['dashboard.hrd', 'hrd.dashboard', 'dashboard'],
-         'manager_departemen' => ['dashboard.manager-departemen', 'manager-departemen.dashboard', 'dashboard'],
-         'karyawan' => ['dashboard.karyawan', 'karyawan.dashboard', 'dashboard'],
-         'admin_pelayanan' => ['dashboard.admin-pelayanan', 'admin-pelayanan.dashboard', 'dashboard'],
-         'admin_operasional' => ['dashboard.admin-operasional', 'admin-operasional.dashboard', 'dashboard'],
-         'finance' => ['dashboard.keuangan', 'keuangan.dashboard', 'dashboard'],
-         'auditor' => ['dashboard.auditor', 'auditor.dashboard', 'dashboard'],
+         'super_admin' => ['super-admin.dashboard', 'dashboard'],
+         'direktur_utama' => ['direktur-utama.dashboard', 'dashboard'],
+         'hrd_manager' => ['hrd-manager.dashboard', 'dashboard'],
+         'manager_departemen' => ['manager-departemen.dashboard', 'dashboard'],
+         'karyawan' => ['karyawan.dashboard', 'dashboard'],
+         'admin_pelayanan' => ['admin-pelayanan.dashboard', 'dashboard'],
+         'admin_operasional' => ['admin-operasional.dashboard', 'dashboard'],
+         'finance_staff' => ['finance-staff.dashboard', 'dashboard'],
+         'auditor_internal' => ['auditor-internal.dashboard', 'dashboard'],
      ];
-
-     $dashboardName = $dashboardNames[$activeRole] ?? 'Dashboard';
-     $dashboardUrl = $routeUrl($dashboardRouteCandidates[$activeRole] ?? ['dashboard']);
 
      $roleDisplayNames = [
          'super_admin' => 'Super Admin',
-         'executive' => 'Direktur Utama',
-         'hr' => 'HRD',
+         'direktur_utama' => 'Direktur Utama',
+         'hrd_manager' => 'HRD Manager',
          'manager_departemen' => 'Manager Departemen',
          'karyawan' => 'Karyawan',
          'admin_pelayanan' => 'Admin Pelayanan',
          'admin_operasional' => 'Admin Operasional',
-         'finance' => 'Keuangan',
-         'auditor' => 'Auditor',
+         'finance_staff' => 'Finance Staff',
+         'auditor_internal' => 'Auditor Internal',
      ];
+
+     $dashboardName = $dashboardNames[$activeRole] ?? 'Dashboard';
+
+     $dashboardCandidates = $dashboardRouteCandidates[$activeRole] ?? ['dashboard'];
+     $resolvedDashboardUrl = $routeUrl($dashboardCandidates);
+
+     if ($resolvedDashboardUrl !== '#') {
+         $dashboardUrl = $resolvedDashboardUrl;
+     }
 
      $activeRoleLabel =
          $roleDisplayNames[$activeRole] ??
@@ -154,57 +187,56 @@
      /*
     |--------------------------------------------------------------------------
     | HAK AKSES MENU
-    | CATATAN: ini hanya mengatur tampilan sidebar. Route tetap wajib memakai
-    | middleware role/permission agar tidak dapat diakses langsung melalui URL.
     |--------------------------------------------------------------------------
     */
+     $canAccessBranches = $hasRole(['super_admin', 'direktur_utama', 'admin_operasional', 'auditor_internal']);
+
      $canAccessMasterData = $hasRole([
          'super_admin',
-         'executive',
-         'hr',
+         'direktur_utama',
+         'hrd_manager',
          'manager_departemen',
          'admin_pelayanan',
          'admin_operasional',
-         'finance',
-         'auditor',
+         'finance_staff',
+         'auditor_internal',
      ]);
 
      $canAccessTransactions = $hasRole([
          'super_admin',
-         'executive',
+         'direktur_utama',
          'admin_pelayanan',
          'admin_operasional',
-         'finance',
-         'auditor',
+         'finance_staff',
+         'auditor_internal',
      ]);
 
      $canAccessPerformance = $hasRole([
          'super_admin',
-         'executive',
-         'hr',
+         'direktur_utama',
+         'hrd_manager',
          'manager_departemen',
          'karyawan',
          'admin_operasional',
-         'auditor',
+         'auditor_internal',
      ]);
 
-     $canAccessSatisfaction = $hasRole(['super_admin', 'executive', 'admin_pelayanan', 'auditor']);
+     $canAccessSatisfaction = $hasRole(['super_admin', 'direktur_utama', 'admin_pelayanan', 'auditor_internal']);
 
-     $canAccessComplaints = $hasRole(['super_admin', 'executive', 'admin_pelayanan', 'auditor']);
+     $canAccessComplaints = $hasRole(['super_admin', 'direktur_utama', 'admin_pelayanan', 'auditor_internal']);
 
      $canAccessReports = $hasRole([
          'super_admin',
-         'executive',
-         'hr',
+         'direktur_utama',
+         'hrd_manager',
          'manager_departemen',
          'admin_pelayanan',
          'admin_operasional',
-         'finance',
-         'auditor',
+         'finance_staff',
+         'auditor_internal',
      ]);
 
-     // HRD harus dimasukkan karena memiliki menu Pengguna.
-     $canAccessSystem = $hasRole(['super_admin', 'hr', 'auditor']);
+     $canAccessSystem = $hasRole(['super_admin', 'hrd_manager', 'auditor_internal']);
 
      /*
     |--------------------------------------------------------------------------
@@ -236,7 +268,21 @@
      $satisfactionOpen = $routeActive('surveys.*', 'survey-questions.*', 'survey-responses.*');
      $complaintsOpen = $routeActive('complaint-categories.*', 'complaints.*');
      $reportsOpen = $routeActive('reports.*');
-     $systemOpen = $routeActive('admin.users.*', 'roles.*', 'permissions.*', 'settings.*', 'activity-logs.*');
+
+     $systemOpen = $routeActive(
+         'super-admin.users.*',
+         'super-admin.roles.*',
+         'permissions.*',
+         'settings.*',
+         'activity-logs.*',
+     );
+
+     /*
+    |--------------------------------------------------------------------------
+    | LABEL MENU CABANG
+    |--------------------------------------------------------------------------
+    */
+     $branchMenuLabel = $isDirektur || $isAuditor ? 'Persetujuan Cabang' : 'Data Cabang';
 
      /*
     |--------------------------------------------------------------------------
@@ -261,6 +307,15 @@
          'work-schedules.index',
          'employee-schedules.index',
      ]);
+
+     /*
+      * Variabel final yang digunakan HTML sidebar.
+      */
+     $safeDashboardUrl = filled($dashboardUrl ?? null) ? (string) $dashboardUrl : url('/');
+
+     $safeDashboardName = filled($dashboardName ?? null) ? (string) $dashboardName : 'Dashboard';
+
+     $safeActiveRoleLabel = filled($activeRoleLabel ?? null) ? (string) $activeRoleLabel : 'Pengguna';
 @endphp
 
 <div class="sidebar">
@@ -269,7 +324,7 @@
      {{-- ================================================================ --}}
      <div class="sidebar-header">
           <div class="sidebar-brand">
-               <a href="{{ $dashboardUrl }}" class="sidebar-logo" aria-label="Buka dashboard">
+               <a href="{{ $safeDashboardUrl }}" class="sidebar-logo" aria-label="Buka dashboard">
                     <img src="{{ asset('backend/assets/img/logo.png') }}" alt="Logo Dashboard Monitoring"
                          class="sidebar-logo-image">
                </a>
@@ -280,7 +335,7 @@
 
                @if ($activeRole !== '')
                     <small class="sidebar-role-name">
-                         {{ $activeRoleLabel }}
+                         {{ $safeActiveRoleLabel }}
                     </small>
                @endif
           </div>
@@ -297,10 +352,10 @@
                </li>
 
                <li class="nav-item">
-                    <a href="{{ $dashboardUrl }}"
+                    <a href="{{ $safeDashboardUrl }}"
                          class="nav-link {{ $routeActive('dashboard', 'dashboard.*', '*.dashboard') ? 'active' : '' }}">
                          <i data-feather="home"></i>
-                         <span>{{ $dashboardName }}</span>
+                         <span>{{ $safeDashboardName }}</span>
                     </a>
                </li>
 
@@ -321,48 +376,48 @@
                          </a>
 
                          <nav id="submenu-master-data" class="nav nav-sub" aria-label="Menu Master Data">
-                              @if ($isSuperAdmin || $isDirektur || $isOperasional || $isAuditor)
-                                   <a href="#"
+                              @if ($canAccessBranches && \Illuminate\Support\Facades\Route::has('branches.index'))
+                                   <a href="{{ route('branches.index') }}"
                                         class="nav-sub-link {{ $routeActive('branches.*') ? 'active' : '' }}">
-                                        Cabang
+                                        {{ $branchMenuLabel }}
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isAuditor)
-                                   <a href="#"
+                                   <a href="{{ $routeUrl('departments.index') }}"
                                         class="nav-sub-link {{ $routeActive('departments.*') ? 'active' : '' }}">
                                         Departemen
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isHrd || $isAuditor)
-                                   <a href="#"
+                                   <a href="{{ $routeUrl('positions.index') }}"
                                         class="nav-sub-link {{ $routeActive('positions.*') ? 'active' : '' }}">
                                         Jabatan
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isOperasional || $isAuditor)
-                                   <a href="#"
+                                   <a href="{{ $routeUrl('employees.index') }}"
                                         class="nav-sub-link {{ $routeActive('employees.*') ? 'active' : '' }}">
                                         Data Karyawan
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isKeuangan || $isAuditor)
-                                   <a href="#"
+                                   <a href="{{ $routeUrl('customers.index') }}"
                                         class="nav-sub-link {{ $routeActive('customers.*') ? 'active' : '' }}">
                                         Data Pelanggan
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isAuditor)
-                                   <a href="#"
+                                   <a href="{{ $routeUrl('service-categories.index') }}"
                                         class="nav-sub-link {{ $routeActive('service-categories.*') ? 'active' : '' }}">
                                         Kategori Layanan
                                    </a>
 
-                                   <a href="#"
+                                   <a href="{{ $routeUrl('services.index') }}"
                                         class="nav-sub-link {{ $routeActive('services.*') ? 'active' : '' }}">
                                         Data Layanan
                                    </a>
@@ -622,8 +677,8 @@
                               @endif
 
                               @if ($isSuperAdmin)
-                                   <a href="#"
-                                        class="nav-sub-link {{ request()->routeIs('admin.roles.*', 'admin.permissions.*') ? 'active' : '' }}">
+                                   <a href="{{ $routeUrl('super-admin.roles.index') }}"
+                                        class="nav-sub-link {{ $routeActive('super-admin.roles.*', 'permissions.*') ? 'active' : '' }}">
                                         Role dan Hak Akses
                                    </a>
                               @endif
@@ -653,7 +708,8 @@
                </li>
 
                <li class="nav-item">
-                    <a href="#" class="nav-link {{ $routeActive('profile.*') ? 'active' : '' }}">
+                    <a href="{{ $routeUrl(['profile.index', 'profile.edit']) }}"
+                         class="nav-link {{ $routeActive('profile.*') ? 'active' : '' }}">
                          <i data-feather="user"></i>
                          <span>Profil Saya</span>
                     </a>

@@ -2,6 +2,8 @@
 
 declare (strict_types = 1);
 
+use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
@@ -17,19 +19,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/health', function (): JsonResponse {
-
     return response()->json([
-
         'status'    => 'success',
-
         'message'   => 'Laravel berjalan normal.',
-
         'timestamp' => now(),
-
     ]);
-
-})
-    ->name('health');
+})->name('health');
 
 /*
 |--------------------------------------------------------------------------
@@ -38,19 +33,10 @@ Route::get('/health', function (): JsonResponse {
 */
 
 Route::get('/', function (): RedirectResponse {
-
-    if (Auth::check()) {
-
-        return redirect()
-            ->route('dashboard');
-
-    }
-
-    return redirect()
-        ->route('login');
-
-})
-    ->name('home');
+    return Auth::check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
+})->name('home');
 
 /*
 |--------------------------------------------------------------------------
@@ -58,468 +44,339 @@ Route::get('/', function (): RedirectResponse {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('guest')
-    ->group(function () {
+Route::middleware('guest')->group(function (): void {
+    Route::get('/login', [LoginController::class, 'create'])
+        ->name('login');
 
-        Route::get(
-            '/login',
-            [
-                LoginController::class,
-                'create',
-            ]
-        )
-            ->name('login');
-
-        Route::post(
-            '/login',
-            [
-                LoginController::class,
-                'store',
-            ]
-        )
-            ->name('login.process');
-
-    });
+    Route::post('/login', [LoginController::class, 'store'])
+        ->name('login.process');
+});
 
 /*
 |--------------------------------------------------------------------------
-| AUTHENTICATED
+| Authenticated Area
 |--------------------------------------------------------------------------
 */
 
-Route::middleware([
-
-    'auth',
-
-    'active.user',
-
-])
-    ->group(function () {
-
-        /*
+Route::middleware(['auth', 'active.user'])->group(function (): void {
+    /*
     |--------------------------------------------------------------------------
-    | MAIN DASHBOARD REDIRECT
+    | Main Dashboard Redirect
     |--------------------------------------------------------------------------
     */
 
-        Route::get(
-            '/dashboard',
-            function (): RedirectResponse {
+    Route::get('/dashboard', function (): RedirectResponse {
+        $user = Auth::user();
 
-                $user = Auth::user();
+        abort_if($user === null, 401, 'Anda harus login terlebih dahulu.');
 
-                abort_if(
+        return match (true) {
+            $user->hasRole('super_admin')        => redirect()->route('super-admin.dashboard'),
+            $user->hasRole('direktur_utama')     => redirect()->route('direktur-utama.dashboard'),
+            $user->hasRole('hrd_manager')        => redirect()->route('hrd-manager.dashboard'),
+            $user->hasRole('manager_departemen') => redirect()->route('manager-departemen.dashboard'),
+            $user->hasRole('karyawan')           => redirect()->route('karyawan.dashboard'),
+            $user->hasRole('admin_pelayanan')    => redirect()->route('admin-pelayanan.dashboard'),
+            $user->hasRole('admin_operasional')  => redirect()->route('admin-operasional.dashboard'),
+            $user->hasRole('finance_staff')      => redirect()->route('finance-staff.dashboard'),
+            $user->hasRole('auditor_internal')   => redirect()->route('auditor-internal.dashboard'),
+            default                              => abort(403, 'Role belum memiliki akses dashboard.'),
+        };
+    })->name('dashboard');
 
-                    $user === null,
-
-                    401
-
-                );
-
-                return match (true) {
-
-                    $user->hasRole('super_admin')        =>
-
-                    redirect()
-                        ->route(
-                            'super-admin.dashboard'
-                        ),
-
-                    $user->hasRole('direktur_utama')     =>
-
-                    redirect()
-                        ->route(
-                            'direktur-utama.dashboard'
-                        ),
-
-                    $user->hasRole('hrd_manager')        =>
-
-                    redirect()
-                        ->route(
-                            'hrd-manager.dashboard'
-                        ),
-
-                    $user->hasRole('manager_departemen') =>
-
-                    redirect()
-                        ->route(
-                            'manager-departemen.dashboard'
-                        ),
-
-                    $user->hasRole('karyawan')           =>
-
-                    redirect()
-                        ->route(
-                            'karyawan.dashboard'
-                        ),
-
-                    $user->hasRole('admin_pelayanan')    =>
-
-                    redirect()
-                        ->route(
-                            'admin-pelayanan.dashboard'
-                        ),
-
-                    $user->hasRole('admin_operasional')  =>
-
-                    redirect()
-                        ->route(
-                            'admin-operasional.dashboard'
-                        ),
-
-                    $user->hasRole('finance_staff')      =>
-
-                    redirect()
-                        ->route(
-                            'finance-staff.dashboard'
-                        ),
-
-                    $user->hasRole('auditor_internal')   =>
-
-                    redirect()
-                        ->route(
-                            'auditor-internal.dashboard'
-                        ),
-
-                    default                              =>
-
-                    abort(
-                        403,
-                        'Role belum memiliki akses dashboard.'
-                    )
-
-                };
-
-            }
-        )
-            ->name('dashboard');
-
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | SUPER ADMIN
+    | Shared Branch Management
     |--------------------------------------------------------------------------
+    |
+    | Lihat:
+    | - super_admin
+    | - direktur_utama
+    | - admin_operasional
+    | - auditor_internal
+    |
+    | Kelola:
+    | - super_admin
+    | - admin_operasional
+    |
+    | Sampah:
+    | - super_admin
+    |
     */
 
-        Route::prefix('super-admin')
-            ->name('super-admin.')
-            ->middleware('role:super_admin')
-            ->group(function () {
+    Route::prefix('branches')
+        ->name('branches.')
+        ->group(function (): void {
+            /*
+            |------------------------------------------------------------------
+            | Index — empat role
+            |------------------------------------------------------------------
+            */
 
-                Route::get(
-                    '/dashboard',
-                    [
-                        DashboardController::class,
-                        'index',
-                    ]
-                )
-                    ->name('dashboard');
+            Route::middleware(
+                'role:super_admin|direktur_utama|admin_operasional|auditor_internal'
+            )->group(function (): void {
+                Route::get('/', [BranchController::class, 'index'])
+                    ->name('index');
+            });
 
-                /*
-        User CRUD
-        */
+            /*
+            |------------------------------------------------------------------
+            | Create dan Store — Super Admin + Admin Operasional
+            |------------------------------------------------------------------
+            */
 
-                Route::resource(
+            Route::middleware(
+                'role:super_admin|admin_operasional'
+            )->group(function (): void {
+                Route::get('/create', [BranchController::class, 'create'])
+                    ->name('create');
 
-                    'users',
+                Route::post('/', [BranchController::class, 'store'])
+                    ->name('store');
+            });
 
-                    UserController::class
+            /*
+            |------------------------------------------------------------------
+            | Recycle Bin — Super Admin
+            |------------------------------------------------------------------
+            |
+            | Route statis diletakkan sebelum /{branch} agar kata "trash"
+            | tidak dianggap sebagai parameter model Branch.
+            */
 
-                );
+            Route::middleware('role:super_admin')->group(function (): void {
+                Route::get('/trash', [BranchController::class, 'trash'])
+                    ->name('trash');
 
-                Route::get(
-
-                    '/users-trash',
-
-                    [
-
-                        UserController::class,
-
-                        'trash',
-
-                    ]
-
-                )
-                    ->name('users.trash');
-
-                Route::post(
-
-                    '/users/{id}/restore',
-
-                    [
-
-                        UserController::class,
-
-                        'restore',
-
-                    ]
-
-                )
+                Route::post('/{id}/restore', [BranchController::class, 'restore'])
                     ->whereNumber('id')
+                    ->name('restore');
 
-                    ->name('users.restore');
-
-                Route::delete(
-
-                    '/users/{id}/force-delete',
-
-                    [
-
-                        UserController::class,
-
-                        'forceDelete',
-
-                    ]
-
-                )
+                Route::delete('/{id}/force-delete', [BranchController::class, 'forceDelete'])
                     ->whereNumber('id')
-
-                    ->name('users.force-delete');
-
+                    ->name('force-delete');
             });
 
-        /*
+            /*
+            |------------------------------------------------------------------
+            | Approval dan Penolakan — Role sesuai tahap persetujuan
+            |------------------------------------------------------------------
+            |
+            | Direktur Utama memproses tahap pertama.
+            | Auditor Internal memproses tahap terakhir.
+            | Super Admin dapat memproses tahap approval yang sedang aktif.
+            |
+            | Route ini harus berada sebelum route /{branch} agar struktur
+            | URL tetap jelas dan mudah dipelihara.
+            */
+
+            Route::middleware(
+                'role:super_admin|direktur_utama|auditor_internal'
+            )->group(function (): void {
+                Route::patch('/{branch}/approve', [BranchController::class, 'approve'])
+                    ->whereNumber('branch')
+                    ->name('approve');
+
+                Route::patch('/{branch}/reject', [BranchController::class, 'reject'])
+                    ->whereNumber('branch')
+                    ->name('reject');
+            });
+
+            /*
+            |------------------------------------------------------------------
+            | Edit, Update, Delete — Super Admin + Admin Operasional
+            |------------------------------------------------------------------
+            */
+
+            Route::middleware(
+                'role:super_admin|admin_operasional'
+            )->group(function (): void {
+                Route::get('/{branch}/edit', [BranchController::class, 'edit'])
+                    ->whereNumber('branch')
+                    ->name('edit');
+
+                Route::match(['put', 'patch'], '/{branch}', [BranchController::class, 'update'])
+                    ->whereNumber('branch')
+                    ->name('update');
+
+                Route::delete('/{branch}', [BranchController::class, 'destroy'])
+                    ->whereNumber('branch')
+                    ->name('destroy');
+            });
+
+            /*
+            |------------------------------------------------------------------
+            | Show — empat role
+            |------------------------------------------------------------------
+            |
+            | Harus berada paling bawah agar tidak menangkap URL create/trash.
+            */
+
+            Route::middleware(
+                'role:super_admin|direktur_utama|admin_operasional|auditor_internal'
+            )->group(function (): void {
+                Route::get('/{branch}', [BranchController::class, 'show'])
+                    ->whereNumber('branch')
+                    ->name('show');
+            });
+        });
+
+    /*
     |--------------------------------------------------------------------------
-    | DIREKTUR UTAMA
+    | Super Admin
     |--------------------------------------------------------------------------
     */
 
-        Route::prefix('direktur-utama')
-            ->name('direktur-utama.')
-            ->middleware('role:direktur_utama')
-            ->group(function () {
+    Route::prefix('super-admin')
+        ->name('super-admin.')
+        ->middleware('role:super_admin')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'super_admin')
+                ->name('dashboard');
 
-                Route::get(
+            Route::resource('users', UserController::class);
+            Route::resource('roles', RoleController::class);
 
-                    '/dashboard',
+            Route::get('/users-trash', [UserController::class, 'trash'])
+                ->name('users.trash');
 
-                    [
+            Route::post('/users/{id}/restore', [UserController::class, 'restore'])
+                ->whereNumber('id')
+                ->name('users.restore');
 
-                        DashboardController::class,
+            Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])
+                ->whereNumber('id')
+                ->name('users.force-delete');
+        });
 
-                        'index',
-
-                    ]
-
-                )
-                    ->name('dashboard');
-
-            });
-
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | HRD MANAGER
-    |--------------------------------------------------------------------------
-    */
-
-        Route::prefix('hrd-manager')
-            ->name('hrd-manager.')
-            ->middleware('role:hrd_manager')
-            ->group(function () {
-
-                Route::get(
-
-                    '/dashboard',
-
-                    [
-
-                        DashboardController::class,
-
-                        'index',
-
-                    ]
-
-                )
-                    ->name('dashboard');
-
-            });
-
-        /*
-    |--------------------------------------------------------------------------
-    | MANAGER DEPARTEMEN
+    | Direktur Utama
     |--------------------------------------------------------------------------
     */
 
-        Route::prefix('manager-departemen')
-            ->name('manager-departemen.')
-            ->middleware('role:manager_departemen')
-            ->group(function () {
+    Route::prefix('direktur-utama')
+        ->name('direktur-utama.')
+        ->middleware('role:direktur_utama')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'direktur_utama')
+                ->name('dashboard');
+        });
 
-                Route::get(
-
-                    '/dashboard',
-
-                    [
-
-                        DashboardController::class,
-
-                        'index',
-
-                    ]
-
-                )
-                    ->name('dashboard');
-
-            });
-
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | KARYAWAN
+    | HRD Manager
     |--------------------------------------------------------------------------
     */
 
-        Route::prefix('karyawan')
-            ->name('karyawan.')
-            ->middleware('role:karyawan')
-            ->group(function () {
+    Route::prefix('hrd-manager')
+        ->name('hrd-manager.')
+        ->middleware('role:hrd_manager')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'hrd_manager')
+                ->name('dashboard');
+        });
 
-                Route::get(
-
-                    '/dashboard',
-
-                    [
-
-                        DashboardController::class,
-
-                        'index',
-
-                    ]
-
-                )
-                    ->name('dashboard');
-
-            });
-
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | ADMIN PELAYANAN
+    | Manager Departemen
     |--------------------------------------------------------------------------
     */
 
-        Route::prefix('admin-pelayanan')
-            ->name('admin-pelayanan.')
-            ->middleware('role:admin_pelayanan')
-            ->group(function () {
+    Route::prefix('manager-departemen')
+        ->name('manager-departemen.')
+        ->middleware('role:manager_departemen')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'manager_departemen')
+                ->name('dashboard');
+        });
 
-                Route::get(
-
-                    '/dashboard',
-
-                    [
-
-                        DashboardController::class,
-
-                        'index',
-
-                    ]
-
-                )
-                    ->name('dashboard');
-
-            });
-
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | ADMIN OPERASIONAL
+    | Karyawan
     |--------------------------------------------------------------------------
     */
 
-        Route::prefix('admin-operasional')
-            ->name('admin-operasional.')
-            ->middleware('role:admin_operasional')
-            ->group(function () {
+    Route::prefix('karyawan')
+        ->name('karyawan.')
+        ->middleware('role:karyawan')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'karyawan')
+                ->name('dashboard');
+        });
 
-                Route::get(
-
-                    '/dashboard',
-
-                    [
-
-                        DashboardController::class,
-
-                        'index',
-
-                    ]
-
-                )
-                    ->name('dashboard');
-
-            });
-
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | FINANCE STAFF
+    | Admin Pelayanan
     |--------------------------------------------------------------------------
     */
 
-        Route::prefix('finance-staff')
-            ->name('finance-staff.')
-            ->middleware('role:finance_staff')
-            ->group(function () {
+    Route::prefix('admin-pelayanan')
+        ->name('admin-pelayanan.')
+        ->middleware('role:admin_pelayanan')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'admin_pelayanan')
+                ->name('dashboard');
+        });
 
-                Route::get(
-
-                    '/dashboard',
-
-                    [
-
-                        DashboardController::class,
-
-                        'index',
-
-                    ]
-
-                )
-                    ->name('dashboard');
-
-            });
-
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | AUDITOR INTERNAL
+    | Admin Operasional
     |--------------------------------------------------------------------------
     */
 
-        Route::prefix('auditor-internal')
-            ->name('auditor-internal.')
-            ->middleware('role:auditor_internal')
-            ->group(function () {
+    Route::prefix('admin-operasional')
+        ->name('admin-operasional.')
+        ->middleware('role:admin_operasional')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'admin_operasional')
+                ->name('dashboard');
+        });
 
-                Route::get(
-
-                    '/dashboard',
-
-                    [
-
-                        DashboardController::class,
-
-                        'index',
-
-                    ]
-
-                )
-                    ->name('dashboard');
-
-            });
-
-        /*
+    /*
     |--------------------------------------------------------------------------
-    | LOGOUT
+    | Finance Staff
     |--------------------------------------------------------------------------
     */
 
-        Route::post(
+    Route::prefix('finance-staff')
+        ->name('finance-staff.')
+        ->middleware('role:finance_staff')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'finance_staff')
+                ->name('dashboard');
+        });
 
-            '/logout',
+    /*
+    |--------------------------------------------------------------------------
+    | Auditor Internal
+    |--------------------------------------------------------------------------
+    */
 
-            [
+    Route::prefix('auditor-internal')
+        ->name('auditor-internal.')
+        ->middleware('role:auditor_internal')
+        ->group(function (): void {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->defaults('dashboard_role', 'auditor_internal')
+                ->name('dashboard');
+        });
 
-                LoginController::class,
+    /*
+    |--------------------------------------------------------------------------
+    | Logout
+    |--------------------------------------------------------------------------
+    */
 
-                'destroy',
-
-            ]
-
-        )
-            ->name('logout');
-
-    });
+    Route::post('/logout', [LoginController::class, 'destroy'])
+        ->name('logout');
+});

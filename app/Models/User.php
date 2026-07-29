@@ -431,4 +431,13 @@ class User extends Authenticatable
 
     }
 
+    public function managedBranch()
+    {
+        return $this->hasOne(
+            Branch::class,
+            'manager_id',
+            'id'
+        );
+    }
+
 }

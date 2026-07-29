@@ -7,56 +7,54 @@ namespace App\Http\Middleware;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
     /**
-     * Handle incoming request.
+     * Memastikan pengguna memiliki setidaknya satu role yang diizinkan.
+     *
+     * Mendukung:
+     * role:super_admin
+     * role:super_admin,direktur_utama
+     * role:super_admin|direktur_utama
      */
     public function handle(
         Request $request,
         Closure $next,
         string ...$roles
     ): Response {
+        /** @var User|null $user */
+        $user = $request->user();
 
-        /**
-         * Ambil user login
-         *
-         * @var User|null $user
-         */
-        $user = Auth::user();
+        abort_if(
+            $user === null,
+            401,
+            'Anda harus login terlebih dahulu.'
+        );
 
-        /**
-         * Jika user belum login
-         */
-        if ($user === null) {
+        $allowedRoles = collect($roles)
+            ->flatMap(static function (string $role): array {
+                return preg_split('/[|,]/', $role) ?: [];
+            })
+            ->map(static fn(string $role): string => trim($role))
+            ->filter(static fn(string $role): bool => $role !== '')
+            ->unique()
+            ->values()
+            ->all();
 
-            abort(
-                401,
-                'Anda harus login terlebih dahulu.'
-            );
+        abort_if(
+            $allowedRoles === [],
+            403,
+            'Role yang diizinkan belum dikonfigurasi.'
+        );
 
-        }
-
-        /**
-         * Validasi role user
-         *
-         * Contoh:
-         * role:super_admin
-         * role:super_admin,direktur_utama
-         */
-        if (! $user->hasAnyRole($roles)) {
-
-            abort(
-                403,
-                'Anda tidak memiliki akses ke halaman ini.'
-            );
-
-        }
+        abort_unless(
+            $user->hasAnyRole($allowedRoles),
+            403,
+            'Anda tidak memiliki akses ke halaman ini.'
+        );
 
         return $next($request);
-
     }
 }

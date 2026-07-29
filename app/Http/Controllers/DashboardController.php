@@ -4,24 +4,38 @@ declare (strict_types = 1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 use Illuminate\View\View as ViewContract;
 
 class DashboardController extends Controller
 {
+    /**
+     * Mapping nama role canonical ke view dashboard.
+     *
+     * @var array<string, string>
+     */
+    private const DASHBOARD_VIEWS = [
+        'super_admin'        => 'dashboards.super-admin',
+        'direktur_utama'     => 'dashboards.direktur-utama',
+        'hrd_manager'        => 'dashboards.hrd',
+        'manager_departemen' => 'dashboards.manager-departemen',
+        'karyawan'           => 'dashboards.karyawan',
+        'admin_pelayanan'    => 'dashboards.admin-pelayanan',
+        'admin_operasional'  => 'dashboards.admin-operasional',
+        'finance_staff'      => 'dashboards.keuangan',
+        'auditor_internal'   => 'dashboards.auditor',
+    ];
 
     /**
-     * Dashboard berdasarkan role aktif
+     * Dashboard berdasarkan role aktif.
      */
-    public function index(
-        Request $request
-    ): ViewContract | RedirectResponse {
-
+    public function index(Request $request): ViewContract | RedirectResponse
+    {
         /*
         |--------------------------------------------------------------------------
         | User Login
@@ -31,106 +45,101 @@ class DashboardController extends Controller
         $user = $request->user();
 
         if (! $user instanceof User) {
-
             return redirect()
                 ->route('login')
-                ->with(
-                    'error',
-                    'Silakan login kembali.'
-                );
-
+                ->with('error', 'Silakan login kembali.');
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Cek status user
+        | Cek Status User
         |--------------------------------------------------------------------------
         */
 
         if (! $user->isActive()) {
-
             $this->logoutSession($request);
 
             return redirect()
                 ->route('login')
-                ->with(
-                    'error',
-                    'Akun tidak aktif.'
-                );
-
+                ->with('error', 'Akun tidak aktif.');
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Ambil role aktif session
+        | Tentukan Role Aktif
         |--------------------------------------------------------------------------
+        |
+        | Prioritas:
+        | 1. Role yang dikirim oleh route melalui defaults('dashboard_role', ...)
+        | 2. Role yang tersimpan di session
+        | 3. Role pertama milik user
+        |
         */
 
-        $roleId = session(
-            'active_role_id'
-        );
+        $routeRoleName = $request->route('dashboard_role');
 
-        $roleName = session(
-            'active_role_name'
-        );
+        $activeRole = null;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Jika session kosong ambil role pertama user
-        |--------------------------------------------------------------------------
-        */
+        if (is_string($routeRoleName) && trim($routeRoleName) !== '') {
+            $canonicalRouteRole = $this->normalizeRoleName($routeRoleName);
 
-        if (! $roleId || ! $roleName) {
-
-            $role = $user
+            $activeRole = $user
                 ->roles()
+                ->whereRaw('LOWER(roles.name) = ?', [$canonicalRouteRole])
                 ->first();
 
-            if (! $role) {
-
-                abort(
-                    403,
-                    'User belum memiliki role.'
-                );
-
-            }
-
-            session([
-
-                'active_role_id'   => $role->id,
-
-                'active_role_name' => $role->name,
-
-            ]);
-
-            $roleId = $role->id;
-
-            $roleName = $role->name;
-
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validasi user mempunyai role tersebut
-        |--------------------------------------------------------------------------
-        */
-
-        $activeRole = $user
-            ->roles()
-            ->where(
-                'roles.id',
-                $roleId
-            )
-            ->first();
-
-        if (! $activeRole) {
-
-            abort(
+            abort_if(
+                $activeRole === null,
                 403,
                 'Role tidak dimiliki user.'
             );
-
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Gunakan Role dari Session
+        |--------------------------------------------------------------------------
+        */
+
+        if ($activeRole === null) {
+            $roleId = $request->session()->get('active_role_id');
+
+            if ($roleId !== null) {
+                $activeRole = $user
+                    ->roles()
+                    ->where('roles.id', $roleId)
+                    ->first();
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fallback ke Role Pertama User
+        |--------------------------------------------------------------------------
+        */
+
+        if ($activeRole === null) {
+            $activeRole = $user
+                ->roles()
+                ->orderBy('roles.id')
+                ->first();
+        }
+
+        abort_if(
+            $activeRole === null,
+            403,
+            'User belum memiliki role.'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Normalisasi Nama Role
+        |--------------------------------------------------------------------------
+        */
+
+        $canonicalRoleName = $this->normalizeRoleName(
+            (string) $activeRole->name
+        );
 
         /*
         |--------------------------------------------------------------------------
@@ -138,68 +147,25 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $dashboard = match (
-            strtolower($activeRole->name)
-        ) {
+        $dashboard = self::DASHBOARD_VIEWS[$canonicalRoleName] ?? null;
 
-            'super_admin'        =>
-
-            'dashboards.super-admin',
-
-            'executive',
-            'direktur_utama'     =>
-
-            'dashboards.direktur-utama',
-
-            'hr',
-            'hrd'                =>
-
-            'dashboards.hrd',
-
-            'manager_departemen' =>
-
-            'dashboards.manager-departemen',
-
-            'karyawan',
-            'user'               =>
-
-            'dashboards.karyawan',
-
-            'admin_pelayanan'    =>
-
-            'dashboards.admin-pelayanan',
-
-            'admin_operasional'  =>
-
-            'dashboards.admin-operasional',
-
-            'finance',
-            'keuangan'           =>
-
-            'dashboards.keuangan',
-
-            'auditor'            =>
-
-            'dashboards.auditor',
-
-            default              => null
-
-        };
+        abort_if(
+            $dashboard === null,
+            403,
+            'Role Anda belum memiliki akses dashboard.'
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | Role Tidak Dikenal
+        | Simpan Session Role Canonical
         |--------------------------------------------------------------------------
         */
 
-        if (! $dashboard) {
-
-            abort(
-                403,
-                'Role Anda belum memiliki akses dashboard.'
-            );
-
-        }
+        $request->session()->put([
+            'active_role_id'   => $activeRole->id,
+            'active_role_name' => $canonicalRoleName,
+            'active_role'      => $canonicalRoleName,
+        ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -207,68 +173,94 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (! View::exists($dashboard)) {
-
-            abort(
-                500,
-                "Dashboard {$dashboard} belum tersedia."
-            );
-
-        }
-
-        return view(
-            $dashboard,
-            [
-
-                'user'            => $user,
-
-                'activeRole'      => $activeRole,
-
-                'activeRoleName'  => $activeRole->name,
-
-                'activeRoleId'    => $activeRole->id,
-
-                'activeRoleLabel' =>
-                ucwords(
-                    str_replace(
-                        '_',
-                        ' ',
-                        $activeRole->name
-                    )
-                ),
-
-            ]
+        abort_unless(
+            View::exists($dashboard),
+            500,
+            "Dashboard {$dashboard} belum tersedia."
         );
 
+        return view($dashboard, [
+            'user'            => $user,
+            'activeRole'      => $activeRole,
+            'activeRoleName'  => $canonicalRoleName,
+            'activeRoleId'    => $activeRole->id,
+            'activeRoleLabel' => Str::of($canonicalRoleName)
+                ->replace('_', ' ')
+                ->title()
+                ->toString(),
+        ]);
     }
 
     /**
-     * Logout session
+     * Menyamakan alias role lama dengan nama role canonical.
      */
-    private function logoutSession(
-        Request $request
-    ): void {
+    private function normalizeRoleName(string $roleName): string
+    {
+        $normalized = Str::of($roleName)
+            ->trim()
+            ->lower()
+            ->replace(['-', ' '], '_')
+            ->replaceMatches('/_+/', '_')
+            ->toString();
 
-        Auth::logout();
+        return match ($normalized) {
+            'superadmin',
+            'super_admin'        => 'super_admin',
 
-        $request
-            ->session()
-            ->forget([
+            'executive',
+            'direktur',
+            'direktur_utama'     => 'direktur_utama',
 
-                'active_role_id',
+            'hr',
+            'hrd',
+            'hrd_manager',
+            'human_resource',
+            'human_resources'    => 'hrd_manager',
 
-                'active_role_name',
+            'manager',
+            'manager_department',
+            'manager_departemen' => 'manager_departemen',
 
-            ]);
+            'pegawai',
+            'employee',
+            'user',
+            'karyawan'           => 'karyawan',
 
-        $request
-            ->session()
-            ->invalidate();
+            'pelayanan',
+            'admin_service',
+            'admin_pelayanan'    => 'admin_pelayanan',
 
-        $request
-            ->session()
-            ->regenerateToken();
+            'operasional',
+            'admin_operation',
+            'admin_operasional'  => 'admin_operasional',
 
+            'finance',
+            'financial',
+            'keuangan',
+            'finance_staff'      => 'finance_staff',
+
+            'audit',
+            'auditor',
+            'auditor_internal'   => 'auditor_internal',
+
+            default              => $normalized,
+        };
     }
 
+    /**
+     * Logout dan hapus session autentikasi.
+     */
+    private function logoutSession(Request $request): void
+    {
+        Auth::logout();
+
+        $request->session()->forget([
+            'active_role_id',
+            'active_role_name',
+            'active_role',
+        ]);
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
 }

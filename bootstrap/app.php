@@ -12,9 +12,17 @@ return Application::configure(
     basePath: dirname(__DIR__)
 )
 
+/*
+|--------------------------------------------------------------------------
+| ROUTING
+|--------------------------------------------------------------------------
+*/
+
     ->withRouting(
 
         web: __DIR__ . '/../routes/web.php',
+
+        api: __DIR__ . '/../routes/api.php',
 
         commands: __DIR__ . '/../routes/console.php',
 
@@ -22,43 +30,49 @@ return Application::configure(
 
     )
 
+/*
+|--------------------------------------------------------------------------
+| MIDDLEWARE
+|--------------------------------------------------------------------------
+*/
+
     ->withMiddleware(function (Middleware $middleware): void {
 
         /*
     |--------------------------------------------------------------------------
-    | Middleware Alias
+    | Custom Middleware Alias
     |--------------------------------------------------------------------------
-    |
-    | Daftar middleware custom Laravel 13.
-    |
     */
 
         $middleware->alias([
 
             /*
-        | Cek user aktif
+        |--------------------------------------------------------------------------
+        | Check User Active
+        |--------------------------------------------------------------------------
         */
+
             'active.user' => EnsureUserIsActive::class,
 
             /*
-        | Role permission
+        |--------------------------------------------------------------------------
+        | Role Middleware
+        |--------------------------------------------------------------------------
         |
-        | Contoh:
-        | ->middleware('role:ADMIN')
-        | ->middleware('role:SUPER_ADMIN,ADMIN')
+        | Example:
+        |
+        | ->middleware('role:super_admin')
         |
         */
+
             'role'        => RoleMiddleware::class,
 
         ]);
 
         /*
     |--------------------------------------------------------------------------
-    | Redirect Authentication
+    | Authentication Redirect
     |--------------------------------------------------------------------------
-    |
-    | Jika user belum login diarahkan ke login.
-    |
     */
 
         $middleware->redirectGuestsTo(
@@ -69,11 +83,8 @@ return Application::configure(
 
         /*
     |--------------------------------------------------------------------------
-    | Redirect User Setelah Login
+    | Already Login Redirect
     |--------------------------------------------------------------------------
-    |
-    | Jika user sudah login dan membuka halaman guest.
-    |
     */
 
         $middleware->redirectUsersTo(
@@ -83,6 +94,12 @@ return Application::configure(
         );
 
     })
+
+/*
+|--------------------------------------------------------------------------
+| EXCEPTIONS
+|--------------------------------------------------------------------------
+*/
 
     ->withExceptions(function (Exceptions $exceptions): void {
 
