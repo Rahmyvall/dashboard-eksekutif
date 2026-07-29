@@ -2,6 +2,7 @@
 
 declare (strict_types = 1);
 
+use App\Http\Controllers\Api\BranchApiController;
 use App\Http\Controllers\Api\RoleApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -85,6 +86,123 @@ Route::prefix('roles')
             '/{role}',
             [
                 RoleApiController::class,
+                'destroy',
+            ]
+        )
+            ->name('destroy');
+
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Branch API
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('branches')
+    ->name('api.branches.')
+    ->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ALL BRANCH
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/',
+            [
+                BranchApiController::class,
+                'index',
+            ]
+        )
+            ->name('index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE BRANCH
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post(
+            '/',
+            [
+                BranchApiController::class,
+                'store',
+            ]
+        )
+            ->name('store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESTORE BRANCH
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{branch}/restore',
+            [
+                BranchApiController::class,
+                'restore',
+            ]
+        )
+            ->name('restore');
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE STATUS BRANCH
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{branch}/status',
+            [
+                BranchApiController::class,
+                'updateStatus',
+            ]
+        )
+            ->name('status');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DETAIL BRANCH
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/{branch}',
+            [
+                BranchApiController::class,
+                'show',
+            ]
+        )
+            ->name('show');
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE BRANCH
+        |--------------------------------------------------------------------------
+        */
+
+        Route::put(
+            '/{branch}',
+            [
+                BranchApiController::class,
+                'update',
+            ]
+        )
+            ->name('update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE BRANCH
+        |--------------------------------------------------------------------------
+        */
+
+        Route::delete(
+            '/{branch}',
+            [
+                BranchApiController::class,
                 'destroy',
             ]
         )
