@@ -4,6 +4,7 @@ declare (strict_types = 1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,11 +15,6 @@ use Illuminate\View\View as ViewContract;
 
 class DashboardController extends Controller
 {
-    /**
-     * Mapping nama role canonical ke view dashboard.
-     *
-     * @var array<string, string>
-     */
     private const DASHBOARD_VIEWS = [
         'super_admin'        => 'dashboards.super-admin',
         'direktur_utama'     => 'dashboards.direktur-utama',
@@ -31,179 +27,202 @@ class DashboardController extends Controller
         'auditor_internal'   => 'dashboards.auditor',
     ];
 
-    /**
-     * Dashboard berdasarkan role aktif.
-     */
     public function index(Request $request): ViewContract | RedirectResponse
     {
-        /*
-        |--------------------------------------------------------------------------
-        | User Login
-        |--------------------------------------------------------------------------
-        */
 
         $user = $request->user();
 
         if (! $user instanceof User) {
+
             return redirect()
                 ->route('login')
-                ->with('error', 'Silakan login kembali.');
+                ->with(
+                    'error',
+                    'Silakan login kembali.'
+                );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Cek Status User
-        |--------------------------------------------------------------------------
-        */
-
         if (! $user->isActive()) {
+
             $this->logoutSession($request);
 
             return redirect()
                 ->route('login')
-                ->with('error', 'Akun tidak aktif.');
+                ->with(
+                    'error',
+                    'Akun tidak aktif.'
+                );
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Tentukan Role Aktif
+        | ROLE
         |--------------------------------------------------------------------------
-        |
-        | Prioritas:
-        | 1. Role yang dikirim oleh route melalui defaults('dashboard_role', ...)
-        | 2. Role yang tersimpan di session
-        | 3. Role pertama milik user
-        |
         */
-
-        $routeRoleName = $request->route('dashboard_role');
 
         $activeRole = null;
 
-        if (is_string($routeRoleName) && trim($routeRoleName) !== '') {
-            $canonicalRouteRole = $this->normalizeRoleName($routeRoleName);
+        $roleId = session('active_role_id');
+
+        if ($roleId) {
 
             $activeRole = $user
                 ->roles()
-                ->whereRaw('LOWER(roles.name) = ?', [$canonicalRouteRole])
+                ->where(
+                    'roles.id',
+                    $roleId
+                )
                 ->first();
 
-            abort_if(
-                $activeRole === null,
-                403,
-                'Role tidak dimiliki user.'
-            );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Gunakan Role dari Session
-        |--------------------------------------------------------------------------
-        */
+        if (! $activeRole) {
 
-        if ($activeRole === null) {
-            $roleId = $request->session()->get('active_role_id');
-
-            if ($roleId !== null) {
-                $activeRole = $user
-                    ->roles()
-                    ->where('roles.id', $roleId)
-                    ->first();
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Fallback ke Role Pertama User
-        |--------------------------------------------------------------------------
-        */
-
-        if ($activeRole === null) {
             $activeRole = $user
                 ->roles()
-                ->orderBy('roles.id')
                 ->first();
+
         }
 
         abort_if(
-            $activeRole === null,
+            ! $activeRole,
             403,
             'User belum memiliki role.'
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Normalisasi Nama Role
-        |--------------------------------------------------------------------------
-        */
-
-        $canonicalRoleName = $this->normalizeRoleName(
-            (string) $activeRole->name
+        $roleName = $this->normalizeRole(
+            $activeRole->name
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Dashboard Mapping
-        |--------------------------------------------------------------------------
-        */
-
-        $dashboard = self::DASHBOARD_VIEWS[$canonicalRoleName] ?? null;
+        $dashboard = self::DASHBOARD_VIEWS[$roleName] ?? null;
 
         abort_if(
-            $dashboard === null,
+            ! $dashboard,
             403,
-            'Role Anda belum memiliki akses dashboard.'
+            'Dashboard role belum tersedia.'
         );
 
         /*
         |--------------------------------------------------------------------------
-        | Simpan Session Role Canonical
+        | DATA CABANG
         |--------------------------------------------------------------------------
         */
 
-        $request->session()->put([
+        $totalBranch = Branch::count();
+
+        $activeBranch = Branch::where(
+            'status',
+            1
+        )->count();
+
+        $inactiveBranch = Branch::where(
+            'status',
+            0
+        )->count();
+
+        $pendingBranch = Branch::where(
+            'approval_status',
+            'pending'
+        )->count();
+
+        $activePercentage   = 0;
+        $inactivePercentage = 0;
+        $pendingPercentage  = 0;
+
+        if ($totalBranch > 0) {
+
+            $activePercentage =
+                round(
+                ($activeBranch / $totalBranch) * 100,
+                1
+            );
+
+            $inactivePercentage =
+                round(
+                ($inactiveBranch / $totalBranch) * 100,
+                1
+            );
+
+            $pendingPercentage =
+                round(
+                ($pendingBranch / $totalBranch) * 100,
+                1
+            );
+        }
+
+        $branchSummary = [
+
+            'total'               => $totalBranch,
+
+            'active'              => $activeBranch,
+
+            'inactive'            => $inactiveBranch,
+
+            'pending'             => $pendingBranch,
+
+            'active_percentage'   => $activePercentage,
+
+            'inactive_percentage' => $inactivePercentage,
+
+            'pending_percentage'  => $pendingPercentage,
+
+        ];
+
+        $branchAngle =
+            ($activePercentage / 100) * 360;
+
+        session([
             'active_role_id'   => $activeRole->id,
-            'active_role_name' => $canonicalRoleName,
-            'active_role'      => $canonicalRoleName,
+            'active_role_name' => $roleName,
+            'active_role'      => $roleName,
         ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cek View
-        |--------------------------------------------------------------------------
-        */
 
         abort_unless(
             View::exists($dashboard),
             500,
-            "Dashboard {$dashboard} belum tersedia."
+            "Dashboard {$dashboard} tidak ditemukan."
         );
 
         return view($dashboard, [
+
             'user'            => $user,
+
             'activeRole'      => $activeRole,
-            'activeRoleName'  => $canonicalRoleName,
+
+            'activeRoleName'  => $roleName,
+
             'activeRoleId'    => $activeRole->id,
-            'activeRoleLabel' => Str::of($canonicalRoleName)
+
+            'activeRoleLabel' => Str::of($roleName)
                 ->replace('_', ' ')
                 ->title()
                 ->toString(),
+
+            'branchSummary'   => $branchSummary,
+
+            'branchAngle'     => $branchAngle,
+
         ]);
+
     }
 
-    /**
-     * Menyamakan alias role lama dengan nama role canonical.
-     */
-    private function normalizeRoleName(string $roleName): string
+    private function normalizeRole(string $role): string
     {
-        $normalized = Str::of($roleName)
-            ->trim()
+
+        $role = Str::of($role)
             ->lower()
-            ->replace(['-', ' '], '_')
-            ->replaceMatches('/_+/', '_')
+            ->trim()
+            ->replace(
+                [
+                    '-',
+                    ' ',
+                ],
+                '_'
+            )
             ->toString();
 
-        return match ($normalized) {
+        return match ($role) {
+
             'superadmin',
             'super_admin'        => 'super_admin',
 
@@ -213,12 +232,9 @@ class DashboardController extends Controller
 
             'hr',
             'hrd',
-            'hrd_manager',
-            'human_resource',
-            'human_resources'    => 'hrd_manager',
+            'hrd_manager'        => 'hrd_manager',
 
             'manager',
-            'manager_department',
             'manager_departemen' => 'manager_departemen',
 
             'pegawai',
@@ -227,15 +243,12 @@ class DashboardController extends Controller
             'karyawan'           => 'karyawan',
 
             'pelayanan',
-            'admin_service',
             'admin_pelayanan'    => 'admin_pelayanan',
 
             'operasional',
-            'admin_operation',
             'admin_operasional'  => 'admin_operasional',
 
             'finance',
-            'financial',
             'keuangan',
             'finance_staff'      => 'finance_staff',
 
@@ -243,24 +256,32 @@ class DashboardController extends Controller
             'auditor',
             'auditor_internal'   => 'auditor_internal',
 
-            default              => $normalized,
+            default              => $role,
+
         };
+
     }
 
-    /**
-     * Logout dan hapus session autentikasi.
-     */
     private function logoutSession(Request $request): void
     {
+
         Auth::logout();
 
-        $request->session()->forget([
-            'active_role_id',
-            'active_role_name',
-            'active_role',
-        ]);
+        $request
+            ->session()
+            ->forget([
+                'active_role_id',
+                'active_role_name',
+                'active_role',
+            ]);
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request
+            ->session()
+            ->invalidate();
+
+        $request
+            ->session()
+            ->regenerateToken();
+
     }
 }

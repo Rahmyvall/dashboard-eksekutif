@@ -1969,76 +1969,228 @@
                </article>
 
                <article class="sad-card">
+
                     <header class="sad-card-header">
                          <div class="sad-card-heading">
+
                               <span class="sad-card-heading-icon">
-                                   <i data-feather="smile"></i>
+                                   <i data-feather="git-branch"></i>
                               </span>
 
                               <div>
-                                   <h2 class="sad-card-title">Indeks Kepuasan Pelanggan</h2>
+                                   <h2 class="sad-card-title">
+                                        Data Cabang
+                                   </h2>
+
                                    <p class="sad-card-subtitle">
-                                        Ringkasan kualitas pengalaman pelanggan pada periode berjalan.
+                                        Ringkasan status dan perkembangan cabang perusahaan.
                                    </p>
                               </div>
+
                          </div>
                     </header>
 
+
                     <div class="sad-satisfaction-body">
+
+
+                         {{-- SUMMARY CABANG --}}
                          <div class="sad-score-summary">
+
                               <div class="sad-score-ring"
-                                   style="background: conic-gradient(
-                                var(--sad-success) 0deg {{ $satisfactionAngle }}deg,
-                                var(--sad-border) {{ $satisfactionAngle }}deg 360deg
-                            );">
+                                   style="
+                 background:
+                 conic-gradient(
+                    var(--sad-success) 0deg {{ $branchAngle }}deg,
+                    var(--sad-border) {{ $branchAngle }}deg 360deg
+                 );">
+
                                    <span class="sad-score-ring-value">
-                                        {{ number_format($satisfactionSummary['score'], 1, ',', '.') }}%
+                                        {{ $branchSummary['active_percentage'] }}%
                                    </span>
+
                               </div>
+
 
                               <div class="sad-score-details">
-                                   <h3>Kategori sangat baik</h3>
+
+                                   <h3>
+                                        {{ $branchSummary['active'] }}
+                                        Cabang Aktif
+                                   </h3>
+
+
                                    <p>
-                                        Berdasarkan {{ number_format($satisfactionSummary['respondents'], 0, ',', '.') }}
-                                        responden
-                                        dengan tingkat respons
-                                        {{ number_format($satisfactionSummary['response_rate'], 1, ',', '.') }}%.
+                                        Dari total
+                                        {{ number_format($branchSummary['total'], 0, ',', '.') }}
+                                        cabang yang terdaftar.
                                    </p>
-                                   <span class="sad-score-status">Tren positif</span>
+
+
+                                   <span class="sad-score-status">
+                                        Operasional berjalan
+                                   </span>
+
                               </div>
+
                          </div>
 
+
+
+                         {{-- STATUS CABANG --}}
                          <div class="sad-sentiment-grid">
+
+
                               <div class="sad-sentiment-card">
-                                   <strong>{{ $satisfactionSummary['positive'] }}%</strong>
-                                   <span>Positif</span>
+
+                                   <strong>
+                                        {{ $branchSummary['active'] }}
+                                   </strong>
+
+                                   <span>
+                                        Aktif
+                                   </span>
+
                               </div>
+
+
+
                               <div class="sad-sentiment-card">
-                                   <strong>{{ $satisfactionSummary['neutral'] }}%</strong>
-                                   <span>Netral</span>
+
+                                   <strong>
+                                        {{ $branchSummary['pending'] }}
+                                   </strong>
+
+                                   <span>
+                                        Approval
+                                   </span>
+
                               </div>
+
+
+
                               <div class="sad-sentiment-card">
-                                   <strong>{{ $satisfactionSummary['negative'] }}%</strong>
-                                   <span>Negatif</span>
+
+                                   <strong>
+                                        {{ $branchSummary['inactive'] }}
+                                   </strong>
+
+                                   <span>
+                                        Nonaktif
+                                   </span>
+
                               </div>
+
+
                          </div>
 
+
+
+
+                         {{-- DETAIL --}}
                          <div class="sad-health-list">
-                              @foreach ($satisfactionSummary['items'] as $item)
-                                   <div>
-                                        <div class="sad-health-top">
-                                             <span class="sad-health-label">{{ $item['label'] }}</span>
-                                             <span class="sad-health-value">{{ $item['value'] }}%</span>
+
+
+                              <div>
+
+                                   <div class="sad-health-top">
+
+                                        <span class="sad-health-label">
+                                             Cabang Aktif
+                                        </span>
+
+
+                                        <span class="sad-health-value">
+                                             {{ $branchSummary['active_percentage'] }}%
+                                        </span>
+
+                                   </div>
+
+
+                                   <div class="sad-progress">
+
+                                        <div class="sad-progress-bar success"
+                                             style="
+                         width:
+                         {{ $branchSummary['active_percentage'] }}%;
+                         ">
                                         </div>
 
-                                        <div class="sad-progress">
-                                             <div class="sad-progress-bar {{ $item['class'] }}"
-                                                  style="width: {{ $item['value'] }}%;"></div>
-                                        </div>
                                    </div>
-                              @endforeach
+
+
+                              </div>
+
+
+
+
+                              <div>
+
+                                   <div class="sad-health-top">
+
+                                        <span class="sad-health-label">
+                                             Menunggu Approval
+                                        </span>
+
+
+                                        <span class="sad-health-value">
+                                             {{ $branchSummary['pending_percentage'] }}%
+                                        </span>
+
+                                   </div>
+
+
+                                   <div class="sad-progress">
+
+                                        <div class="sad-progress-bar warning"
+                                             style="
+                         width:
+                         {{ $branchSummary['pending_percentage'] }}%;
+                         ">
+                                        </div>
+
+                                   </div>
+
+                              </div>
+
+
+
+
+                              <div>
+
+                                   <div class="sad-health-top">
+
+                                        <span class="sad-health-label">
+                                             Cabang Nonaktif
+                                        </span>
+
+
+                                        <span class="sad-health-value">
+                                             {{ $branchSummary['inactive_percentage'] }}%
+                                        </span>
+
+                                   </div>
+
+
+                                   <div class="sad-progress">
+
+                                        <div class="sad-progress-bar danger"
+                                             style="
+                         width:
+                         {{ $branchSummary['inactive_percentage'] }}%;
+                         ">
+                                        </div>
+
+                                   </div>
+
+                              </div>
+
+
                          </div>
+
+
                     </div>
+
                </article>
           </section>
 
