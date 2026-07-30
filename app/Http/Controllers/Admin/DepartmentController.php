@@ -17,7 +17,7 @@ class DepartmentController extends Controller
      */
     public function index(Request $request): View
     {
-        $search = trim((string) $request->input('search'));
+        $search = trim((string) $request->input('search', ''));
         $status = $request->input('status');
 
         $departments = Department::query()
@@ -45,6 +45,8 @@ class DepartmentController extends Controller
 
     /**
      * Menampilkan form tambah department.
+     *
+     * Hanya Super Admin.
      */
     public function create(): View
     {
@@ -53,6 +55,8 @@ class DepartmentController extends Controller
 
     /**
      * Menyimpan department baru.
+     *
+     * Hanya Super Admin.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -99,11 +103,16 @@ class DepartmentController extends Controller
         );
 
         try {
-            DB::transaction(function () use ($validated) {
+            DB::transaction(function () use ($validated): void {
                 Department::create([
                     'code'        => strtoupper(trim($validated['code'])),
+
                     'name'        => trim($validated['name']),
-                    'description' => $validated['description'] ?? null,
+
+                    'description' => filled($validated['description'] ?? null)
+                        ? trim($validated['description'])
+                        : null,
+
                     'status'      => $validated['status'],
                 ]);
             });
@@ -128,6 +137,13 @@ class DepartmentController extends Controller
 
     /**
      * Menampilkan detail department.
+     *
+     * Dapat dibuka oleh:
+     * - Super Admin
+     * - Direktur
+     * - Manager
+     * - HRD
+     * - Auditor
      */
     public function show(Department $department): View
     {
@@ -139,6 +155,8 @@ class DepartmentController extends Controller
 
     /**
      * Menampilkan form edit department.
+     *
+     * Hanya Super Admin.
      */
     public function edit(Department $department): View
     {
@@ -150,6 +168,8 @@ class DepartmentController extends Controller
 
     /**
      * Memperbarui department.
+     *
+     * Hanya Super Admin.
      */
     public function update(
         Request $request,
@@ -162,7 +182,7 @@ class DepartmentController extends Controller
                     'string',
                     'max:30',
                     Rule::unique('departments', 'code')
-                        ->ignore($department->id),
+                        ->ignore($department->getKey()),
                 ],
 
                 'name'        => [
@@ -199,11 +219,19 @@ class DepartmentController extends Controller
         );
 
         try {
-            DB::transaction(function () use ($validated, $department) {
+            DB::transaction(function () use (
+                $validated,
+                $department
+            ): void {
                 $department->update([
                     'code'        => strtoupper(trim($validated['code'])),
+
                     'name'        => trim($validated['name']),
-                    'description' => $validated['description'] ?? null,
+
+                    'description' => filled($validated['description'] ?? null)
+                        ? trim($validated['description'])
+                        : null,
+
                     'status'      => $validated['status'],
                 ]);
             });
@@ -228,12 +256,16 @@ class DepartmentController extends Controller
 
     /**
      * Menghapus department menggunakan soft delete.
+     *
+     * Hanya Super Admin.
      */
     public function destroy(
         Department $department
     ): RedirectResponse {
         try {
-            $department->delete();
+            DB::transaction(function () use ($department): void {
+                $department->delete();
+            });
 
             return redirect()
                 ->route('super-admin.departments.index')
@@ -253,10 +285,12 @@ class DepartmentController extends Controller
 
     /**
      * Menampilkan department yang sudah dihapus.
+     *
+     * Hanya Super Admin.
      */
     public function trash(Request $request): View
     {
-        $search = trim((string) $request->input('search'));
+        $search = trim((string) $request->input('search', ''));
 
         $departments = Department::onlyTrashed()
             ->when($search !== '', function ($query) use ($search) {
@@ -279,14 +313,18 @@ class DepartmentController extends Controller
 
     /**
      * Mengembalikan department yang sudah dihapus.
+     *
+     * Hanya Super Admin.
      */
     public function restore(int $id): RedirectResponse
     {
         try {
-            $department = Department::onlyTrashed()
-                ->findOrFail($id);
+            DB::transaction(function () use ($id): void {
+                $department = Department::onlyTrashed()
+                    ->findOrFail($id);
 
-            $department->restore();
+                $department->restore();
+            });
 
             return redirect()
                 ->route('super-admin.departments.index')
@@ -306,14 +344,18 @@ class DepartmentController extends Controller
 
     /**
      * Menghapus department secara permanen.
+     *
+     * Hanya Super Admin.
      */
     public function forceDelete(int $id): RedirectResponse
     {
         try {
-            $department = Department::onlyTrashed()
-                ->findOrFail($id);
+            DB::transaction(function () use ($id): void {
+                $department = Department::onlyTrashed()
+                    ->findOrFail($id);
 
-            $department->forceDelete();
+                $department->forceDelete();
+            });
 
             return redirect()
                 ->route('super-admin.departments.trash')

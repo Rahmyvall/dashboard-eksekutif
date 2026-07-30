@@ -225,6 +225,121 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
 
     /*
     |--------------------------------------------------------------------------
+    | Shared Department Management
+    |--------------------------------------------------------------------------
+    |
+    | Index dan Show:
+    | - super_admin
+    | - direktur_utama
+    | - hrd_manager
+    | - manager_departemen
+    | - auditor_internal
+    |
+    | Pengelolaan penuh:
+    | - super_admin
+    |
+    */
+
+    Route::prefix('super-admin')
+        ->name('super-admin.')
+        ->group(function (): void {
+            Route::prefix('departments')
+                ->name('departments.')
+                ->controller(DepartmentController::class)
+                ->group(function (): void {
+                    /*
+                    |----------------------------------------------------------
+                    | Create dan Store — khusus Super Admin
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware('role:super_admin')
+                        ->group(function (): void {
+                            Route::get('/create', 'create')
+                                ->name('create');
+
+                            Route::post('/', 'store')
+                                ->name('store');
+                        });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Edit, Update, dan Delete — khusus Super Admin
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware('role:super_admin')
+                        ->group(function (): void {
+                            Route::get('/{department}/edit', 'edit')
+                                ->whereNumber('department')
+                                ->name('edit');
+
+                            Route::match(
+                                ['put', 'patch'],
+                                '/{department}',
+                                'update'
+                            )
+                                ->whereNumber('department')
+                                ->name('update');
+
+                            Route::delete('/{department}', 'destroy')
+                                ->whereNumber('department')
+                                ->name('destroy');
+                        });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Index dan Show — lima role
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware(
+                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|auditor_internal'
+                    )->group(function (): void {
+                        Route::get('/', 'index')
+                            ->name('index');
+
+                        Route::get('/{department}', 'show')
+                            ->whereNumber('department')
+                            ->name('show');
+                    });
+                });
+
+            /*
+            |--------------------------------------------------------------
+            | Recycle Bin Department — khusus Super Admin
+            |--------------------------------------------------------------
+            |
+            | URL dan nama route lama dipertahankan agar Blade tetap bekerja.
+            |
+            */
+
+            Route::middleware('role:super_admin')
+                ->group(function (): void {
+                    Route::get(
+                        '/departments-trash',
+                        [DepartmentController::class, 'trash']
+                    )
+                        ->name('departments.trash');
+
+                    Route::post(
+                        '/departments/{id}/restore',
+                        [DepartmentController::class, 'restore']
+                    )
+                        ->whereNumber('id')
+                        ->name('departments.restore');
+
+                    Route::delete(
+                        '/departments/{id}/force-delete',
+                        [DepartmentController::class, 'forceDelete']
+                    )
+                        ->whereNumber('id')
+                        ->name('departments.force-delete');
+                });
+        });
+
+    /*
+    |--------------------------------------------------------------------------
     | Super Admin
     |--------------------------------------------------------------------------
     */
@@ -258,37 +373,6 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
             Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])
                 ->whereNumber('id')
                 ->name('users.force-delete');
-
-            /*
-        |--------------------------------------------------------------------------
-        | Department Management
-        |--------------------------------------------------------------------------
-        */
-
-            Route::resource(
-                'departments',
-                DepartmentController::class
-            );
-
-            Route::get(
-                '/departments-trash',
-                [DepartmentController::class, 'trash']
-            )
-                ->name('departments.trash');
-
-            Route::post(
-                '/departments/{id}/restore',
-                [DepartmentController::class, 'restore']
-            )
-                ->whereNumber('id')
-                ->name('departments.restore');
-
-            Route::delete(
-                '/departments/{id}/force-delete',
-                [DepartmentController::class, 'forceDelete']
-            )
-                ->whereNumber('id')
-                ->name('departments.force-delete');
 
         });
 

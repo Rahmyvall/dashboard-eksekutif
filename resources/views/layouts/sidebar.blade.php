@@ -101,7 +101,37 @@
     | HELPER
     |--------------------------------------------------------------------------
     */
-     $hasRole = static fn(array $roles): bool => in_array($activeRole, $roles, true);
+     /*
+      * Pemeriksaan role dibuat lebih kuat:
+      * 1. Memeriksa role aktif yang berasal dari session/user.
+      * 2. Memeriksa seluruh role Spatie milik user.
+      * 3. Menormalisasi spasi dan tanda hubung agar sesuai dengan slug web.php.
+      */
+     $hasRole = static function (array $roles) use ($user, $activeRole, $roleAliases): bool {
+         if (in_array($activeRole, $roles, true)) {
+             return true;
+         }
+
+         if (!$user || !method_exists($user, 'getRoleNames')) {
+             return false;
+         }
+
+         $userRoles = $user
+             ->getRoleNames()
+             ->map(static function ($roleName) use ($roleAliases): string {
+                 $normalized = \Illuminate\Support\Str::of((string) $roleName)
+                     ->trim()
+                     ->lower()
+                     ->replace(['-', ' '], '_')
+                     ->replaceMatches('/_+/', '_')
+                     ->toString();
+
+                 return $roleAliases[$normalized] ?? $normalized;
+             })
+             ->all();
+
+         return count(array_intersect($roles, $userRoles)) > 0;
+     };
 
      $routeUrl = static function (string|array $routeNames, array $parameters = []): string {
          foreach ((array) $routeNames as $routeName) {
@@ -191,6 +221,19 @@
     */
      $canAccessBranches = $hasRole(['super_admin', 'direktur_utama', 'admin_operasional', 'auditor_internal']);
 
+     /*
+      * Menu Departemen dapat dilihat oleh lima role.
+      * Pembatasan create, edit, delete, trash, restore, dan force delete
+      * tetap dilakukan melalui middleware route khusus Super Admin.
+      */
+     $canAccessDepartments = $hasRole([
+         'super_admin',
+         'direktur_utama',
+         'hrd_manager',
+         'manager_departemen',
+         'auditor_internal',
+     ]);
+
      $canAccessMasterData = $hasRole([
          'super_admin',
          'direktur_utama',
@@ -239,13 +282,18 @@
      $canAccessSystem = $hasRole(['super_admin', 'hrd_manager', 'auditor_internal']);
 
      /*
+      * Pastikan route index Departemen benar-benar terdaftar.
+      */
+     $departmentsRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.departments.index');
+
+     /*
     |--------------------------------------------------------------------------
     | STATUS SUBMENU
     |--------------------------------------------------------------------------
     */
      $masterDataOpen = $routeActive(
          'branches.*',
-         'departments.*',
+         'super-admin.departments.*',
          'positions.*',
          'employees.*',
          'customers.*',
@@ -383,16 +431,14 @@
                                    </a>
                               @endif
 
-                              @if (
-                                  ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isAuditor) &&
-                                      \Illuminate\Support\Facades\Route::has('super-admin.departments.index'))
+                              @if (($canAccessDepartments ?? false) && ($departmentsRouteExists ?? false))
                                    <a href="{{ route('super-admin.departments.index') }}"
                                         class="nav-sub-link {{ $routeActive('super-admin.departments.*') ? 'active' : '' }}">
                                         Departemen
                                    </a>
                               @endif
 
-                              @if ($isSuperAdmin || $isDirektur || $isHrd || $isAuditor)
+                              @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isAuditor)
                                    <a href="{{ $routeUrl('positions.index') }}"
                                         class="nav-sub-link {{ $routeActive('positions.*') ? 'active' : '' }}">
                                         Jabatan
