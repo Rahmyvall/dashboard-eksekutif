@@ -852,6 +852,37 @@
           $inactiveOnPage = $departments->getCollection()->where('status', 'inactive')->count();
           $currentSearch = request('search', $search ?? '');
           $currentStatus = request('status', $status ?? '');
+
+          /*
+           * Hak kelola Department hanya untuk Super Admin.
+           * Role lain tetap dapat melihat daftar dan halaman detail.
+           */
+          $currentUser = auth()->user();
+          $canManageDepartments = false;
+
+          if ($currentUser) {
+              if (method_exists($currentUser, 'hasRole')) {
+                  $canManageDepartments = $currentUser->hasRole('super_admin');
+              } else {
+                  $rawRole =
+                      data_get($currentUser, 'role.slug') ??
+                      (data_get($currentUser, 'role.name') ??
+                          (data_get($currentUser, 'role_name') ?? data_get($currentUser, 'role')));
+
+                  if (is_object($rawRole) || is_array($rawRole)) {
+                      $rawRole = data_get($rawRole, 'slug') ?? (data_get($rawRole, 'name') ?? '');
+                  }
+
+                  $normalizedRole = \Illuminate\Support\Str::of((string) $rawRole)
+                      ->trim()
+                      ->lower()
+                      ->replace(['-', ' '], '_')
+                      ->replaceMatches('/_+/', '_')
+                      ->toString();
+
+                  $canManageDepartments = in_array($normalizedRole, ['super_admin', 'superadmin'], true);
+              }
+          }
      @endphp
 
      <div class="department-page">
@@ -875,17 +906,26 @@
                          </div>
 
                          <div class="hero-actions">
-                              @if (Route::has('super-admin.departments.trash'))
-                                   <a href="{{ route('super-admin.departments.trash') }}" class="btn-hero btn-hero-soft">
-                                        <i class="bi bi-trash3-fill"></i>
-                                        Data Terhapus
-                                   </a>
-                              @endif
+                              @if ($canManageDepartments)
+                                   @if (Route::has('super-admin.departments.trash'))
+                                        <a href="{{ route('super-admin.departments.trash') }}" class="btn-hero btn-hero-soft">
+                                             <i class="bi bi-trash3-fill"></i>
+                                             Data Terhapus
+                                        </a>
+                                   @endif
 
-                              <a href="{{ route('super-admin.departments.create') }}" class="btn-hero">
-                                   <i class="bi bi-plus-circle-fill"></i>
-                                   Tambah Department
-                              </a>
+                                   @if (Route::has('super-admin.departments.create'))
+                                        <a href="{{ route('super-admin.departments.create') }}" class="btn-hero">
+                                             <i class="bi bi-plus-circle-fill"></i>
+                                             Tambah Department
+                                        </a>
+                                   @endif
+                              @else
+                                   <span class="btn-hero btn-hero-soft" title="Akses hanya untuk melihat data">
+                                        <i class="bi bi-eye-fill"></i>
+                                        Mode Lihat
+                                   </span>
+                              @endif
                          </div>
                     </div>
                </div>
@@ -1122,30 +1162,40 @@
 
                                                   <td class="text-center">
                                                        <div class="action-group">
-                                                            <a href="{{ route('super-admin.departments.show', $department) }}"
-                                                                 class="btn action-btn btn-view" title="Lihat detail"
-                                                                 aria-label="Lihat detail {{ $department->name }}">
-                                                                 <i class="bi bi-eye-fill"></i>
-                                                            </a>
+                                                            @if (Route::has('super-admin.departments.show'))
+                                                                 <a href="{{ route('super-admin.departments.show', $department) }}"
+                                                                      class="btn action-btn btn-view" title="Lihat detail"
+                                                                      aria-label="Lihat detail {{ $department->name }}">
+                                                                      <i class="bi bi-eye-fill"></i>
+                                                                 </a>
+                                                            @endif
 
-                                                            <a href="{{ route('super-admin.departments.edit', $department) }}"
-                                                                 class="btn action-btn btn-edit" title="Edit department"
-                                                                 aria-label="Edit {{ $department->name }}">
-                                                                 <i class="bi bi-pencil-fill"></i>
-                                                            </a>
+                                                            @if ($canManageDepartments)
+                                                                 @if (Route::has('super-admin.departments.edit'))
+                                                                      <a href="{{ route('super-admin.departments.edit', $department) }}"
+                                                                           class="btn action-btn btn-edit"
+                                                                           title="Edit department"
+                                                                           aria-label="Edit {{ $department->name }}">
+                                                                           <i class="bi bi-pencil-fill"></i>
+                                                                      </a>
+                                                                 @endif
 
-                                                            <form action="{{ route('super-admin.departments.destroy', $department) }}"
-                                                                 method="POST" class="d-inline"
-                                                                 onsubmit="return confirm('Yakin ingin menghapus department {{ addslashes($department->name) }}?')">
-                                                                 @csrf
-                                                                 @method('DELETE')
+                                                                 @if (Route::has('super-admin.departments.destroy'))
+                                                                      <form action="{{ route('super-admin.departments.destroy', $department) }}"
+                                                                           method="POST" class="d-inline"
+                                                                           onsubmit="return confirm('Yakin ingin menghapus department {{ addslashes($department->name) }}?')">
+                                                                           @csrf
+                                                                           @method('DELETE')
 
-                                                                 <button type="submit" class="btn action-btn btn-delete"
-                                                                      title="Hapus department"
-                                                                      aria-label="Hapus {{ $department->name }}">
-                                                                      <i class="bi bi-trash3-fill"></i>
-                                                                 </button>
-                                                            </form>
+                                                                           <button type="submit"
+                                                                                class="btn action-btn btn-delete"
+                                                                                title="Hapus department"
+                                                                                aria-label="Hapus {{ $department->name }}">
+                                                                                <i class="bi bi-trash3-fill"></i>
+                                                                           </button>
+                                                                      </form>
+                                                                 @endif
+                                                            @endif
                                                        </div>
                                                   </td>
                                              </tr>
@@ -1174,7 +1224,7 @@
                                                                  <i class="bi bi-arrow-counterclockwise"></i>
                                                                  Hapus Filter
                                                             </a>
-                                                       @else
+                                                       @elseif ($canManageDepartments && Route::has('super-admin.departments.create'))
                                                             <a href="{{ route('super-admin.departments.create') }}"
                                                                  class="empty-add-button">
                                                                  <i class="bi bi-plus-circle-fill"></i>
