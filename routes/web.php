@@ -3,6 +3,7 @@
 declare (strict_types = 1);
 
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
@@ -232,11 +233,19 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
         ->name('super-admin.')
         ->middleware('role:super_admin')
         ->group(function (): void {
+
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'super_admin')
                 ->name('dashboard');
 
+            /*
+        |--------------------------------------------------------------------------
+        | User Management
+        |--------------------------------------------------------------------------
+        */
+
             Route::resource('users', UserController::class);
+
             Route::resource('roles', RoleController::class);
 
             Route::get('/users-trash', [UserController::class, 'trash'])
@@ -249,6 +258,38 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
             Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])
                 ->whereNumber('id')
                 ->name('users.force-delete');
+
+            /*
+        |--------------------------------------------------------------------------
+        | Department Management
+        |--------------------------------------------------------------------------
+        */
+
+            Route::resource(
+                'departments',
+                DepartmentController::class
+            );
+
+            Route::get(
+                '/departments-trash',
+                [DepartmentController::class, 'trash']
+            )
+                ->name('departments.trash');
+
+            Route::post(
+                '/departments/{id}/restore',
+                [DepartmentController::class, 'restore']
+            )
+                ->whereNumber('id')
+                ->name('departments.restore');
+
+            Route::delete(
+                '/departments/{id}/force-delete',
+                [DepartmentController::class, 'forceDelete']
+            )
+                ->whereNumber('id')
+                ->name('departments.force-delete');
+
         });
 
     /*

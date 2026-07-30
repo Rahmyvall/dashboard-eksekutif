@@ -1,0 +1,656 @@
+{
+  "info": {
+    "_postman_id": "dc3e8e74-9d31-4a54-9bea-department-api",
+    "name": "Laravel Department REST API",
+    "description": "Koleksi pengujian REST API Department Laravel. Urutkan request dari atas ke bawah.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api"
+    },
+    {
+      "key": "department_id",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Get All Departments",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments?per_page=10&sort_by=name&sort_direction=asc",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments"
+          ],
+          "query": [
+            {
+              "key": "per_page",
+              "value": "10"
+            },
+            {
+              "key": "sort_by",
+              "value": "name"
+            },
+            {
+              "key": "sort_direction",
+              "value": "asc"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Response success', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Create Department",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"code\": \"IT-POSTMAN\",\n    \"name\": \"Information Technology Postman\",\n    \"description\": \"Data pengujian REST API dari Postman.\",\n    \"status\": \"active\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/departments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+              "const json = pm.response.json();",
+              "pm.test('Department berhasil dibuat', function () {",
+              "  pm.expect(json.success).to.eql(true);",
+              "  pm.expect(json.data).to.have.property('id');",
+              "});",
+              "if (json.data && json.data.id) {",
+              "  pm.collectionVariables.set('department_id', json.data.id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Show Department",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments/{{department_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "{{department_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('ID sesuai', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(String(json.data.id)).to.eql(String(pm.collectionVariables.get('department_id')));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Update Department PUT",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"code\": \"IT-POSTMAN\",\n    \"name\": \"Information Technology Updated\",\n    \"description\": \"Data department sudah diperbarui menggunakan PUT.\",\n    \"status\": \"active\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/departments/{{department_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "{{department_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Nama diperbarui', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.data.name).to.eql('Information Technology Updated');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Partial Update PATCH",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"description\": \"Deskripsi diperbarui melalui PATCH.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/departments/{{department_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "{{department_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Update Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"status\": \"inactive\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/departments/{{department_id}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "{{department_id}}",
+            "status"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Status menjadi inactive', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.data.status).to.eql('inactive');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Search and Filter",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments?search=POSTMAN&status=inactive&per_page=10",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "POSTMAN"
+            },
+            {
+              "key": "status",
+              "value": "inactive"
+            },
+            {
+              "key": "per_page",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Statistics",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments/statistics",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "statistics"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Statistik tersedia', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.data).to.have.property('total');",
+              "  pm.expect(json.data).to.have.property('active');",
+              "  pm.expect(json.data).to.have.property('inactive');",
+              "  pm.expect(json.data).to.have.property('trashed');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Soft Delete Department",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments/{{department_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "{{department_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Data masuk trash', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Get Trash",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments/trash",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "trash"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Restore Department",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments/{{department_id}}/restore",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "{{department_id}}",
+            "restore"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Department dipulihkan', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.data.deleted_at).to.eql(null);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Soft Delete Again",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments/{{department_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "{{department_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Force Delete Department",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/departments/{{department_id}}/force-delete",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments",
+            "{{department_id}}",
+            "force-delete"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Hapus permanen berhasil', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Validation Test",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{base_url}}/departments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "departments"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 422', function () { pm.response.to.have.status(422); });",
+              "pm.test('Validation errors tersedia', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json).to.have.property('errors');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

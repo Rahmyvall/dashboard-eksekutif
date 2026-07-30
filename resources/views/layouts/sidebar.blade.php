@@ -383,9 +383,11 @@
                                    </a>
                               @endif
 
-                              @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isAuditor)
-                                   <a href="{{ $routeUrl('departments.index') }}"
-                                        class="nav-sub-link {{ $routeActive('departments.*') ? 'active' : '' }}">
+                              @if (
+                                  ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isAuditor) &&
+                                      \Illuminate\Support\Facades\Route::has('super-admin.departments.index'))
+                                   <a href="{{ route('super-admin.departments.index') }}"
+                                        class="nav-sub-link {{ $routeActive('super-admin.departments.*') ? 'active' : '' }}">
                                         Departemen
                                    </a>
                               @endif

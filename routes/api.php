@@ -3,6 +3,7 @@
 declare (strict_types = 1);
 
 use App\Http\Controllers\Api\BranchApiController;
+use App\Http\Controllers\Api\DepartmentApiController;
 use App\Http\Controllers\Api\RoleApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,8 +29,7 @@ Route::prefix('roles')
                 RoleApiController::class,
                 'index',
             ]
-        )
-            ->name('index');
+        )->name('index');
 
         /*
         |--------------------------------------------------------------------------
@@ -43,8 +43,7 @@ Route::prefix('roles')
                 RoleApiController::class,
                 'store',
             ]
-        )
-            ->name('store');
+        )->name('store');
 
         /*
         |--------------------------------------------------------------------------
@@ -59,6 +58,7 @@ Route::prefix('roles')
                 'show',
             ]
         )
+            ->whereNumber('role')
             ->name('show');
 
         /*
@@ -74,6 +74,7 @@ Route::prefix('roles')
                 'update',
             ]
         )
+            ->whereNumber('role')
             ->name('update');
 
         /*
@@ -89,8 +90,8 @@ Route::prefix('roles')
                 'destroy',
             ]
         )
+            ->whereNumber('role')
             ->name('destroy');
-
     });
 
 /*
@@ -115,8 +116,7 @@ Route::prefix('branches')
                 BranchApiController::class,
                 'index',
             ]
-        )
-            ->name('index');
+        )->name('index');
 
         /*
         |--------------------------------------------------------------------------
@@ -130,8 +130,7 @@ Route::prefix('branches')
                 BranchApiController::class,
                 'store',
             ]
-        )
-            ->name('store');
+        )->name('store');
 
         /*
         |--------------------------------------------------------------------------
@@ -146,6 +145,7 @@ Route::prefix('branches')
                 'restore',
             ]
         )
+            ->whereNumber('branch')
             ->name('restore');
 
         /*
@@ -161,6 +161,7 @@ Route::prefix('branches')
                 'updateStatus',
             ]
         )
+            ->whereNumber('branch')
             ->name('status');
 
         /*
@@ -176,6 +177,7 @@ Route::prefix('branches')
                 'show',
             ]
         )
+            ->whereNumber('branch')
             ->name('show');
 
         /*
@@ -191,6 +193,7 @@ Route::prefix('branches')
                 'update',
             ]
         )
+            ->whereNumber('branch')
             ->name('update');
 
         /*
@@ -206,6 +209,207 @@ Route::prefix('branches')
                 'destroy',
             ]
         )
+            ->whereNumber('branch')
             ->name('destroy');
+    });
 
+/*
+|--------------------------------------------------------------------------
+| Department API
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('departments')
+    ->name('api.departments.')
+    ->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ALL DEPARTMENT
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/',
+            [
+                DepartmentApiController::class,
+                'index',
+            ]
+        )->name('index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE DEPARTMENT
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post(
+            '/',
+            [
+                DepartmentApiController::class,
+                'store',
+            ]
+        )->name('store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEPARTMENT STATISTICS
+        |--------------------------------------------------------------------------
+        |
+        | Harus diletakkan sebelum route /{department}.
+        |
+        */
+
+        Route::get(
+            '/statistics',
+            [
+                DepartmentApiController::class,
+                'statistics',
+            ]
+        )->name('statistics');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEPARTMENT TRASH
+        |--------------------------------------------------------------------------
+        |
+        | Menampilkan data department yang sudah terkena soft delete.
+        |
+        */
+
+        Route::get(
+            '/trash',
+            [
+                DepartmentApiController::class,
+                'trash',
+            ]
+        )->name('trash');
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESTORE DEPARTMENT
+        |--------------------------------------------------------------------------
+        |
+        | Parameter dikirim sebagai ID karena data yang terhapus tidak dapat
+        | menggunakan implicit route model binding biasa.
+        |
+        */
+
+        Route::patch(
+            '/{department}/restore',
+            [
+                DepartmentApiController::class,
+                'restore',
+            ]
+        )
+            ->whereNumber('department')
+            ->name('restore');
+
+        /*
+        |--------------------------------------------------------------------------
+        | FORCE DELETE DEPARTMENT
+        |--------------------------------------------------------------------------
+        |
+        | Menghapus department secara permanen dari database.
+        |
+        */
+
+        Route::delete(
+            '/{department}/force-delete',
+            [
+                DepartmentApiController::class,
+                'forceDelete',
+            ]
+        )
+            ->whereNumber('department')
+            ->name('force-delete');
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE STATUS DEPARTMENT
+        |--------------------------------------------------------------------------
+        |
+        | Body JSON:
+        | {
+        |     "status": "active"
+        | }
+        |
+        */
+
+        Route::patch(
+            '/{department}/status',
+            [
+                DepartmentApiController::class,
+                'updateStatus',
+            ]
+        )
+            ->whereNumber('department')
+            ->name('status');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DETAIL DEPARTMENT
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/{department}',
+            [
+                DepartmentApiController::class,
+                'show',
+            ]
+        )
+            ->whereNumber('department')
+            ->name('show');
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE DEPARTMENT
+        |--------------------------------------------------------------------------
+        */
+
+        Route::put(
+            '/{department}',
+            [
+                DepartmentApiController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('department')
+            ->name('update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PARTIAL UPDATE DEPARTMENT
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{department}',
+            [
+                DepartmentApiController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('department')
+            ->name('patch');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE DEPARTMENT
+        |--------------------------------------------------------------------------
+        |
+        | Menghapus department menggunakan soft delete.
+        |
+        */
+
+        Route::delete(
+            '/{department}',
+            [
+                DepartmentApiController::class,
+                'destroy',
+            ]
+        )
+            ->whereNumber('department')
+            ->name('destroy');
     });
