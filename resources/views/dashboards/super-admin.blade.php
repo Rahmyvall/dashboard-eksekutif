@@ -2243,39 +2243,45 @@
                     <header class="sad-card-header">
                          <div class="sad-card-heading">
                               <span class="sad-card-heading-icon">
-                                   <i data-feather="monitor"></i>
+                                   <i data-feather="briefcase"></i>
                               </span>
 
                               <div>
-                                   <h2 class="sad-card-title">Monitoring Kinerja Unit</h2>
+                                   <h2 class="sad-card-title">Data Jabatan</h2>
                                    <p class="sad-card-subtitle">
-                                        Capaian KPI, kepuasan pelanggan, dan keluhan setiap unit kerja.
+                                        Daftar jabatan berdasarkan departemen, level, dan status aktif.
                                    </p>
                               </div>
                          </div>
 
-                         <a href="{{ $reportsUrl }}" class="sad-card-action">
-                              <i data-feather="file-text"></i>
-                              Laporan lengkap
-                         </a>
+                         @if (Route::has('super-admin.positions.index'))
+                              <a href="{{ route('super-admin.positions.index') }}" class="sad-card-action">
+                                   <i data-feather="list"></i>
+                                   Lihat semua jabatan
+                              </a>
+                         @endif
                     </header>
 
                     <div class="sad-table-toolbar">
                          <div class="sad-filter-list">
-                              <button type="button" class="sad-filter-button active"
-                                   data-unit-filter="semua">Semua</button>
-                              <button type="button" class="sad-filter-button" data-unit-filter="sangat baik">Sangat
-                                   Baik</button>
-                              <button type="button" class="sad-filter-button" data-unit-filter="baik">Baik</button>
-                              <button type="button" class="sad-filter-button"
-                                   data-unit-filter="perlu perhatian">Perhatian</button>
-                              <button type="button" class="sad-filter-button" data-unit-filter="kritis">Kritis</button>
+                              <button type="button" class="sad-filter-button active" data-position-filter="semua">
+                                   Semua
+                              </button>
+
+                              <button type="button" class="sad-filter-button" data-position-filter="active">
+                                   Aktif
+                              </button>
+
+                              <button type="button" class="sad-filter-button" data-position-filter="inactive">
+                                   Tidak Aktif
+                              </button>
                          </div>
 
                          <label class="sad-search">
                               <i data-feather="search"></i>
-                              <input type="search" id="unitMonitoringSearch"
-                                   placeholder="Cari unit, kode, atau kepala unit..." autocomplete="off">
+
+                              <input type="search" id="positionSearch"
+                                   placeholder="Cari jabatan, kode, atau departemen..." autocomplete="off">
                          </label>
                     </div>
 
@@ -2283,108 +2289,170 @@
                          <table class="sad-table">
                               <thead>
                                    <tr>
-                                        <th>Unit Kerja</th>
-                                        <th>Kepala Unit</th>
-                                        <th>Realisasi KPI</th>
-                                        <th>Kepuasan</th>
-                                        <th>Keluhan</th>
+                                        <th>Jabatan</th>
+                                        <th>Departemen</th>
+                                        <th>Level</th>
+                                        <th>Deskripsi</th>
                                         <th>Status</th>
+                                        <th>Diperbarui</th>
                                         <th></th>
                                    </tr>
                               </thead>
 
-                              <tbody id="unitMonitoringBody">
-                                   @foreach ($unitMonitoring as $unit)
+                              <tbody id="positionTableBody">
+                                   @forelse ($positions as $position)
                                         @php
-                                             $statusClass = match ($unit['status']) {
-                                                 'Sangat Baik' => 'success',
-                                                 'Baik' => 'info',
-                                                 'Perlu Perhatian' => 'warning',
-                                                 'Kritis' => 'danger',
+                                             $status = strtolower($position->status);
+
+                                             $statusClass = match ($status) {
+                                                 'active' => 'success',
+                                                 'inactive' => 'danger',
                                                  default => 'neutral',
                                              };
 
-                                             $progressClass = match (true) {
-                                                 $unit['realization'] >= 90 => 'success',
-                                                 $unit['realization'] >= 80 => 'info',
-                                                 $unit['realization'] >= 75 => 'warning',
-                                                 default => 'danger',
+                                             $statusLabel = match ($status) {
+                                                 'active' => 'Aktif',
+                                                 'inactive' => 'Tidak Aktif',
+                                                 default => ucfirst($position->status),
                                              };
+
+                                             $levelClass = match (true) {
+                                                 $position->level >= 4 => 'danger',
+                                                 $position->level === 3 => 'warning',
+                                                 $position->level === 2 => 'info',
+                                                 default => 'neutral',
+                                             };
+
+                                             $levelLabel = match ((int) $position->level) {
+                                                 1 => 'Staff',
+                                                 2 => 'Supervisor',
+                                                 3 => 'Manager',
+                                                 4 => 'Direktur',
+                                                 default => 'Level ' . $position->level,
+                                             };
+
+                                             $departmentName = $position->department?->name ?? 'Tanpa Departemen';
+
+                                             $searchKeyword = strtolower(
+                                                 $position->name .
+                                                     ' ' .
+                                                     $position->code .
+                                                     ' ' .
+                                                     $departmentName .
+                                                     ' ' .
+                                                     $position->status .
+                                                     ' ' .
+                                                     $levelLabel,
+                                             );
                                         @endphp
 
-                                        <tr data-unit-row data-unit-status="{{ strtolower($unit['status']) }}"
-                                             data-unit-keyword="{{ strtolower($unit['unit'] . ' ' . $unit['code'] . ' ' . $unit['leader']) }}">
+                                        <tr data-position-row data-position-status="{{ $status }}"
+                                             data-position-keyword="{{ $searchKeyword }}">
                                              <td>
                                                   <div class="sad-unit-cell">
                                                        <span class="sad-unit-icon">
-                                                            <i data-feather="layers"></i>
+                                                            <i data-feather="briefcase"></i>
                                                        </span>
 
                                                        <span>
-                                                            <strong class="sad-unit-name">{{ $unit['unit'] }}</strong>
-                                                            <span class="sad-unit-code">{{ $unit['code'] }}</span>
+                                                            <strong class="sad-unit-name">
+                                                                 {{ $position->name }}
+                                                            </strong>
+
+                                                            <span class="sad-unit-code">
+                                                                 {{ $position->code }}
+                                                            </span>
                                                        </span>
                                                   </div>
                                              </td>
 
                                              <td>
-                                                  <span class="sad-leader">{{ $unit['leader'] }}</span>
-                                                  <span class="sad-updated">Diperbarui {{ $unit['updated_at'] }}</span>
+                                                  <span class="sad-leader">
+                                                       {{ $departmentName }}
+                                                  </span>
+
+                                                  @if ($position->department?->code)
+                                                       <span class="sad-updated">
+                                                            {{ $position->department->code }}
+                                                       </span>
+                                                  @endif
                                              </td>
 
                                              <td>
-                                                  <div class="sad-score-cell">
-                                                       <div class="sad-score-cell-top">
-                                                            <span>Target {{ $unit['target'] }}%</span>
-                                                            <strong>{{ $unit['realization'] }}%</strong>
-                                                       </div>
-                                                       <div class="sad-progress">
-                                                            <div class="sad-progress-bar {{ $progressClass }}"
-                                                                 style="width: {{ $unit['realization'] }}%;"></div>
-                                                       </div>
-                                                  </div>
-                                             </td>
+                                                  <span class="sad-badge {{ $levelClass }}">
+                                                       {{ $levelLabel }}
+                                                  </span>
 
-                                             <td>
-                                                  <div class="sad-score-cell">
-                                                       <div class="sad-score-cell-top">
-                                                            <span>Indeks</span>
-                                                            <strong>{{ $unit['satisfaction'] }}%</strong>
-                                                       </div>
-                                                       <div class="sad-progress">
-                                                            <div class="sad-progress-bar primary"
-                                                                 style="width: {{ $unit['satisfaction'] }}%;"></div>
-                                                       </div>
-                                                  </div>
-                                             </td>
-
-                                             <td>
-                                                  <span class="sad-complaint-count">
-                                                       <i data-feather="message-square"></i>
-                                                       {{ $unit['complaints'] }} aktif
+                                                  <span class="sad-updated">
+                                                       Level {{ $position->level }}
                                                   </span>
                                              </td>
 
                                              <td>
-                                                  <span class="sad-badge {{ $statusClass }}">{{ $unit['status'] }}</span>
+                                                  <span class="sad-description">
+                                                       {{ \Illuminate\Support\Str::limit($position->description ?? 'Tidak ada deskripsi.', 80) }}
+                                                  </span>
                                              </td>
 
                                              <td>
-                                                  <button type="button" class="sad-action-menu"
-                                                       aria-label="Pilihan unit {{ $unit['unit'] }}">
-                                                       <i data-feather="more-horizontal"></i>
-                                                  </button>
+                                                  <span class="sad-badge {{ $statusClass }}">
+                                                       {{ $statusLabel }}
+                                                  </span>
+                                             </td>
+
+                                             <td>
+                                                  <span class="sad-leader">
+                                                       {{ $position->updated_at?->format('d M Y') }}
+                                                  </span>
+
+                                                  <span class="sad-updated">
+                                                       {{ $position->updated_at?->diffForHumans() }}
+                                                  </span>
+                                             </td>
+
+                                             <td>
+                                                  <div class="sad-row-actions">
+                                                       @if (Route::has('super-admin.positions.show'))
+                                                            <a href="{{ route('super-admin.positions.show', $position) }}"
+                                                                 class="sad-action-menu"
+                                                                 aria-label="Lihat jabatan {{ $position->name }}"
+                                                                 title="Detail">
+                                                                 <i data-feather="eye"></i>
+                                                            </a>
+                                                       @endif
+
+                                                       @if (Route::has('super-admin.positions.edit'))
+                                                            <a href="{{ route('super-admin.positions.edit', $position) }}"
+                                                                 class="sad-action-menu"
+                                                                 aria-label="Edit jabatan {{ $position->name }}"
+                                                                 title="Edit">
+                                                                 <i data-feather="edit-2"></i>
+                                                            </a>
+                                                       @endif
+                                                  </div>
                                              </td>
                                         </tr>
-                                   @endforeach
+                                   @empty
+                                        <tr>
+                                             <td colspan="7">
+                                                  <div class="sad-empty-state is-visible">
+                                                       <i data-feather="briefcase"></i>
+                                                       <h4>Data jabatan belum tersedia</h4>
+                                                       <p>Tambahkan data jabatan untuk menampilkannya di sini.</p>
+                                                  </div>
+                                             </td>
+                                        </tr>
+                                   @endforelse
                               </tbody>
                          </table>
 
-                         <div class="sad-empty-state" id="unitMonitoringEmpty">
-                              <i data-feather="search"></i>
-                              <h4>Data unit tidak ditemukan</h4>
-                              <p>Gunakan kata kunci atau filter status yang berbeda.</p>
-                         </div>
+                         @if ($positions->isNotEmpty())
+                              <div class="sad-empty-state" id="positionEmptyState">
+                                   <i data-feather="search"></i>
+                                   <h4>Data jabatan tidak ditemukan</h4>
+                                   <p>Gunakan kata kunci atau filter status yang berbeda.</p>
+                              </div>
+                         @endif
                     </div>
                </article>
           </section>
@@ -2650,4 +2718,69 @@
                window.setInterval(updateClock, 1000);
           });
      </script>
+     @push('scripts')
+          <script>
+               document.addEventListener('DOMContentLoaded', function() {
+                    const searchInput = document.getElementById('positionSearch');
+                    const filterButtons = document.querySelectorAll('[data-position-filter]');
+                    const positionRows = document.querySelectorAll('[data-position-row]');
+                    const emptyState = document.getElementById('positionEmptyState');
+
+                    let activeFilter = 'semua';
+
+                    function filterPositions() {
+                         const keyword = searchInput ?
+                              searchInput.value.toLowerCase().trim() :
+                              '';
+
+                         let visibleRows = 0;
+
+                         positionRows.forEach(function(row) {
+                              const positionStatus =
+                                   row.dataset.positionStatus?.toLowerCase() || '';
+
+                              const positionKeyword =
+                                   row.dataset.positionKeyword?.toLowerCase() || '';
+
+                              const matchesStatus =
+                                   activeFilter === 'semua' ||
+                                   positionStatus === activeFilter;
+
+                              const matchesKeyword =
+                                   keyword === '' ||
+                                   positionKeyword.includes(keyword);
+
+                              const shouldShow = matchesStatus && matchesKeyword;
+
+                              row.style.display = shouldShow ? '' : 'none';
+
+                              if (shouldShow) {
+                                   visibleRows++;
+                              }
+                         });
+
+                         if (emptyState) {
+                              emptyState.classList.toggle('is-visible', visibleRows === 0);
+                         }
+                    }
+
+                    filterButtons.forEach(function(button) {
+                         button.addEventListener('click', function() {
+                              filterButtons.forEach(function(item) {
+                                   item.classList.remove('active');
+                              });
+
+                              button.classList.add('active');
+                              activeFilter = button.dataset.positionFilter.toLowerCase();
+
+                              filterPositions();
+                         });
+                    });
+
+                    if (searchInput) {
+                         searchInput.addEventListener('input', filterPositions);
+                    }
+               });
+          </script>
+     @endpush
 @endsection

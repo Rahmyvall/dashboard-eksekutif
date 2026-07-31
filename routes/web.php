@@ -4,6 +4,7 @@ declare (strict_types = 1);
 
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
@@ -335,6 +336,122 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
                     )
                         ->whereNumber('id')
                         ->name('departments.force-delete');
+                });
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shared Position Management
+    |--------------------------------------------------------------------------
+    |
+    | Index dan Show:
+    | - super_admin
+    | - direktur_utama
+    | - hrd_manager
+    | - manager_departemen
+    | - auditor_internal
+    |
+    | Pengelolaan penuh:
+    | - super_admin
+    |
+    */
+
+    Route::prefix('super-admin')
+        ->name('super-admin.')
+        ->group(function (): void {
+            Route::prefix('positions')
+                ->name('positions.')
+                ->controller(PositionController::class)
+                ->group(function (): void {
+                    /*
+                    |----------------------------------------------------------
+                    | Create dan Store — khusus Super Admin
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware('role:super_admin')
+                        ->group(function (): void {
+                            Route::get('/create', 'create')
+                                ->name('create');
+
+                            Route::post('/', 'store')
+                                ->name('store');
+                        });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Edit, Update, dan Delete — khusus Super Admin
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware('role:super_admin')
+                        ->group(function (): void {
+                            Route::get('/{position}/edit', 'edit')
+                                ->whereNumber('position')
+                                ->name('edit');
+
+                            Route::match(
+                                ['put', 'patch'],
+                                '/{position}',
+                                'update'
+                            )
+                                ->whereNumber('position')
+                                ->name('update');
+
+                            Route::delete('/{position}', 'destroy')
+                                ->whereNumber('position')
+                                ->name('destroy');
+                        });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Index dan Show — lima role
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware(
+                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|auditor_internal'
+                    )->group(function (): void {
+                        Route::get('/', 'index')
+                            ->name('index');
+
+                        /*
+                         * Route show diletakkan paling bawah agar URL create
+                         * tidak dianggap sebagai parameter {position}.
+                         */
+                        Route::get('/{position}', 'show')
+                            ->whereNumber('position')
+                            ->name('show');
+                    });
+                });
+
+            /*
+            |--------------------------------------------------------------
+            | Recycle Bin Position — khusus Super Admin
+            |--------------------------------------------------------------
+            */
+
+            Route::middleware('role:super_admin')
+                ->group(function (): void {
+                    Route::get(
+                        '/positions-trash',
+                        [PositionController::class, 'trash']
+                    )
+                        ->name('positions.trash');
+
+                    Route::post(
+                        '/positions/{id}/restore',
+                        [PositionController::class, 'restore']
+                    )
+                        ->whereNumber('id')
+                        ->name('positions.restore');
+
+                    Route::delete(
+                        '/positions/{id}/force-delete',
+                        [PositionController::class, 'forceDelete']
+                    )
+                        ->whereNumber('id')
+                        ->name('positions.force-delete');
                 });
         });
 

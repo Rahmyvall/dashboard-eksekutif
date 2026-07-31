@@ -4,6 +4,7 @@ declare (strict_types = 1);
 
 use App\Http\Controllers\Api\BranchApiController;
 use App\Http\Controllers\Api\DepartmentApiController;
+use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -411,5 +412,172 @@ Route::prefix('departments')
             ]
         )
             ->whereNumber('department')
+            ->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Position API
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('positions')
+    ->name('api.positions.')
+    ->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ALL POSITION
+        |--------------------------------------------------------------------------
+        |
+        | Query parameter:
+        | - search
+        | - status
+        | - department_id
+        | - level
+        | - per_page
+        |
+        */
+
+        Route::get(
+            '/',
+            [
+                PositionController::class,
+                'index',
+            ]
+        )->name('index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE POSITION
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post(
+            '/',
+            [
+                PositionController::class,
+                'store',
+            ]
+        )->name('store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | POSITION TRASH
+        |--------------------------------------------------------------------------
+        |
+        | Route statis harus diletakkan sebelum /{position}.
+        |
+        */
+
+        Route::get(
+            '/trash',
+            [
+                PositionController::class,
+                'trash',
+            ]
+        )->name('trash');
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESTORE POSITION
+        |--------------------------------------------------------------------------
+        |
+        | Menggunakan parameter ID karena data soft delete tidak dapat
+        | menggunakan implicit route model binding biasa.
+        |
+        */
+
+        Route::patch(
+            '/{id}/restore',
+            [
+                PositionController::class,
+                'restore',
+            ]
+        )
+            ->whereNumber('id')
+            ->name('restore');
+
+        /*
+        |--------------------------------------------------------------------------
+        | FORCE DELETE POSITION
+        |--------------------------------------------------------------------------
+        */
+
+        Route::delete(
+            '/{id}/force-delete',
+            [
+                PositionController::class,
+                'forceDelete',
+            ]
+        )
+            ->whereNumber('id')
+            ->name('force-delete');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DETAIL POSITION
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/{position}',
+            [
+                PositionController::class,
+                'show',
+            ]
+        )
+            ->whereNumber('position')
+            ->name('show');
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE POSITION
+        |--------------------------------------------------------------------------
+        */
+
+        Route::put(
+            '/{position}',
+            [
+                PositionController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('position')
+            ->name('update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PARTIAL UPDATE POSITION
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{position}',
+            [
+                PositionController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('position')
+            ->name('patch');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE POSITION
+        |--------------------------------------------------------------------------
+        |
+        | Menghapus position menggunakan soft delete.
+        |
+        */
+
+        Route::delete(
+            '/{position}',
+            [
+                PositionController::class,
+                'destroy',
+            ]
+        )
+            ->whereNumber('position')
             ->name('destroy');
     });

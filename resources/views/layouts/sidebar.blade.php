@@ -234,6 +234,18 @@
          'auditor_internal',
      ]);
 
+     /*
+      * Menu Jabatan dapat dilihat oleh lima role.
+      * Seluruh aksi pengelolaan tetap diamankan oleh middleware route.
+      */
+     $canAccessPositions = $hasRole([
+         'super_admin',
+         'direktur_utama',
+         'hrd_manager',
+         'manager_departemen',
+         'auditor_internal',
+     ]);
+
      $canAccessMasterData = $hasRole([
          'super_admin',
          'direktur_utama',
@@ -287,6 +299,11 @@
      $departmentsRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.departments.index');
 
      /*
+      * Pastikan route index Jabatan benar-benar terdaftar.
+      */
+     $positionsRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.positions.index');
+
+     /*
     |--------------------------------------------------------------------------
     | STATUS SUBMENU
     |--------------------------------------------------------------------------
@@ -294,7 +311,7 @@
      $masterDataOpen = $routeActive(
          'branches.*',
          'super-admin.departments.*',
-         'positions.*',
+         'super-admin.positions.*',
          'employees.*',
          'customers.*',
          'service-categories.*',
@@ -438,9 +455,9 @@
                                    </a>
                               @endif
 
-                              @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isAuditor)
-                                   <a href="{{ $routeUrl('positions.index') }}"
-                                        class="nav-sub-link {{ $routeActive('positions.*') ? 'active' : '' }}">
+                              @if (($canAccessPositions ?? false) && ($positionsRouteExists ?? false))
+                                   <a href="{{ route('super-admin.positions.index') }}"
+                                        class="nav-sub-link {{ $routeActive('super-admin.positions.*') ? 'active' : '' }}">
                                         Jabatan
                                    </a>
                               @endif

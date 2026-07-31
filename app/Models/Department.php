@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Department extends Model
@@ -312,5 +313,29 @@ class Department extends Model
         return $this->update([
             'status' => 'inactive',
         ]);
+    }
+
+    /**
+     * Relasi posisi pada departemen.
+     */
+    public function positions(): HasMany
+    {
+        return $this->hasMany(
+            Position::class,
+            'department_id',
+            'id'
+        );
+    }
+
+    /**
+     * Posisi aktif pada departemen.
+     */
+    public function activePositions(): HasMany
+    {
+        return $this->hasMany(
+            Position::class,
+            'department_id',
+            'id'
+        )->where('status', Position::STATUS_ACTIVE);
     }
 }
