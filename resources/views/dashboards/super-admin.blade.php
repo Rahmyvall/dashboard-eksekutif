@@ -15,13 +15,47 @@
 
           $currentUser = auth()->user();
           $currentUserName = $currentUser?->name ?? 'Super Admin';
-          $currentUserRole = strtoupper(str_replace('_', ' ', $currentUser?->role ?? 'SUPER_ADMIN'));
+          $roleSource = $currentUser?->role;
+          $roleValue = is_object($roleSource)
+              ? $roleSource->name ?? ($roleSource->slug ?? 'SUPER_ADMIN')
+              : $roleSource ?? 'SUPER_ADMIN';
+          $currentUserRole = strtoupper(str_replace(['_', '-'], ' ', (string) $roleValue));
 
           $usersUrl = Route::has('admin.users.index') ? route('admin.users.index') : '#';
           $reportsUrl = Route::has('super-admin.reports.index') ? route('super-admin.reports.index') : '#';
           $settingsUrl = Route::has('super-admin.settings.index') ? route('super-admin.settings.index') : '#';
           $surveysUrl = Route::has('super-admin.surveys.index') ? route('super-admin.surveys.index') : '#';
           $complaintsUrl = Route::has('super-admin.complaints.index') ? route('super-admin.complaints.index') : '#';
+
+          /*
+           |--------------------------------------------------------------------------
+           | SAFE DEFAULTS
+           |--------------------------------------------------------------------------
+           | Mencegah error ketika controller belum mengirim data cabang/posisi.
+           */
+          $positions = $positions ?? collect();
+
+          $branchSummary = array_merge(
+              [
+                  'total' => 12,
+                  'active' => 9,
+                  'pending' => 2,
+                  'inactive' => 1,
+                  'active_percentage' => null,
+                  'pending_percentage' => null,
+                  'inactive_percentage' => null,
+              ],
+              $branchSummary ?? [],
+          );
+
+          $branchTotal = max(1, (int) ($branchSummary['total'] ?? 0));
+          $branchSummary['active_percentage'] =
+              $branchSummary['active_percentage'] ?? round(((int) $branchSummary['active'] / $branchTotal) * 100);
+          $branchSummary['pending_percentage'] =
+              $branchSummary['pending_percentage'] ?? round(((int) $branchSummary['pending'] / $branchTotal) * 100);
+          $branchSummary['inactive_percentage'] =
+              $branchSummary['inactive_percentage'] ?? round(((int) $branchSummary['inactive'] / $branchTotal) * 100);
+          $branchAngle = min(360, max(0, (float) $branchSummary['active_percentage'] * 3.6));
 
           $dashboardStatistics = $dashboardStatistics ?? [
               [
@@ -306,14 +340,14 @@
 
      <style>
           .sad-dashboard {
-               --sad-primary: #4f46e5;
+               --sad-primary: #c8c7e7;
                --sad-primary-dark: #3730a3;
                --sad-primary-soft: rgba(79, 70, 229, 0.12);
                --sad-secondary: #0f766e;
                --sad-success: #16a34a;
                --sad-warning: #d97706;
                --sad-danger: #dc2626;
-               --sad-info: #2563eb;
+               --sad-info: #8faae4;
                --sad-purple: #7c3aed;
                --sad-heading: #172033;
                --sad-text: #5f6b7a;
@@ -369,7 +403,7 @@
                padding: 36px 40px;
                border-radius: 24px;
                background:
-                    linear-gradient(125deg, rgba(30, 27, 75, 0.98), rgba(79, 70, 229, 0.96) 52%, rgba(15, 118, 110, 0.93));
+                    linear-gradient(125deg, rgba(30, 27, 75, 0.98), rgba(171, 167, 241, 0.96) 52%, rgba(15, 118, 110, 0.93));
                box-shadow: 0 24px 52px rgba(67, 56, 202, 0.25);
           }
 
@@ -1799,6 +1833,685 @@
                     grid-template-columns: 1fr;
                }
           }
+
+
+          /* ======================================================================
+                  MODERN FULL-WIDTH UI OVERRIDE
+                  ====================================================================== */
+          .sad-dashboard {
+               --sad-primary: #3157d5;
+               --sad-primary-dark: #1e3a8a;
+               --sad-primary-soft: rgba(49, 87, 213, 0.10);
+               --sad-secondary: #0891b2;
+               --sad-success: #16a34a;
+               --sad-warning: #f59e0b;
+               --sad-danger: #dc2626;
+               --sad-info: #0284c7;
+               --sad-purple: #7c3aed;
+               --sad-heading: #122033;
+               --sad-text: #526176;
+               --sad-muted: #7f8ca2;
+               --sad-border: #e3e9f2;
+               --sad-background: #f2f5fa;
+               --sad-card: #ffffff;
+               --sad-shadow: 0 12px 35px rgba(24, 39, 75, 0.07);
+               --sad-shadow-hover: 0 22px 50px rgba(24, 39, 75, 0.13);
+
+               width: auto;
+               max-width: none;
+               min-height: 100vh;
+               margin: -24px;
+               padding: 30px clamp(22px, 2.7vw, 46px) 48px;
+               overflow-x: hidden;
+               background:
+                    linear-gradient(rgba(49, 87, 213, 0.025) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(49, 87, 213, 0.025) 1px, transparent 1px),
+                    radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.13), transparent 31%),
+                    radial-gradient(circle at 0% 55%, rgba(6, 182, 212, 0.08), transparent 28%),
+                    var(--sad-background);
+               background-size: 34px 34px, 34px 34px, auto, auto, auto;
+               font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }
+
+          html[data-theme="dark"] .sad-dashboard,
+          body.dark-theme .sad-dashboard,
+          body.dark-mode .sad-dashboard {
+               --sad-heading: #f8fafc;
+               --sad-text: #cbd5e1;
+               --sad-muted: #94a3b8;
+               --sad-border: rgba(148, 163, 184, 0.16);
+               --sad-background: #0b1220;
+               --sad-card: #121c2d;
+               --sad-primary-soft: rgba(96, 165, 250, 0.12);
+          }
+
+          .sad-dashboard a,
+          .sad-dashboard button,
+          .sad-dashboard input {
+               -webkit-tap-highlight-color: transparent;
+          }
+
+          .sad-hero {
+               min-height: 292px;
+               margin-bottom: 26px;
+               padding: clamp(30px, 4vw, 54px);
+               border: 1px solid rgba(255, 255, 255, 0.15);
+               border-radius: 30px;
+               background:
+                    linear-gradient(112deg, rgba(12, 24, 51, 0.98) 0%, rgba(30, 58, 138, 0.98) 44%, rgba(8, 145, 178, 0.92) 100%);
+               box-shadow: 0 30px 70px rgba(30, 58, 138, 0.26);
+          }
+
+          .sad-hero::before {
+               top: -230px;
+               right: -95px;
+               width: 520px;
+               height: 520px;
+               border-width: 92px;
+          }
+
+          .sad-hero::after {
+               right: 28%;
+               bottom: -215px;
+               width: 390px;
+               height: 390px;
+               background: rgba(255, 255, 255, 0.055);
+          }
+
+          .sad-hero-content {
+               max-width: 870px;
+          }
+
+          .sad-role-badge {
+               margin-bottom: 22px;
+               padding: 9px 14px;
+               font-size: 12px;
+          }
+
+          .sad-hero h1 {
+               max-width: 820px;
+               margin-bottom: 16px;
+               font-size: clamp(34px, 4.2vw, 58px);
+               line-height: 1.04;
+          }
+
+          .sad-hero-description {
+               max-width: 790px;
+               font-size: 15px;
+               line-height: 1.75;
+          }
+
+          .sad-hero-meta {
+               gap: 12px 22px;
+               margin-top: 25px;
+          }
+
+          .sad-hero-meta-item {
+               font-size: 12px;
+          }
+
+          .sad-hero-actions {
+               width: 236px;
+               gap: 13px;
+          }
+
+          .sad-button {
+               min-height: 50px;
+               padding: 13px 18px;
+               border-radius: 14px;
+               font-size: 13px;
+          }
+
+          .sad-button-primary:hover {
+               box-shadow: 0 16px 32px rgba(15, 23, 42, 0.28);
+          }
+
+          .sad-stat-grid {
+               grid-template-columns: repeat(4, minmax(0, 1fr));
+               gap: 20px;
+               margin-bottom: 26px;
+          }
+
+          .sad-stat-card {
+               min-height: 192px;
+               padding: 24px;
+               border-radius: 22px;
+               box-shadow: var(--sad-shadow);
+          }
+
+          .sad-stat-card::before {
+               position: absolute;
+               top: 0;
+               left: 0;
+               width: 100%;
+               height: 4px;
+               border-radius: 22px 22px 0 0;
+               background: linear-gradient(90deg, var(--sad-primary), var(--sad-secondary));
+               content: "";
+          }
+
+          .sad-stat-card.theme-green::before {
+               background: linear-gradient(90deg, #16a34a, #4ade80);
+          }
+
+          .sad-stat-card.theme-orange::before {
+               background: linear-gradient(90deg, #d97706, #fbbf24);
+          }
+
+          .sad-stat-card.theme-blue::before {
+               background: linear-gradient(90deg, #2563eb, #38bdf8);
+          }
+
+          .sad-stat-icon {
+               width: 52px;
+               height: 52px;
+               border-radius: 16px;
+          }
+
+          .sad-stat-icon svg {
+               width: 23px;
+               height: 23px;
+          }
+
+          .sad-stat-trend {
+               padding: 6px 10px;
+               font-size: 11px;
+          }
+
+          .sad-stat-label {
+               margin-top: 21px;
+               font-size: 12px;
+          }
+
+          .sad-stat-value {
+               font-size: clamp(31px, 3vw, 40px);
+          }
+
+          .sad-stat-description {
+               margin-top: 11px;
+               font-size: 12px;
+               line-height: 1.6;
+          }
+
+          .sad-main-grid,
+          .sad-secondary-grid,
+          .sad-bottom-grid,
+          .sad-footer-grid {
+               gap: 24px;
+               margin-bottom: 26px;
+          }
+
+          .sad-main-grid {
+               grid-template-columns: minmax(0, 1.75fr) minmax(360px, 0.72fr);
+          }
+
+          .sad-secondary-grid {
+               grid-template-columns: minmax(350px, 0.72fr) minmax(0, 1.58fr);
+          }
+
+          .sad-bottom-grid {
+               grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .sad-footer-grid {
+               grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+               margin-bottom: 0;
+          }
+
+          .sad-card {
+               overflow: hidden;
+               border-radius: 24px;
+               box-shadow: var(--sad-shadow);
+               transition: transform 0.25s ease, box-shadow 0.25s ease;
+          }
+
+          .sad-card:hover {
+               box-shadow: var(--sad-shadow-hover);
+          }
+
+          .sad-card-header {
+               padding: 24px 26px 20px;
+          }
+
+          .sad-card-heading {
+               gap: 14px;
+          }
+
+          .sad-card-heading-icon {
+               width: 44px;
+               height: 44px;
+               border-radius: 14px;
+          }
+
+          .sad-card-heading-icon svg {
+               width: 20px;
+               height: 20px;
+          }
+
+          .sad-card-title {
+               font-size: 17px;
+          }
+
+          .sad-card-subtitle {
+               margin-top: 6px;
+               font-size: 12px;
+               line-height: 1.55;
+          }
+
+          .sad-card-action {
+               min-height: 38px;
+               padding: 9px 12px;
+               border-radius: 11px;
+               font-size: 11px;
+          }
+
+          .sad-chart-body {
+               padding: 26px 26px 28px;
+          }
+
+          .sad-chart-summary {
+               margin-bottom: 28px;
+          }
+
+          .sad-chart-legend {
+               font-size: 11px;
+          }
+
+          .sad-chart-rate strong {
+               font-size: 24px;
+          }
+
+          .sad-chart-rate span {
+               font-size: 11px;
+          }
+
+          .sad-chart-area,
+          .sad-chart-content {
+               height: 340px;
+          }
+
+          .sad-chart-y-axis,
+          .sad-chart-bars {
+               height: 295px;
+          }
+
+          .sad-chart-lines {
+               inset: 0 0 45px;
+          }
+
+          .sad-chart-y-axis,
+          .sad-chart-month {
+               font-size: 11px;
+          }
+
+          .sad-chart-bar {
+               width: min(24px, 40%);
+               border-radius: 8px 8px 4px 4px;
+          }
+
+          .sad-chart-tooltip {
+               min-width: 94px;
+               padding: 8px 10px;
+               border-radius: 9px;
+               font-size: 10px;
+               line-height: 1.5;
+          }
+
+          .sad-satisfaction-body {
+               padding: 27px;
+          }
+
+          .sad-score-summary {
+               gap: 25px;
+               margin-bottom: 26px;
+               padding-bottom: 26px;
+          }
+
+          .sad-score-ring {
+               width: 142px;
+               height: 142px;
+               box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+          }
+
+          .sad-score-ring::before {
+               width: 103px;
+               height: 103px;
+               box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+          }
+
+          .sad-score-ring-value {
+               font-size: 28px;
+          }
+
+          .sad-score-details h3 {
+               font-size: 17px;
+          }
+
+          .sad-score-details p {
+               font-size: 12px;
+          }
+
+          .sad-score-status {
+               padding: 7px 10px;
+               font-size: 10px;
+          }
+
+          .sad-sentiment-card {
+               padding: 14px 10px;
+               border-radius: 13px;
+               background: rgba(148, 163, 184, 0.035);
+          }
+
+          .sad-sentiment-card strong {
+               font-size: 20px;
+          }
+
+          .sad-sentiment-card span {
+               font-size: 9px;
+          }
+
+          .sad-health-label,
+          .sad-health-value {
+               font-size: 12px;
+          }
+
+          .sad-progress {
+               height: 9px;
+          }
+
+          .sad-badge {
+               padding: 6px 9px;
+               font-size: 10px;
+          }
+
+          .sad-priority-item {
+               gap: 15px;
+               padding: 20px 23px;
+          }
+
+          .sad-priority-icon {
+               width: 43px;
+               height: 43px;
+               border-radius: 13px;
+          }
+
+          .sad-priority-title {
+               font-size: 13px;
+          }
+
+          .sad-priority-description {
+               margin: 7px 0 12px;
+               font-size: 11px;
+          }
+
+          .sad-priority-action {
+               font-size: 11px;
+          }
+
+          .sad-table-toolbar {
+               padding: 16px 22px;
+               background: rgba(148, 163, 184, 0.025);
+          }
+
+          .sad-filter-button {
+               min-height: 34px;
+               padding: 8px 12px;
+               border-radius: 10px;
+               font-size: 10px;
+          }
+
+          .sad-search {
+               width: min(100%, 300px);
+          }
+
+          .sad-search input {
+               height: 40px;
+               padding-left: 36px;
+               border-radius: 11px;
+               background: var(--sad-card);
+               font-size: 11px;
+          }
+
+          .sad-table {
+               min-width: 1020px;
+          }
+
+          .sad-table th {
+               padding: 14px 17px;
+               font-size: 10px;
+          }
+
+          .sad-table td {
+               padding: 17px;
+               font-size: 11px;
+          }
+
+          .sad-unit-cell {
+               min-width: 230px;
+          }
+
+          .sad-unit-icon {
+               width: 42px;
+               height: 42px;
+               border-radius: 13px;
+          }
+
+          .sad-unit-name,
+          .sad-leader {
+               font-size: 12px;
+          }
+
+          .sad-unit-code,
+          .sad-updated,
+          .sad-description {
+               font-size: 10px;
+               line-height: 1.5;
+          }
+
+          .sad-row-actions {
+               display: flex;
+               align-items: center;
+               gap: 7px;
+          }
+
+          .sad-action-menu {
+               width: 35px;
+               height: 35px;
+               border-radius: 10px;
+          }
+
+          .sad-empty-state.is-visible {
+               display: block;
+          }
+
+          .sad-empty-state h4 {
+               font-size: 14px;
+          }
+
+          .sad-empty-state p {
+               font-size: 11px;
+          }
+
+          .sad-channel-list,
+          .sad-role-list,
+          .sad-activity-list {
+               padding: 5px 25px 12px;
+          }
+
+          .sad-channel-item,
+          .sad-role-item {
+               padding: 19px 0;
+          }
+
+          .sad-channel-icon,
+          .sad-role-icon {
+               width: 40px;
+               height: 40px;
+               border-radius: 12px;
+          }
+
+          .sad-channel-name,
+          .sad-role-name {
+               font-size: 12px;
+          }
+
+          .sad-channel-meta,
+          .sad-role-meta {
+               font-size: 10px;
+          }
+
+          .sad-channel-score,
+          .sad-role-count {
+               font-size: 15px;
+          }
+
+          .sad-activity-item {
+               gap: 15px;
+               padding: 20px 0;
+          }
+
+          .sad-activity-item:not(:last-child)::before {
+               top: 59px;
+               left: 21px;
+          }
+
+          .sad-activity-icon {
+               width: 44px;
+               height: 44px;
+          }
+
+          .sad-activity-content h4 {
+               font-size: 13px;
+          }
+
+          .sad-activity-content p {
+               font-size: 11px;
+          }
+
+          .sad-activity-time {
+               font-size: 10px;
+          }
+
+          .sad-quick-grid {
+               gap: 14px;
+               padding: 24px;
+          }
+
+          .sad-quick-action {
+               min-height: 96px;
+               padding: 17px;
+               border-radius: 16px;
+               background: linear-gradient(145deg, rgba(49, 87, 213, 0.035), transparent 70%);
+          }
+
+          .sad-quick-icon {
+               width: 45px;
+               height: 45px;
+               border-radius: 14px;
+          }
+
+          .sad-quick-action strong {
+               font-size: 12px;
+          }
+
+          .sad-quick-action span {
+               font-size: 10px;
+          }
+
+          @media (max-width: 1500px) {
+               .sad-main-grid {
+                    grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.75fr);
+               }
+
+               .sad-secondary-grid {
+                    grid-template-columns: minmax(330px, 0.72fr) minmax(0, 1.45fr);
+               }
+          }
+
+          @media (max-width: 1199px) {
+               .sad-dashboard {
+                    margin: -20px;
+                    padding: 25px;
+               }
+
+               .sad-stat-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+               }
+
+               .sad-main-grid,
+               .sad-secondary-grid,
+               .sad-footer-grid {
+                    grid-template-columns: 1fr;
+               }
+          }
+
+          @media (max-width: 767px) {
+               .sad-dashboard {
+                    margin: -15px;
+                    padding: 17px 15px 34px;
+               }
+
+               .sad-hero {
+                    padding: 29px 23px;
+                    border-radius: 24px;
+               }
+
+               .sad-hero h1 {
+                    font-size: clamp(31px, 10vw, 43px);
+               }
+
+               .sad-hero-description {
+                    font-size: 14px;
+               }
+
+               .sad-hero-actions {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    width: 100%;
+               }
+
+               .sad-stat-grid,
+               .sad-bottom-grid {
+                    grid-template-columns: 1fr;
+               }
+
+               .sad-card-header {
+                    gap: 15px;
+                    padding: 21px;
+               }
+
+               .sad-card-action {
+                    align-self: stretch;
+                    justify-content: center;
+               }
+
+               .sad-table-toolbar {
+                    padding: 15px 18px;
+               }
+
+               .sad-search {
+                    width: 100%;
+               }
+          }
+
+          @media (max-width: 480px) {
+               .sad-hero-actions {
+                    grid-template-columns: 1fr;
+               }
+
+               .sad-stat-card {
+                    min-height: auto;
+               }
+
+               .sad-score-ring {
+                    width: 132px;
+                    height: 132px;
+               }
+
+               .sad-sentiment-grid {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+               }
+          }
      </style>
 
      <div class="sad-dashboard">
@@ -2446,7 +3159,7 @@
                               </tbody>
                          </table>
 
-                         @if ($positions->isNotEmpty())
+                         @if (count($positions) > 0)
                               <div class="sad-empty-state" id="positionEmptyState">
                                    <i data-feather="search"></i>
                                    <h4>Data jabatan tidak ditemukan</h4>
@@ -2638,58 +3351,13 @@
                     feather.replace();
                }
 
-               const filterButtons = document.querySelectorAll('[data-unit-filter]');
-               const unitRows = document.querySelectorAll('[data-unit-row]');
-               const unitSearch = document.getElementById('unitMonitoringSearch');
-               const unitEmpty = document.getElementById('unitMonitoringEmpty');
-               let activeStatus = 'semua';
-
-               function filterUnitMonitoring() {
-                    const keyword = unitSearch ? unitSearch.value.trim().toLowerCase() : '';
-                    let visibleRows = 0;
-
-                    unitRows.forEach(function(row) {
-                         const rowStatus = row.dataset.unitStatus || '';
-                         const rowKeyword = row.dataset.unitKeyword || '';
-                         const statusMatches = activeStatus === 'semua' || rowStatus === activeStatus;
-                         const keywordMatches = keyword === '' || rowKeyword.includes(keyword);
-                         const shouldShow = statusMatches && keywordMatches;
-
-                         row.style.display = shouldShow ? '' : 'none';
-
-                         if (shouldShow) {
-                              visibleRows += 1;
-                         }
-                    });
-
-                    if (unitEmpty) {
-                         unitEmpty.style.display = visibleRows === 0 ? 'block' : 'none';
-                    }
-               }
-
-               filterButtons.forEach(function(button) {
-                    button.addEventListener('click', function() {
-                         filterButtons.forEach(function(item) {
-                              item.classList.remove('active');
-                         });
-
-                         button.classList.add('active');
-                         activeStatus = button.dataset.unitFilter || 'semua';
-                         filterUnitMonitoring();
-                    });
-               });
-
-               if (unitSearch) {
-                    unitSearch.addEventListener('input', filterUnitMonitoring);
-               }
-
                const markReadButton = document.getElementById('markSystemRead');
                const activityItems = document.querySelectorAll('[data-system-activity]');
 
                if (markReadButton) {
                     markReadButton.addEventListener('click', function() {
                          activityItems.forEach(function(activity) {
-                              activity.style.opacity = '0.55';
+                              activity.style.opacity = '0.5';
                          });
 
                          markReadButton.textContent = 'Sudah dibaca';
@@ -2700,12 +3368,9 @@
                const liveClock = document.getElementById('sadLiveClock');
 
                function updateClock() {
-                    if (!liveClock) {
-                         return;
-                    }
+                    if (!liveClock) return;
 
-                    const currentTime = new Date();
-                    liveClock.textContent = currentTime.toLocaleTimeString('id-ID', {
+                    liveClock.textContent = new Date().toLocaleTimeString('id-ID', {
                          hour: '2-digit',
                          minute: '2-digit',
                          second: '2-digit',
@@ -2780,6 +3445,8 @@
                     if (searchInput) {
                          searchInput.addEventListener('input', filterPositions);
                     }
+
+                    filterPositions();
                });
           </script>
      @endpush
