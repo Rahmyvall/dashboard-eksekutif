@@ -1,23 +1,29 @@
 <div align="center">
 
 <img
-src="public/backend/assets/img/logo.png"
-width="130"
-alt="Logo Dashboard Monitoring Perusahaan Jasa"
+ src="public/backend/assets/img/logo.png"
+ width="130"
+ alt="Logo Dashboard Monitoring Perusahaan Jasa"
 />
 
-Dashboard Monitoring Perusahaan Jasa
+# Dashboard Monitoring Perusahaan Jasa
 
 Sistem informasi berbasis web untuk memonitor produktivitas karyawan, absensi, transaksi jasa, pendapatan, pengeluaran, dan kepuasan pelanggan secara terintegrasi.
 
-
+[![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square\&logo=laravel\&logoColor=white)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square\&logo=php\&logoColor=white)](https://www.php.net)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square\&logo=postgresql\&logoColor=white)](https://www.postgresql.org)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat-square\&logo=bootstrap\&logoColor=white)](https://getbootstrap.com)
+[![GitHub Stars](https://img.shields.io/github/stars/USERNAME/NAMA-REPOSITORY?style=flat-square)](https://github.com/USERNAME/NAMA-REPOSITORY/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/USERNAME/NAMA-REPOSITORY?style=flat-square)](https://github.com/USERNAME/NAMA-REPOSITORY/issues)
+[![License](https://img.shields.io/github/license/USERNAME/NAMA-REPOSITORY?style=flat-square)](https://github.com/USERNAME/NAMA-REPOSITORY/blob/main/LICENSE)
 
 <br>
 
 <img
-src="public/backend/assets/img/readme/dashboard-preview.png"
-width="900"
-alt="Preview Dashboard Monitoring Perusahaan Jasa"
+ src="public/backend/assets/img/readme/dashboard-preview.png"
+ width="900"
+ alt="Preview Dashboard Monitoring Perusahaan Jasa"
 />
 
 <br>
@@ -29,481 +35,160 @@ transaksi jasa, pendapatan, dan aktivitas operasional perusahaan.
 
 </div>
 
-Daftar Isi
+---
 
-Tentang Aplikasi
+## Daftar Isi
 
-Proses Bisnis
+* [Tentang Aplikasi](#tentang-aplikasi)
+* [Tampilan Aplikasi](#tampilan-aplikasi)
+* [Fitur Utama](#fitur-utama)
+* [Teknologi yang Digunakan](#teknologi-yang-digunakan)
+* [Persyaratan Sistem](#persyaratan-sistem)
+* [Instalasi](#instalasi)
+* [Struktur Modul Database](#struktur-modul-database)
+* [Struktur Direktori Gambar](#struktur-direktori-gambar)
+* [Keamanan](#keamanan)
+* [Kontribusi](#kontribusi)
+* [Lisensi](#lisensi)
 
-Flowchart
+---
 
-Tampilan Aplikasi
+## Tentang Aplikasi
 
-Fitur Utama
-
-Teknologi yang Digunakan
-
-Persyaratan Sistem
-
-Instalasi
-
-Struktur Modul Database
-
-Struktur Direktori Gambar
-
-Keamanan
-
-Kontribusi
-
-Lisensi
-
-Tentang Aplikasi
-
-Dashboard Monitoring Perusahaan Jasa merupakan aplikasi berbasis web yang dikembangkan untuk membantu perusahaan dalam memonitor dan mengelola aktivitas operasional secara terintegrasi.
+**Dashboard Monitoring Perusahaan Jasa** merupakan aplikasi berbasis web yang dikembangkan untuk membantu perusahaan dalam memonitor dan mengelola aktivitas operasional secara terintegrasi.
 
 Aplikasi ini mencakup pengelolaan:
 
-Data karyawan
-
-Departemen dan jabatan
-
-Jadwal kerja
-
-Absensi dan cuti
-
-Target serta penilaian kinerja
-
-Pelanggan dan layanan
-
-Transaksi jasa
-
-Invoice dan pembayaran
-
-Pengeluaran perusahaan
-
-Kepuasan serta keluhan pelanggan
-
-Laporan dan dashboard eksekutif
+* Data karyawan
+* Departemen dan jabatan
+* Jadwal kerja
+* Absensi dan cuti
+* Target serta penilaian kinerja
+* Pelanggan dan layanan
+* Transaksi jasa
+* Invoice dan pembayaran
+* Pengeluaran perusahaan
+* Kepuasan serta keluhan pelanggan
+* Laporan dan dashboard eksekutif
 
 Informasi utama ditampilkan dalam dashboard interaktif agar manajemen dapat memantau kondisi perusahaan dan mengambil keputusan berdasarkan data yang tersedia.
 
-Proses Bisnis
+---
 
-Proses bisnis aplikasi menggambarkan hubungan antara pelanggan, bagian operasional, karyawan, keuangan, HRD, dan manajemen dalam menjalankan layanan perusahaan. Seluruh aktivitas utama dicatat ke dalam sistem agar dapat dipantau melalui dashboard dan laporan manajemen.
+## Tampilan Aplikasi
 
-Aktor yang Terlibat
-
-Aktor
-
-Tanggung Jawab Utama
-
-Super Admin
-
-Mengelola konfigurasi sistem, pengguna, role, permission, dan data master.
-
-Admin/Operasional
-
-Mencatat pelanggan, pesanan jasa, detail layanan, penugasan, serta progres pekerjaan.
-
-HRD
-
-Mengelola karyawan, departemen, jabatan, jadwal kerja, absensi, cuti, dan penilaian kinerja.
-
-Karyawan
-
-Melakukan absensi, melihat jadwal, menjalankan tugas, mencatat aktivitas, dan memperbarui progres pekerjaan.
-
-Keuangan
-
-Membuat invoice, memverifikasi pembayaran, mencatat pengeluaran, dan menyusun laporan keuangan operasional.
-
-Manajer/Direktur
-
-Memantau KPI, produktivitas, transaksi, pendapatan, pengeluaran, keluhan, dan laporan eksekutif.
-
-Pelanggan
-
-Mengajukan kebutuhan jasa, melakukan pembayaran, memberikan penilaian, dan menyampaikan keluhan.
-
-Alur Proses Bisnis Utama
-
-Konfigurasi dan data masterSuper Admin atau admin menyiapkan data pengguna, role, permission, departemen, jabatan, karyawan, kategori jasa, layanan, harga, dan pengaturan sistem.
-
-Registrasi pelanggan dan permintaan jasaAdmin mencatat data pelanggan serta kebutuhan layanan. Sistem kemudian membuat pesanan jasa beserta detail item layanan.
-
-Validasi dan persetujuan pesananData pesanan diperiksa, termasuk jenis layanan, harga, jadwal, lokasi, kebutuhan tenaga kerja, dan informasi pendukung. Pesanan yang valid dilanjutkan ke proses penugasan.
-
-Penjadwalan dan penugasan pekerjaanAdmin atau manajer operasional memilih karyawan berdasarkan kompetensi, jadwal kerja, dan beban pekerjaan. Sistem mencatat penanggung jawab serta target penyelesaian.
-
-Pelaksanaan layananKaryawan menjalankan pekerjaan, melakukan absensi, mencatat aktivitas, mengunggah bukti pekerjaan apabila diperlukan, dan memperbarui progres pesanan.
-
-Monitoring dan verifikasi hasilAdmin atau supervisor memonitor progres dan memverifikasi hasil pekerjaan. Apabila pekerjaan belum sesuai, pesanan dikembalikan untuk diperbaiki. Jika sudah sesuai, status pesanan diubah menjadi selesai.
-
-Pembuatan invoice dan pembayaranSetelah pekerjaan selesai atau sesuai termin yang ditentukan, bagian keuangan membuat invoice. Pembayaran pelanggan dicatat dan diverifikasi hingga status invoice menjadi lunas atau sebagian dibayar.
-
-Pencatatan pengeluaranBiaya yang berkaitan dengan transaksi atau operasional dicatat sebagai pengeluaran untuk menghasilkan perhitungan pendapatan bersih yang lebih akurat.
-
-Penilaian dan keluhan pelangganPelanggan memberikan penilaian terhadap kualitas layanan, kinerja karyawan, ketepatan waktu, dan harga. Keluhan yang masuk ditindaklanjuti sampai dinyatakan selesai.
-
-Evaluasi kinerja dan dashboard manajemenSistem mengolah data absensi, aktivitas, target, transaksi, pendapatan, pengeluaran, kepuasan, dan keluhan menjadi indikator KPI serta dashboard eksekutif.
-
-Matriks Proses dan Output
-
-Tahap
-
-Input
-
-Proses Sistem
-
-Output
-
-Data master
-
-Data organisasi, karyawan, layanan, harga
-
-Validasi dan penyimpanan data master
-
-Data referensi sistem
-
-Permintaan jasa
-
-Data pelanggan dan kebutuhan layanan
-
-Pembuatan pesanan dan detail layanan
-
-Nomor pesanan jasa
-
-Penugasan
-
-Jadwal, kompetensi, dan beban kerja
-
-Penentuan karyawan pelaksana
-
-Surat/daftar penugasan
-
-Pelaksanaan
-
-Aktivitas, absensi, dan progres
-
-Pencatatan serta monitoring pekerjaan
-
-Riwayat progres pekerjaan
-
-Verifikasi
-
-Hasil pekerjaan dan bukti pendukung
-
-Pemeriksaan kesesuaian hasil
-
-Status selesai atau revisi
-
-Penagihan
-
-Data pesanan selesai dan nilai transaksi
-
-Pembuatan invoice
-
-Invoice pelanggan
-
-Pembayaran
-
-Bukti dan nominal pembayaran
-
-Verifikasi pembayaran
-
-Status pembayaran
-
-Pengeluaran
-
-Biaya transaksi dan operasional
-
-Pencatatan biaya
-
-Rekap pengeluaran
-
-Umpan balik
-
-Rating, komentar, atau keluhan
-
-Analisis kepuasan dan tindak lanjut
-
-Nilai kepuasan dan status keluhan
-
-Pelaporan
-
-Data seluruh modul
-
-Agregasi dan visualisasi
-
-Dashboard dan laporan manajemen
-
-Aturan Bisnis Utama
-
-Pengguna hanya dapat mengakses menu dan tindakan sesuai role serta permission.
-
-Pesanan tidak dapat masuk ke tahap pelaksanaan sebelum data pelanggan, layanan, harga, dan penugasan dinyatakan valid.
-
-Karyawan yang dinonaktifkan tidak dapat menerima penugasan baru.
-
-Jadwal penugasan harus mempertimbangkan benturan jadwal dan status ketersediaan karyawan.
-
-Status pekerjaan harus diperbarui secara berurutan dan disimpan dalam riwayat status.
-
-Invoice hanya dibuat untuk pesanan yang telah memenuhi syarat penagihan.
-
-Nilai pembayaran tidak boleh melebihi sisa tagihan tanpa proses koreksi atau pengembalian dana.
-
-Keluhan tidak dapat ditutup sebelum tindak lanjut dan hasil penyelesaian dicatat.
-
-Perubahan data penting harus direkam pada audit log.
-
-Data yang dihapus menggunakan mekanisme soft delete apabila masih diperlukan untuk histori dan pelaporan.
-
-Flowchart
-
-Flowchart berikut menggunakan sintaks Mermaid dan dapat ditampilkan secara langsung pada GitHub, GitLab, atau editor Markdown yang mendukung Mermaid.
-
-Flowchart Proses Bisnis Utama
-
-flowchart TD
-    A([Mulai]) --> B[Login ke Sistem]
-    B --> C{Autentikasi Berhasil?}
-    C -- Tidak --> D[Tampilkan Pesan Kesalahan]
-    D --> B
-    C -- Ya --> E[Validasi Role dan Permission]
-    E --> F[Kelola Data Master]
-    F --> G[Catat Data Pelanggan]
-    G --> H[Buat Pesanan Jasa]
-    H --> I[Validasi Layanan, Harga, dan Jadwal]
-    I --> J{Data Pesanan Valid?}
-    J -- Tidak --> K[Perbaiki Data Pesanan]
-    K --> I
-    J -- Ya --> L[Tentukan dan Tugaskan Karyawan]
-    L --> M[Karyawan Melaksanakan Pekerjaan]
-    M --> N[Catat Absensi, Aktivitas, dan Progres]
-    N --> O[Supervisor Memverifikasi Hasil]
-    O --> P{Hasil Sesuai?}
-    P -- Tidak --> Q[Kembalikan untuk Perbaikan]
-    Q --> M
-    P -- Ya --> R[Ubah Status Pesanan Menjadi Selesai]
-    R --> S[Buat Invoice]
-    S --> T[Catat dan Verifikasi Pembayaran]
-    T --> U{Invoice Lunas?}
-    U -- Belum --> V[Catat Sisa Tagihan]
-    V --> T
-    U -- Ya --> W[Catat Pengeluaran Terkait]
-    W --> X[Input Feedback atau Keluhan Pelanggan]
-    X --> Y{Ada Keluhan?}
-    Y -- Ya --> Z[Tindak Lanjut Keluhan]
-    Z --> AA[Verifikasi Penyelesaian Keluhan]
-    AA --> AB[Perbarui Dashboard dan Laporan]
-    Y -- Tidak --> AB
-    AB --> AC[Manajemen Melakukan Evaluasi]
-    AC --> AD([Selesai])
-
-Flowchart Absensi Karyawan
-
-flowchart TD
-    A([Mulai]) --> B[Karyawan Login]
-    B --> C[Memilih Menu Absensi]
-    C --> D{Sudah Absen Masuk?}
-    D -- Belum --> E[Catat Waktu Masuk]
-    E --> F[Bandingkan dengan Jadwal Kerja]
-    F --> G[Hitung Status Tepat Waktu atau Terlambat]
-    G --> H[Simpan Absensi Masuk]
-    D -- Sudah --> I{Sudah Absen Pulang?}
-    I -- Belum --> J[Catat Waktu Pulang]
-    J --> K[Hitung Durasi Kerja dan Lembur]
-    K --> L[Simpan Absensi Pulang]
-    I -- Sudah --> M[Tampilkan Riwayat Absensi]
-    H --> M
-    L --> M
-    M --> N([Selesai])
-
-Flowchart Pengajuan Cuti
-
-flowchart TD
-    A([Mulai]) --> B[Karyawan Mengisi Form Cuti]
-    B --> C[Validasi Tanggal, Jenis, dan Alasan]
-    C --> D{Data Lengkap?}
-    D -- Tidak --> E[Tampilkan Kesalahan Validasi]
-    E --> B
-    D -- Ya --> F[Periksa Sisa Cuti dan Benturan Jadwal]
-    F --> G{Memenuhi Syarat?}
-    G -- Tidak --> H[Pengajuan Ditolak Sistem]
-    G -- Ya --> I[Kirim ke Atasan atau HRD]
-    I --> J{Disetujui?}
-    J -- Tidak --> K[Catat Alasan Penolakan]
-    J -- Ya --> L[Kurangi Saldo Cuti]
-    L --> M[Perbarui Jadwal dan Status Kehadiran]
-    H --> N[Kirimi Notifikasi kepada Karyawan]
-    K --> N
-    M --> N
-    N --> O([Selesai])
-
-Flowchart Penilaian Kinerja
-
-flowchart TD
-    A([Mulai]) --> B[Tentukan Periode Penilaian]
-    B --> C[Tentukan KPI dan Bobot]
-    C --> D[Tetapkan Target Karyawan]
-    D --> E[Karyawan Mencatat Aktivitas dan Realisasi]
-    E --> F[Sistem Menghitung Pencapaian]
-    F --> G[Atasan Melakukan Verifikasi]
-    G --> H{Data Valid?}
-    H -- Tidak --> I[Kembalikan untuk Koreksi]
-    I --> E
-    H -- Ya --> J[Hitung Nilai Akhir]
-    J --> K[Tentukan Kategori dan Peringkat]
-    K --> L[Simpan Hasil Penilaian]
-    L --> M[Tampilkan pada Dashboard Produktivitas]
-    M --> N([Selesai])
-
-Flowchart Penanganan Keluhan Pelanggan
-
-flowchart TD
-    A([Mulai]) --> B[Pelanggan Menyampaikan Keluhan]
-    B --> C[Admin Mencatat Keluhan]
-    C --> D[Klasifikasi Jenis dan Prioritas]
-    D --> E[Tugaskan Penanggung Jawab]
-    E --> F[Lakukan Investigasi]
-    F --> G[Tentukan Tindakan Penyelesaian]
-    G --> H[Catat Hasil Tindak Lanjut]
-    H --> I{Pelanggan Menerima Solusi?}
-    I -- Tidak --> J[Eskalasi ke Supervisor atau Manajer]
-    J --> F
-    I -- Ya --> K[Ubah Status Menjadi Selesai]
-    K --> L[Simpan Waktu Penyelesaian]
-    L --> M[Perbarui Statistik Keluhan dan Kepuasan]
-    M --> N([Selesai])
-
-Tampilan Aplikasi
-
-Halaman Login
+### Halaman Login
 
 <div align="center">
 
 <img
-src="public/backend/assets/img/readme/login-page.png"
-width="850"
-alt="Halaman Login Dashboard Monitoring Perusahaan Jasa"
+ src="public/backend/assets/img/readme/login-page.png"
+ width="850"
+ alt="Halaman Login Dashboard Monitoring Perusahaan Jasa"
 />
 
 </div>
 
 Halaman login digunakan untuk mengamankan akses ke dalam sistem. Setiap pengguna hanya dapat mengakses fitur dan menu sesuai dengan peran serta hak akses yang telah diberikan.
 
-Dashboard Eksekutif
+---
+
+### Dashboard Eksekutif
 
 <div align="center">
 
 <img
-src="public/backend/assets/img/readme/dashboard-eksekutif.png"
-width="850"
-alt="Dashboard Eksekutif"
+ src="public/backend/assets/img/readme/dashboard-eksekutif.png"
+ width="850"
+ alt="Dashboard Eksekutif"
 />
 
 </div>
 
 Dashboard Eksekutif menampilkan informasi penting perusahaan, antara lain:
 
-Produktivitas karyawan
+* Produktivitas karyawan
+* Rekapitulasi absensi
+* Jumlah transaksi jasa
+* Pendapatan dan pengeluaran
+* Invoice yang belum dibayar
+* Tingkat kepuasan pelanggan
+* Jumlah keluhan pelanggan
 
-Rekapitulasi absensi
+---
 
-Jumlah transaksi jasa
-
-Pendapatan dan pengeluaran
-
-Invoice yang belum dibayar
-
-Tingkat kepuasan pelanggan
-
-Jumlah keluhan pelanggan
-
-Manajemen Karyawan
+### Manajemen Karyawan
 
 <div align="center">
 
 <img
-src="public/backend/assets/img/readme/data-karyawan.png"
-width="850"
-alt="Halaman Manajemen Data Karyawan"
+ src="public/backend/assets/img/readme/data-karyawan.png"
+ width="850"
+ alt="Halaman Manajemen Data Karyawan"
 />
 
 </div>
 
 Modul Manajemen Karyawan digunakan untuk mengelola:
 
-Data karyawan
+* Data karyawan
+* Departemen
+* Jabatan
+* Jadwal kerja
+* Penempatan jadwal
+* Status kepegawaian
 
-Departemen
+---
 
-Jabatan
-
-Jadwal kerja
-
-Penempatan jadwal
-
-Status kepegawaian
-
-Transaksi Jasa
+### Transaksi Jasa
 
 <div align="center">
 
 <img
-src="public/backend/assets/img/readme/transaksi-jasa.png"
-width="850"
-alt="Halaman Transaksi Jasa"
+ src="public/backend/assets/img/readme/transaksi-jasa.png"
+ width="850"
+ alt="Halaman Transaksi Jasa"
 />
 
 </div>
 
 Modul Transaksi Jasa digunakan untuk mengelola:
 
-Pesanan pelanggan
+* Pesanan pelanggan
+* Detail layanan
+* Penugasan pekerjaan
+* Riwayat status pekerjaan
+* Invoice
+* Pembayaran
+* Pengeluaran transaksi
 
-Detail layanan
+---
 
-Penugasan pekerjaan
-
-Riwayat status pekerjaan
-
-Invoice
-
-Pembayaran
-
-Pengeluaran transaksi
-
-Kepuasan Pelanggan
+### Kepuasan Pelanggan
 
 <div align="center">
 
 <img
-src="public/backend/assets/img/readme/kepuasan-pelanggan.png"
-width="850"
-alt="Halaman Kepuasan Pelanggan"
+ src="public/backend/assets/img/readme/kepuasan-pelanggan.png"
+ width="850"
+ alt="Halaman Kepuasan Pelanggan"
 />
 
 </div>
 
 Modul Kepuasan Pelanggan digunakan untuk mencatat:
 
-Penilaian kualitas pelayanan
+* Penilaian kualitas pelayanan
+* Penilaian kinerja karyawan
+* Penilaian ketepatan waktu
+* Penilaian harga
+* Komentar pelanggan
+* Keluhan pelanggan
+* Status penyelesaian keluhan
 
-Penilaian kinerja karyawan
+---
 
-Penilaian ketepatan waktu
-
-Penilaian harga
-
-Komentar pelanggan
-
-Keluhan pelanggan
-
-Status penyelesaian keluhan
-
-Galeri Tampilan
+## Galeri Tampilan
 
 <table>
     <tr>
@@ -548,324 +233,218 @@ Galeri Tampilan
     </tr>
 </table>
 
-Fitur Utama
-
-1. Autentikasi dan Hak Akses
-
-Login dan logout pengguna
-
-Manajemen akun pengguna
-
-Manajemen role dan permission
-
-Pembatasan menu berdasarkan hak akses
-
-Manajemen sesi pengguna
-
-Perubahan kata sandi
-
-Status aktif dan nonaktif pengguna
-
-2. Manajemen Karyawan
-
-Data karyawan
-
-Data departemen
-
-Data jabatan
-
-Jadwal kerja
-
-Penempatan jadwal karyawan
-
-Status kepegawaian
-
-Riwayat data karyawan
-
-3. Absensi dan Cuti
-
-Pencatatan jam masuk
-
-Pencatatan jam pulang
-
-Perhitungan keterlambatan
-
-Perhitungan lembur
-
-Status kehadiran
-
-Pengajuan cuti
-
-Persetujuan cuti
-
-Penolakan cuti
-
-Riwayat pengajuan cuti
-
-4. Produktivitas Karyawan
-
-Periode penilaian
-
-Indikator kinerja atau KPI
-
-Target karyawan
-
-Aktivitas pekerjaan
-
-Realisasi pekerjaan
-
-Penilaian kinerja
-
-Persentase pencapaian target
-
-Peringkat karyawan
-
-Riwayat hasil penilaian
-
-5. Pelanggan dan Layanan
-
-Data pelanggan
-
-Kategori jasa
-
-Data layanan
-
-Harga layanan
-
-Status layanan
-
-Riwayat pelanggan
-
-6. Transaksi Jasa
-
-Pembuatan pesanan jasa
-
-Detail item pesanan
-
-Riwayat status pesanan
-
-Penugasan pekerjaan
-
-Invoice pelanggan
-
-Pencatatan pembayaran
-
-Pencatatan pengeluaran
-
-Monitoring progres pekerjaan
-
-Riwayat transaksi
-
-7. Kepuasan Pelanggan
-
-Penilaian kualitas pelayanan
-
-Penilaian kinerja karyawan
-
-Penilaian ketepatan waktu
-
-Penilaian harga
-
-Komentar pelanggan
-
-Keluhan pelanggan
-
-Tindak lanjut keluhan
-
-Status penyelesaian keluhan
-
-8. Dashboard Eksekutif
-
-Statistik jumlah karyawan
-
-Rekapitulasi absensi
-
-Rekapitulasi pengajuan cuti
-
-Produktivitas karyawan
-
-Pencapaian target
-
-Jumlah pelanggan
-
-Jumlah transaksi jasa
-
-Total pendapatan perusahaan
-
-Total pengeluaran perusahaan
-
-Invoice belum dibayar
-
-Tingkat kepuasan pelanggan
-
-Jumlah keluhan pelanggan
-
-Grafik perkembangan transaksi
-
-Grafik pendapatan dan pengeluaran
-
-9. Fitur Pendukung
-
-Notifikasi pengguna
-
-Audit log aktivitas
-
-Pengaturan sistem
-
-Pencarian data
-
-Filter data
-
-Pengurutan data
-
-Pagination
-
-Soft delete
-
-Restore data
-
-Ekspor laporan
-
-Tampilan responsif
-
-Validasi formulir
-
-Konfirmasi tindakan
-
-Teknologi yang Digunakan
-
-Teknologi
-
-Keterangan
-
-Laravel 13
-
-Framework backend aplikasi
-
-PHP 8.2+
-
-Bahasa pemrograman backend
-
-PostgreSQL
-
-Sistem manajemen basis data
-
-Blade
-
-Template engine Laravel
-
-Bootstrap 5
-
-Framework antarmuka pengguna
-
-JavaScript
-
-Interaksi dan manipulasi halaman
-
-Chart.js
-
-Visualisasi grafik dashboard
-
-HTML5
-
-Struktur halaman aplikasi
-
-CSS3
-
-Desain dan tata letak halaman
-
-Composer
-
-Manajemen dependensi PHP
-
-NPM
-
-Manajemen dependensi frontend
-
-Vite
-
-Build tool untuk aset frontend
-
-Git
-
-Version control
-
-GitHub
-
-Repository dan kolaborasi kode
-
-Persyaratan Sistem
+---
+
+## Fitur Utama
+
+### 1. Autentikasi dan Hak Akses
+
+* Login dan logout pengguna
+* Manajemen akun pengguna
+* Manajemen role dan permission
+* Pembatasan menu berdasarkan hak akses
+* Manajemen sesi pengguna
+* Perubahan kata sandi
+* Status aktif dan nonaktif pengguna
+
+### 2. Manajemen Karyawan
+
+* Data karyawan
+* Data departemen
+* Data jabatan
+* Jadwal kerja
+* Penempatan jadwal karyawan
+* Status kepegawaian
+* Riwayat data karyawan
+
+### 3. Absensi dan Cuti
+
+* Pencatatan jam masuk
+* Pencatatan jam pulang
+* Perhitungan keterlambatan
+* Perhitungan lembur
+* Status kehadiran
+* Pengajuan cuti
+* Persetujuan cuti
+* Penolakan cuti
+* Riwayat pengajuan cuti
+
+### 4. Produktivitas Karyawan
+
+* Periode penilaian
+* Indikator kinerja atau KPI
+* Target karyawan
+* Aktivitas pekerjaan
+* Realisasi pekerjaan
+* Penilaian kinerja
+* Persentase pencapaian target
+* Peringkat karyawan
+* Riwayat hasil penilaian
+
+### 5. Pelanggan dan Layanan
+
+* Data pelanggan
+* Kategori jasa
+* Data layanan
+* Harga layanan
+* Status layanan
+* Riwayat pelanggan
+
+### 6. Transaksi Jasa
+
+* Pembuatan pesanan jasa
+* Detail item pesanan
+* Riwayat status pesanan
+* Penugasan pekerjaan
+* Invoice pelanggan
+* Pencatatan pembayaran
+* Pencatatan pengeluaran
+* Monitoring progres pekerjaan
+* Riwayat transaksi
+
+### 7. Kepuasan Pelanggan
+
+* Penilaian kualitas pelayanan
+* Penilaian kinerja karyawan
+* Penilaian ketepatan waktu
+* Penilaian harga
+* Komentar pelanggan
+* Keluhan pelanggan
+* Tindak lanjut keluhan
+* Status penyelesaian keluhan
+
+### 8. Dashboard Eksekutif
+
+* Statistik jumlah karyawan
+* Rekapitulasi absensi
+* Rekapitulasi pengajuan cuti
+* Produktivitas karyawan
+* Pencapaian target
+* Jumlah pelanggan
+* Jumlah transaksi jasa
+* Total pendapatan perusahaan
+* Total pengeluaran perusahaan
+* Invoice belum dibayar
+* Tingkat kepuasan pelanggan
+* Jumlah keluhan pelanggan
+* Grafik perkembangan transaksi
+* Grafik pendapatan dan pengeluaran
+
+### 9. Fitur Pendukung
+
+* Notifikasi pengguna
+* Audit log aktivitas
+* Pengaturan sistem
+* Pencarian data
+* Filter data
+* Pengurutan data
+* Pagination
+* Soft delete
+* Restore data
+* Ekspor laporan
+* Tampilan responsif
+* Validasi formulir
+* Konfirmasi tindakan
+
+---
+
+## Teknologi yang Digunakan
+
+| Teknologi   | Keterangan                       |
+| ----------- | -------------------------------- |
+| Laravel 13  | Framework backend aplikasi       |
+| PHP 8.2+    | Bahasa pemrograman backend       |
+| PostgreSQL  | Sistem manajemen basis data      |
+| Blade       | Template engine Laravel          |
+| Bootstrap 5 | Framework antarmuka pengguna     |
+| JavaScript  | Interaksi dan manipulasi halaman |
+| Chart.js    | Visualisasi grafik dashboard     |
+| HTML5       | Struktur halaman aplikasi        |
+| CSS3        | Desain dan tata letak halaman    |
+| Composer    | Manajemen dependensi PHP         |
+| NPM         | Manajemen dependensi frontend    |
+| Vite        | Build tool untuk aset frontend   |
+| Git         | Version control                  |
+| GitHub      | Repository dan kolaborasi kode   |
+
+---
+
+## Persyaratan Sistem
 
 Pastikan perangkat telah memiliki perangkat lunak berikut:
 
-PHP 8.2 atau lebih baru
-
-Composer
-
-PostgreSQL
-
-Node.js
-
-NPM
-
-Git
-
-Web server Apache atau Nginx
+* PHP 8.2 atau lebih baru
+* Composer
+* PostgreSQL
+* Node.js
+* NPM
+* Git
+* Web server Apache atau Nginx
 
 Ekstensi PHP yang direkomendasikan:
 
-php-pgsql
+* `php-pgsql`
+* `php-mbstring`
+* `php-xml`
+* `php-curl`
+* `php-zip`
+* `php-bcmath`
+* `php-fileinfo`
+* `php-tokenizer`
 
-php-mbstring
+---
 
-php-xml
+## Instalasi
 
-php-curl
+### 1. Clone Repository
 
-php-zip
-
-php-bcmath
-
-php-fileinfo
-
-php-tokenizer
-
-Instalasi
-
-1. Clone Repository
-
+```bash
 git clone https://github.com/USERNAME/NAMA-REPOSITORY.git
+```
 
 Masuk ke direktori aplikasi:
 
+```bash
 cd NAMA-REPOSITORY
+```
 
-2. Instal Dependensi PHP
+### 2. Instal Dependensi PHP
 
+```bash
 composer install
+```
 
-3. Instal Dependensi Frontend
+### 3. Instal Dependensi Frontend
 
+```bash
 npm install
+```
 
-4. Salin File Environment
+### 4. Salin File Environment
 
 Untuk Linux atau macOS:
 
+```bash
 cp .env.example .env
+```
 
 Untuk Windows Command Prompt:
 
+```cmd
 copy .env.example .env
+```
 
-5. Generate Application Key
+### 5. Generate Application Key
 
+```bash
 php artisan key:generate
+```
 
-6. Konfigurasi Database
+### 6. Konfigurasi Database
 
-Buka file .env, kemudian sesuaikan konfigurasi berikut:
+Buka file `.env`, kemudian sesuaikan konfigurasi berikut:
 
+```env
 APP_NAME="Dashboard Monitoring Perusahaan Jasa"
 APP_ENV=local
 APP_KEY=
@@ -878,95 +457,119 @@ DB_PORT=5432
 DB_DATABASE=dashboard_monitoring_jasa
 DB_USERNAME=postgres
 DB_PASSWORD=
+```
 
-7. Jalankan Migrasi Database
+### 7. Jalankan Migrasi Database
 
+```bash
 php artisan migrate
+```
 
 Apabila aplikasi menyediakan data awal melalui seeder, jalankan:
 
+```bash
 php artisan db:seed
+```
 
 Atau jalankan migrasi beserta seeder:
 
+```bash
 php artisan migrate --seed
+```
 
-8. Buat Symbolic Link Storage
+### 8. Buat Symbolic Link Storage
 
+```bash
 php artisan storage:link
+```
 
-9. Jalankan Build Aset Frontend
+### 9. Jalankan Build Aset Frontend
 
 Untuk mode pengembangan:
 
+```bash
 npm run dev
+```
 
 Untuk mode produksi:
 
+```bash
 npm run build
+```
 
-10. Jalankan Aplikasi
+### 10. Jalankan Aplikasi
 
+```bash
 php artisan serve
+```
 
 Akses aplikasi melalui alamat berikut:
 
+```text
 http://127.0.0.1:8000
+```
 
-Perintah Pengembangan
+---
+
+## Perintah Pengembangan
 
 Membersihkan cache aplikasi:
 
+```bash
 php artisan optimize:clear
+```
 
 Membuat ulang cache konfigurasi:
 
+```bash
 php artisan config:cache
+```
 
 Membuat cache route:
 
+```bash
 php artisan route:cache
+```
 
 Membuat cache view:
 
+```bash
 php artisan view:cache
+```
 
 Menjalankan pengujian:
 
+```bash
 php artisan test
+```
 
 Menampilkan daftar route:
 
+```bash
 php artisan route:list
+```
 
-Struktur Modul Database
+---
+
+## Struktur Modul Database
 
 Database aplikasi dikelompokkan menjadi beberapa modul utama:
 
-Autentikasi dan akses
+1. Autentikasi dan akses
+2. Role dan permission
+3. Organisasi dan karyawan
+4. Absensi dan cuti
+5. Produktivitas karyawan
+6. Pelanggan dan jasa
+7. Transaksi jasa
+8. Kepuasan pelanggan
+9. Notifikasi dan audit log
+10. Pengaturan sistem
+11. Pendukung dashboard
 
-Role dan permission
+### Tabel Utama
 
-Organisasi dan karyawan
-
-Absensi dan cuti
-
-Produktivitas karyawan
-
-Pelanggan dan jasa
-
-Transaksi jasa
-
-Kepuasan pelanggan
-
-Notifikasi dan audit log
-
-Pengaturan sistem
-
-Pendukung dashboard
-
-Tabel Utama
-
+```text
 users
 roles
 permissions
@@ -1007,13 +610,17 @@ customer_complaints
 notifications
 audit_logs
 system_settings
+```
 
-Nama tabel pivot role dan permission dapat berbeda tergantung implementasi package atau struktur database yang digunakan.
+> Nama tabel pivot role dan permission dapat berbeda tergantung implementasi package atau struktur database yang digunakan.
 
-Struktur Direktori Gambar
+---
+
+## Struktur Direktori Gambar
 
 Agar seluruh gambar pada README dapat tampil dengan benar, gunakan struktur direktori berikut:
 
+```text
 public/
 └── backend/
     └── assets/
@@ -1026,59 +633,60 @@ public/
                 ├── data-karyawan.png
                 ├── transaksi-jasa.png
                 └── kepuasan-pelanggan.png
+```
 
 Pastikan penulisan nama file, huruf kapital, dan ekstensi gambar sesuai dengan file yang terdapat di repository.
 
-Keamanan
+---
+
+## Keamanan
 
 Beberapa mekanisme keamanan yang digunakan dalam aplikasi:
 
-Autentikasi pengguna
+* Autentikasi pengguna
+* Otorisasi berdasarkan role dan permission
+* Proteksi CSRF
+* Validasi input
+* Hashing kata sandi
+* Middleware hak akses
+* Pembatasan akses route
+* Audit log aktivitas pengguna
+* Perlindungan mass assignment
+* Pengelolaan session
+* Soft delete untuk data tertentu
 
-Otorisasi berdasarkan role dan permission
+Jangan mengunggah file `.env`, credential database, API key, atau informasi sensitif lainnya ke repository publik.
 
-Proteksi CSRF
+---
 
-Validasi input
-
-Hashing kata sandi
-
-Middleware hak akses
-
-Pembatasan akses route
-
-Audit log aktivitas pengguna
-
-Perlindungan mass assignment
-
-Pengelolaan session
-
-Soft delete untuk data tertentu
-
-Jangan mengunggah file .env, credential database, API key, atau informasi sensitif lainnya ke repository publik.
-
-Kontribusi
+## Kontribusi
 
 Kontribusi terhadap pengembangan aplikasi dapat dilakukan melalui langkah berikut:
 
-Fork repository ini.
+1. Fork repository ini.
+2. Buat branch fitur baru.
 
-Buat branch fitur baru.
-
+```bash
 git checkout -b feature/nama-fitur
+```
 
-Lakukan perubahan dan commit.
+3. Lakukan perubahan dan commit.
 
+```bash
 git commit -m "feat: menambahkan nama fitur"
+```
 
-Push branch ke repository.
+4. Push branch ke repository.
 
+```bash
 git push origin feature/nama-fitur
+```
 
-Buat Pull Request melalui GitHub.
+5. Buat Pull Request melalui GitHub.
 
 Gunakan format commit yang jelas dan konsisten, misalnya:
 
+```text
 feat: menambahkan fitur baru
 fix: memperbaiki kesalahan aplikasi
 docs: memperbarui dokumentasi
@@ -1086,39 +694,42 @@ style: memperbaiki format kode
 refactor: menyederhanakan struktur kode
 test: menambahkan pengujian
 chore: memperbarui konfigurasi proyek
+```
 
-Pelaporan Masalah
+---
+
+## Pelaporan Masalah
 
 Apabila menemukan bug atau masalah pada aplikasi, buat laporan melalui halaman berikut:
 
+```text
 https://github.com/USERNAME/NAMA-REPOSITORY/issues
+```
 
 Sertakan informasi berikut:
 
-Deskripsi masalah
+* Deskripsi masalah
+* Langkah untuk menghasilkan masalah
+* Hasil yang diharapkan
+* Hasil yang terjadi
+* Screenshot apabila diperlukan
+* Versi PHP dan Laravel
+* Sistem operasi yang digunakan
 
-Langkah untuk menghasilkan masalah
+---
 
-Hasil yang diharapkan
+## Lisensi
 
-Hasil yang terjadi
+Proyek ini didistribusikan berdasarkan lisensi yang tercantum pada file [`LICENSE`](LICENSE).
 
-Screenshot apabila diperlukan
+---
 
-Versi PHP dan Laravel
-
-Sistem operasi yang digunakan
-
-Lisensi
-
-Proyek ini didistribusikan berdasarkan lisensi yang tercantum pada file LICENSE.
-
-Pengembang
+## Pengembang
 
 <div align="center">
 
 Dikembangkan untuk mendukung proses monitoring dan pengambilan keputusan pada perusahaan jasa.
 
-Dashboard Monitoring Perusahaan Jasa
+**Dashboard Monitoring Perusahaan Jasa**
 
 </div>
