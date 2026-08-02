@@ -4,7 +4,7 @@
 <head>
 
      <title>
-          Dashboard Monitoring Kinerja & Kepuasan Pelanggan |
+          Dashboard Monitoring Produktivitas Karyawan Dan Transaksi Jasa |
           @yield('page-title', 'Dashboard Eksekutif')
      </title>
 

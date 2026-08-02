@@ -322,6 +322,12 @@
      $customersRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.customers.index');
 
      /*
+      * Pastikan route index Jadwal Kerja benar-benar terdaftar.
+      * Menu pengelolaan Work Schedule hanya ditampilkan untuk Super Admin.
+      */
+     $workSchedulesRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.work-schedules.index');
+
+     /*
     |--------------------------------------------------------------------------
     | STATUS SUBMENU
     |--------------------------------------------------------------------------
@@ -344,6 +350,7 @@
          'employee-targets.*',
          'employee-kpi-results.*',
          'performance-evaluations.*',
+         'super-admin.work-schedules.*',
          'work-schedules.*',
          'employee-schedules.*',
      );
@@ -469,14 +476,14 @@
                               @if (($canAccessDepartments ?? false) && ($departmentsRouteExists ?? false))
                                    <a href="{{ route('super-admin.departments.index') }}"
                                         class="nav-sub-link {{ $routeActive('super-admin.departments.*') ? 'active' : '' }}">
-                                        Departemen
+                                        Data Departemen
                                    </a>
                               @endif
 
                               @if (($canAccessPositions ?? false) && ($positionsRouteExists ?? false))
                                    <a href="{{ route('super-admin.positions.index') }}"
                                         class="nav-sub-link {{ $routeActive('super-admin.positions.*') ? 'active' : '' }}">
-                                        Jabatan
+                                        Data Jabatan
                                    </a>
                               @endif
 
@@ -568,6 +575,13 @@
                          </a>
 
                          <nav id="submenu-kinerja" class="nav nav-sub" aria-label="Menu Kinerja">
+                              @if ($isSuperAdmin && ($workSchedulesRouteExists ?? false))
+                                   <a href="{{ route('super-admin.work-schedules.index') }}"
+                                        class="nav-sub-link {{ $routeActive('super-admin.work-schedules.*') ? 'active' : '' }}">
+                                        Jadwal Kerja
+                                   </a>
+                              @endif
+
                               @if ($isSuperAdmin || $isHrd)
                                    <a href="#"
                                         class="nav-sub-link {{ $routeActive('kpi-categories.*') ? 'active' : '' }}">

@@ -8,12 +8,24 @@ use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\WorkScheduleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Models\WorkSchedule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Explicit Route Model Binding
+|--------------------------------------------------------------------------
+|
+| Memastikan parameter {workSchedule} selalu menjadi instance WorkSchedule.
+|
+*/
+Route::model('workSchedule', WorkSchedule::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -589,6 +601,94 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'super_admin')
                 ->name('dashboard');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Work Schedule Management
+            |--------------------------------------------------------------------------
+            */
+
+            Route::prefix('work-schedules')
+                ->name('work-schedules.')
+                ->group(function (): void {
+                    /*
+                    |----------------------------------------------------------
+                    | Route statis
+                    |----------------------------------------------------------
+                    */
+                    Route::get(
+                        '/',
+                        [WorkScheduleController::class, 'index']
+                    )->name('index');
+
+                    Route::get(
+                        '/print',
+                        [WorkScheduleController::class, 'printAll']
+                    )->name('print');
+
+                    Route::get(
+                        '/create',
+                        [WorkScheduleController::class, 'create']
+                    )->name('create');
+
+                    Route::post(
+                        '/',
+                        [WorkScheduleController::class, 'store']
+                    )->name('store');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Route dengan aksi khusus
+                    |----------------------------------------------------------
+                    |
+                    | Harus diletakkan sebelum route /{workSchedule}.
+                    |
+                    */
+                    Route::patch(
+                        '/{workSchedule}/toggle-status',
+                        [WorkScheduleController::class, 'toggleStatus']
+                    )
+                        ->whereNumber('workSchedule')
+                        ->name('toggle-status');
+
+                    Route::get(
+                        '/{workSchedule}/edit',
+                        [WorkScheduleController::class, 'edit']
+                    )
+                        ->whereNumber('workSchedule')
+                        ->name('edit');
+
+                    Route::match(
+                        ['put', 'patch'],
+                        '/{workSchedule}',
+                        [WorkScheduleController::class, 'update']
+                    )
+                        ->whereNumber('workSchedule')
+                        ->name('update');
+
+                    Route::delete(
+                        '/{workSchedule}',
+                        [WorkScheduleController::class, 'destroy']
+                    )
+                        ->whereNumber('workSchedule')
+                        ->name('destroy');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Detail jadwal kerja
+                    |----------------------------------------------------------
+                    |
+                    | Diletakkan paling bawah agar create, edit, dan
+                    | toggle-status tidak dibaca sebagai parameter model.
+                    |
+                    */
+                    Route::get(
+                        '/{workSchedule}',
+                        [WorkScheduleController::class, 'show']
+                    )
+                        ->whereNumber('workSchedule')
+                        ->name('show');
+                });
 
             /*
         |--------------------------------------------------------------------------
