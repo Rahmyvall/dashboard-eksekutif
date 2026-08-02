@@ -3,6 +3,7 @@
 declare (strict_types = 1);
 
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
@@ -452,6 +453,125 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
                     )
                         ->whereNumber('id')
                         ->name('positions.force-delete');
+                });
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shared Customer Management
+    |--------------------------------------------------------------------------
+    |
+    | Index dan Show:
+    | - super_admin
+    | - direktur_utama
+    | - admin_pelayanan
+    | - admin_operasional
+    | - finance_staff
+    | - auditor_internal
+    |
+    | Create, Store, Edit, Update, dan Delete:
+    | - super_admin
+    | - admin_pelayanan
+    | - admin_operasional
+    |
+    | Recycle Bin:
+    | - super_admin
+    |
+    */
+
+    Route::prefix('super-admin')
+        ->name('super-admin.')
+        ->group(function (): void {
+            Route::prefix('customers')
+                ->name('customers.')
+                ->controller(CustomerController::class)
+                ->group(function (): void {
+                    /*
+                    |----------------------------------------------------------
+                    | Create dan Store
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware(
+                        'role:super_admin|admin_pelayanan|admin_operasional'
+                    )->group(function (): void {
+                        Route::get('/create', 'create')
+                            ->name('create');
+
+                        Route::post('/', 'store')
+                            ->name('store');
+                    });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Recycle Bin — khusus Super Admin
+                    |----------------------------------------------------------
+                    |
+                    | Route statis diletakkan sebelum /{customer} agar kata
+                    | "trash" tidak dianggap sebagai parameter model Customer.
+                    |
+                    */
+
+                    Route::middleware('role:super_admin')
+                        ->group(function (): void {
+                            Route::get('/trash', 'trash')
+                                ->name('trash');
+
+                            Route::post('/{id}/restore', 'restore')
+                                ->whereNumber('id')
+                                ->name('restore');
+
+                            Route::delete('/{id}/force-delete', 'forceDelete')
+                                ->whereNumber('id')
+                                ->name('force-delete');
+                        });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Edit, Update, dan Soft Delete
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware(
+                        'role:super_admin|admin_pelayanan|admin_operasional'
+                    )->group(function (): void {
+                        Route::get('/{customer}/edit', 'edit')
+                            ->whereNumber('customer')
+                            ->name('edit');
+
+                        Route::match(
+                            ['put', 'patch'],
+                            '/{customer}',
+                            'update'
+                        )
+                            ->whereNumber('customer')
+                            ->name('update');
+
+                        Route::delete('/{customer}', 'destroy')
+                            ->whereNumber('customer')
+                            ->name('destroy');
+                    });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Index dan Show
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware(
+                        'role:super_admin|direktur_utama|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
+                    )->group(function (): void {
+                        Route::get('/', 'index')
+                            ->name('index');
+
+                        /*
+                         * Route show diletakkan paling bawah agar URL create
+                         * dan trash tidak dianggap sebagai {customer}.
+                         */
+                        Route::get('/{customer}', 'show')
+                            ->whereNumber('customer')
+                            ->name('show');
+                    });
                 });
         });
 

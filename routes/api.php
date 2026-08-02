@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BranchApiController;
 use App\Http\Controllers\Api\DepartmentApiController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
+use App\Http\Controllers\Api\V1\CustomerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -579,5 +580,207 @@ Route::prefix('positions')
             ]
         )
             ->whereNumber('position')
+            ->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Customer API
+|--------------------------------------------------------------------------
+|
+| Database customers:
+| - id
+| - customer_code
+| - customer_type
+| - name
+| - company_name
+| - phone
+| - email
+| - address
+| - tax_number
+| - status
+| - created_at
+| - updated_at
+| - deleted_at
+|
+*/
+
+Route::prefix('customers')
+    ->name('api.customers.')
+    ->group(function (): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ALL CUSTOMER
+        |--------------------------------------------------------------------------
+        |
+        | Query parameter:
+        | - search
+        | - customer_type: individual | company
+        | - status: active | inactive
+        | - sort
+        | - direction: asc | desc
+        | - per_page
+        |
+        */
+
+        Route::get(
+            '/',
+            [
+                CustomerController::class,
+                'index',
+            ]
+        )->name('index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE CUSTOMER
+        |--------------------------------------------------------------------------
+        |
+        | Body JSON:
+        | {
+        |     "customer_code": "CUST-0001",
+        |     "customer_type": "individual",
+        |     "name": "Nama Pelanggan",
+        |     "company_name": null,
+        |     "phone": "081234567890",
+        |     "email": "customer@example.com",
+        |     "address": "Alamat pelanggan",
+        |     "tax_number": null,
+        |     "status": "active"
+        | }
+        |
+        */
+
+        Route::post(
+            '/',
+            [
+                CustomerController::class,
+                'store',
+            ]
+        )->name('store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CUSTOMER TRASH
+        |--------------------------------------------------------------------------
+        |
+        | Route statis harus diletakkan sebelum /{customer} agar kata
+        | "trash" tidak dianggap sebagai parameter customer.
+        |
+        */
+
+        Route::get(
+            '/trash',
+            [
+                CustomerController::class,
+                'trash',
+            ]
+        )->name('trash');
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESTORE CUSTOMER
+        |--------------------------------------------------------------------------
+        |
+        | Menggunakan parameter ID karena data soft delete tidak dapat
+        | menggunakan implicit route model binding biasa.
+        |
+        */
+
+        Route::patch(
+            '/{id}/restore',
+            [
+                CustomerController::class,
+                'restore',
+            ]
+        )
+            ->whereNumber('id')
+            ->name('restore');
+
+        /*
+        |--------------------------------------------------------------------------
+        | FORCE DELETE CUSTOMER
+        |--------------------------------------------------------------------------
+        |
+        | Menghapus customer secara permanen dari database.
+        |
+        */
+
+        Route::delete(
+            '/{id}/force-delete',
+            [
+                CustomerController::class,
+                'forceDelete',
+            ]
+        )
+            ->whereNumber('id')
+            ->name('force-delete');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DETAIL CUSTOMER
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/{customer}',
+            [
+                CustomerController::class,
+                'show',
+            ]
+        )
+            ->whereNumber('customer')
+            ->name('show');
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE CUSTOMER
+        |--------------------------------------------------------------------------
+        */
+
+        Route::put(
+            '/{customer}',
+            [
+                CustomerController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('customer')
+            ->name('update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PARTIAL UPDATE CUSTOMER
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{customer}',
+            [
+                CustomerController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('customer')
+            ->name('patch');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE CUSTOMER
+        |--------------------------------------------------------------------------
+        |
+        | Menghapus customer menggunakan soft delete.
+        |
+        */
+
+        Route::delete(
+            '/{customer}',
+            [
+                CustomerController::class,
+                'destroy',
+            ]
+        )
+            ->whereNumber('customer')
             ->name('destroy');
     });

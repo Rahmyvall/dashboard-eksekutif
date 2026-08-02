@@ -246,6 +246,19 @@
          'auditor_internal',
      ]);
 
+     /*
+      * Menu Data Pelanggan dapat dilihat oleh role berikut.
+      * Hak akses aksi tetap wajib diamankan melalui middleware/permission route.
+      */
+     $canAccessCustomers = $hasRole([
+         'super_admin',
+         'direktur_utama',
+         'admin_pelayanan',
+         'admin_operasional',
+         'finance_staff',
+         'auditor_internal',
+     ]);
+
      $canAccessMasterData = $hasRole([
          'super_admin',
          'direktur_utama',
@@ -304,6 +317,11 @@
      $positionsRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.positions.index');
 
      /*
+      * Pastikan route index Data Pelanggan benar-benar terdaftar.
+      */
+     $customersRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.customers.index');
+
+     /*
     |--------------------------------------------------------------------------
     | STATUS SUBMENU
     |--------------------------------------------------------------------------
@@ -313,7 +331,7 @@
          'super-admin.departments.*',
          'super-admin.positions.*',
          'employees.*',
-         'customers.*',
+         'super-admin.customers.*',
          'service-categories.*',
          'services.*',
      );
@@ -469,9 +487,9 @@
                                    </a>
                               @endif
 
-                              @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isKeuangan || $isAuditor)
-                                   <a href="{{ $routeUrl('customers.index') }}"
-                                        class="nav-sub-link {{ $routeActive('customers.*') ? 'active' : '' }}">
+                              @if (($canAccessCustomers ?? false) && ($customersRouteExists ?? false))
+                                   <a href="{{ route('super-admin.customers.index') }}"
+                                        class="nav-sub-link {{ $routeActive('super-admin.customers.*') ? 'active' : '' }}">
                                         Data Pelanggan
                                    </a>
                               @endif
