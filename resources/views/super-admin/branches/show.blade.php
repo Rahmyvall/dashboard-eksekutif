@@ -2,1238 +2,657 @@
 
 @section('title', 'Detail Cabang')
 
-@push('styles')
+@section('content')
+     @php
+          $currentUser = auth()->user();
+          $isSuperAdmin = $currentUser?->hasRole('super_admin') ?? false;
+          $isOperasional = $currentUser?->hasRole('admin_operasional') ?? false;
+          $canEdit = ($isSuperAdmin || $isOperasional)
+              && (($branch->approval_status ?? 'approved') !== 'pending')
+              && \Illuminate\Support\Facades\Route::has('branches.edit');
+
+          $approvalStatus = $branch->approval_status ?? 'approved';
+          $pendingApprovalRole = $branch->pending_approval_role ?? null;
+          $approvalRoleLabels = [
+               'super_admin' => 'Super Admin',
+               'direktur_utama' => 'Direktur Utama',
+               'admin_operasional' => 'Admin Operasional',
+               'auditor_internal' => 'Auditor Internal',
+          ];
+          $pendingRoleLabel = $approvalRoleLabels[$pendingApprovalRole]
+               ?? ($pendingApprovalRole ? str($pendingApprovalRole)->replace('_', ' ')->title() : null);
+     @endphp
+
      <style>
           .branch-show-page {
-               --bsh-primary: #2563eb;
-               --bsh-primary-dark: #1d4ed8;
-               --bsh-primary-soft: #eff6ff;
-               --bsh-success: #16a34a;
-               --bsh-danger: #dc2626;
-               --bsh-text: #0f172a;
-               --bsh-muted: #64748b;
-               --bsh-border: #e2e8f0;
-               --bsh-surface: #ffffff;
-               --bsh-background: #f8fafc;
+               --bs-primary: #0f8f83;
+               --bs-primary-hover: #0b7d74;
+               --bs-heading: #164e63;
+               --bs-text: #2b424c;
+               --bs-muted: #627983;
+               --bs-border: #cfe5e4;
+               --bs-soft: #f3fbfa;
                min-height: calc(100vh - 70px);
-               color: var(--bsh-text);
+               padding: 22px 24px 42px;
+               color: var(--bs-text);
                background:
-                    radial-gradient(circle at top right, rgba(37, 99, 235, .09), transparent 28%),
-                    radial-gradient(circle at bottom left, rgba(14, 165, 233, .06), transparent 24%),
-                    var(--bsh-background);
+                    radial-gradient(circle at 100% 0, rgba(45, 212, 191, .14), transparent 29%),
+                    radial-gradient(circle at 0 100%, rgba(125, 211, 252, .11), transparent 27%),
+                    linear-gradient(180deg, #f8fffe 0%, #f4fbfb 48%, #f7fafc 100%);
           }
 
-          .branch-show-page .show-shell {
+          .branch-show-page * {
+               box-sizing: border-box;
+          }
+
+          .branch-show-shell {
+               width: 100%;
                max-width: 1480px;
                margin: 0 auto;
           }
 
-          .branch-show-page .page-hero {
+          .branch-show-hero {
                position: relative;
                overflow: hidden;
-               padding: 30px 32px;
-               border-radius: 24px;
-               color: #fff;
-               background:
-                    radial-gradient(circle at 91% 12%, rgba(255, 255, 255, .22), transparent 22%),
-                    radial-gradient(circle at 75% 100%, rgba(255, 255, 255, .12), transparent 28%),
-                    linear-gradient(135deg, #0f172a 0%, #1e3a8a 48%, #2563eb 78%, #0ea5e9 100%);
-               box-shadow: 0 22px 48px rgba(30, 64, 175, .22);
-          }
-
-          .branch-show-page .page-hero::after {
-               content: '';
-               position: absolute;
-               right: -90px;
-               bottom: -125px;
-               width: 230px;
-               height: 230px;
-               border: 34px solid rgba(255, 255, 255, .10);
-               border-radius: 50%;
-          }
-
-          .branch-show-page .hero-content,
-          .branch-show-page .hero-actions {
-               position: relative;
-               z-index: 2;
-          }
-
-          .branch-show-page .hero-heading {
                display: flex;
                align-items: center;
-               gap: 16px;
+               justify-content: space-between;
+               gap: 24px;
+               margin-bottom: 20px;
+               padding: 30px 34px;
+               border: 1px solid #bde7e2;
+               border-radius: 22px;
+               background:
+                    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, .94), transparent 23%),
+                    radial-gradient(circle at 72% 112%, rgba(45, 212, 191, .19), transparent 39%),
+                    linear-gradient(135deg, #ffffff 0%, #f1fffc 38%, #e5faf6 72%, #d9f5ef 100%);
+               box-shadow: 0 18px 42px rgba(15, 118, 110, .10);
           }
 
-          .branch-show-page .hero-icon {
-               display: inline-flex;
-               align-items: center;
-               justify-content: center;
-               flex: 0 0 58px;
-               width: 58px;
-               height: 58px;
-               border: 1px solid rgba(255, 255, 255, .34);
-               border-radius: 18px;
-               background: rgba(255, 255, 255, .14);
-               backdrop-filter: blur(10px);
-               font-size: 1.55rem;
+          .branch-show-hero::after {
+               content: '';
+               position: absolute;
+               right: -94px;
+               bottom: -142px;
+               width: 275px;
+               height: 275px;
+               border: 38px solid rgba(20, 184, 166, .10);
+               border-radius: 50%;
+               pointer-events: none;
           }
 
-          .branch-show-page .hero-eyebrow {
+          .branch-show-hero > * {
+               position: relative;
+               z-index: 1;
+          }
+
+          .branch-show-eyebrow {
                display: inline-flex;
                align-items: center;
                gap: 7px;
-               margin-bottom: 5px;
-               color: rgba(255, 255, 255, .76);
-               font-size: .74rem;
-               font-weight: 800;
-               letter-spacing: .12em;
+               margin-bottom: 7px;
+               color: #168178;
+               font-size: .72rem;
+               font-weight: 850;
+               letter-spacing: .11em;
                text-transform: uppercase;
           }
 
-          .branch-show-page .hero-title {
-               margin: 0 0 6px;
-               font-size: clamp(1.7rem, 3vw, 2.25rem);
+          .branch-show-page .branch-show-hero h1 {
+               margin: 0 0 7px;
+               color: var(--bs-heading) !important;
+               font-size: clamp(1.75rem, 3vw, 2.45rem);
                font-weight: 850;
                letter-spacing: -.035em;
           }
 
-          .branch-show-page .hero-description {
-               max-width: 760px;
+          .branch-show-page .branch-show-hero p {
+               max-width: 850px;
                margin: 0;
-               color: rgba(255, 255, 255, .82);
+               color: #55717a !important;
+               font-size: .92rem;
                line-height: 1.65;
           }
 
-          .branch-show-page .hero-actions {
+          .branch-show-actions {
                display: flex;
-               align-items: center;
-               justify-content: flex-end;
-               gap: 10px;
                flex-wrap: wrap;
-          }
-
-          .branch-show-page .hero-button {
-               display: inline-flex;
-               align-items: center;
-               justify-content: center;
+               justify-content: flex-end;
                gap: 9px;
-               min-height: 46px;
-               padding: 11px 17px;
-               border-radius: 14px;
-               font-size: .84rem;
-               font-weight: 800;
-               text-decoration: none;
-               transition: transform .2s ease, background-color .2s ease, color .2s ease, box-shadow .2s ease;
           }
 
-          .branch-show-page .hero-button.edit {
-               border: 1px solid rgba(255, 255, 255, .18);
-               color: #1e40af;
-               background: #fff;
-          }
-
-          .branch-show-page .hero-button.edit:hover {
-               color: #1e3a8a;
-               transform: translateY(-2px);
-               box-shadow: 0 12px 24px rgba(15, 23, 42, .16);
-          }
-
-          .branch-show-page .hero-button.print,
-          .branch-show-page .hero-button.back {
-               border: 1px solid rgba(255, 255, 255, .38);
-               color: #fff;
-               background: rgba(255, 255, 255, .11);
-               backdrop-filter: blur(8px);
-          }
-
-          .branch-show-page .hero-button.print:hover,
-          .branch-show-page .hero-button.back:hover {
-               color: #1e40af;
-               background: #fff;
-               transform: translateY(-2px);
-          }
-
-          .branch-show-page .detail-layout {
-               display: grid;
-               grid-template-columns: minmax(0, 1fr) 350px;
-               gap: 24px;
-               align-items: start;
-          }
-
-          .branch-show-page .surface-card {
-               border: 1px solid rgba(226, 232, 240, .96);
-               border-radius: 22px;
-               background: rgba(255, 255, 255, .98);
-               box-shadow: 0 16px 42px rgba(15, 23, 42, .07);
-          }
-
-          .branch-show-page .profile-card {
-               overflow: hidden;
-          }
-
-          .branch-show-page .profile-cover {
-               position: relative;
-               min-height: 175px;
-               padding: 30px;
-               color: #fff;
-               background:
-                    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .25), transparent 20%),
-                    linear-gradient(135deg, #1e3a8a, #2563eb 58%, #0ea5e9);
-          }
-
-          .branch-show-page .profile-cover::after {
-               content: '';
-               position: absolute;
-               right: -55px;
-               bottom: -85px;
-               width: 165px;
-               height: 165px;
-               border: 22px solid rgba(255, 255, 255, .10);
-               border-radius: 50%;
-          }
-
-          .branch-show-page .profile-cover-content {
-               position: relative;
-               z-index: 2;
-               display: flex;
-               align-items: center;
-               gap: 20px;
-          }
-
-          .branch-show-page .building-avatar {
+          .branch-show-button {
                display: inline-flex;
                align-items: center;
                justify-content: center;
-               flex: 0 0 78px;
-               width: 78px;
-               height: 78px;
-               border: 5px solid rgba(255, 255, 255, .90);
-               border-radius: 23px;
-               background: rgba(255, 255, 255, .14);
-               box-shadow: 0 14px 30px rgba(15, 23, 42, .18);
-               font-size: 2rem;
-          }
-
-          .branch-show-page .profile-code {
-               display: inline-flex;
-               align-items: center;
                gap: 7px;
-               padding: 6px 10px;
-               margin-bottom: 8px;
-               border: 1px solid rgba(255, 255, 255, .27);
-               border-radius: 999px;
-               background: rgba(255, 255, 255, .12);
-               font-size: .7rem;
+               min-height: 44px;
+               padding: 10px 15px;
+               font-size: .8rem;
                font-weight: 850;
-               letter-spacing: .06em;
-               text-transform: uppercase;
+               text-decoration: none;
+               white-space: nowrap;
+               border-radius: 12px;
+               transition: .2s ease;
           }
 
-          .branch-show-page .profile-name {
-               margin: 0 0 7px;
-               font-size: clamp(1.35rem, 3vw, 2rem);
-               font-weight: 850;
-               letter-spacing: -.025em;
+          .branch-show-button.light {
+               color: #0f766e !important;
+               border: 1px solid #8fdad1;
+               background: rgba(255, 255, 255, .92);
           }
 
-          .branch-show-page .profile-address {
+          .branch-show-button.light:hover {
+               color: #0b655f !important;
+               border-color: #5eead4;
+               background: #f0fdfa;
+               transform: translateY(-1px);
+          }
+
+          .branch-show-button.primary {
+               color: #fff !important;
+               border: 1px solid #16a99a;
+               background: linear-gradient(135deg, #2bc7b6, #149e91);
+               box-shadow: 0 9px 20px rgba(20, 158, 145, .20);
+          }
+
+          .branch-show-button.primary:hover {
+               color: #fff !important;
+               background: linear-gradient(135deg, #24b9aa, #0f8f83);
+               transform: translateY(-1px);
+          }
+
+          .branch-show-grid {
+               display: grid;
+               grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+               gap: 18px;
+          }
+
+          .branch-show-card {
+               overflow: hidden;
+               border: 1px solid var(--bs-border);
+               border-radius: 19px;
+               background: rgba(255, 255, 255, .99);
+               box-shadow: 0 13px 34px rgba(51, 65, 85, .06);
+          }
+
+          .branch-show-card + .branch-show-card {
+               margin-top: 18px;
+          }
+
+          .branch-show-card-header {
                display: flex;
-               align-items: flex-start;
-               gap: 8px;
-               max-width: 760px;
-               margin: 0;
-               color: rgba(255, 255, 255, .82);
-               font-size: .82rem;
-               line-height: 1.6;
-          }
-
-          .branch-show-page .profile-address i {
-               margin-top: 3px;
-          }
-
-          .branch-show-page .detail-section {
-               padding: 26px;
-               border-bottom: 1px solid var(--bsh-border);
-          }
-
-          .branch-show-page .detail-section:last-child {
-               border-bottom: 0;
-          }
-
-          .branch-show-page .section-heading {
-               display: flex;
-               align-items: flex-start;
-               gap: 13px;
-               margin-bottom: 20px;
-          }
-
-          .branch-show-page .section-icon {
-               display: inline-flex;
                align-items: center;
-               justify-content: center;
-               flex: 0 0 43px;
-               width: 43px;
-               height: 43px;
-               border-radius: 13px;
-               color: var(--bsh-primary);
-               background: var(--bsh-primary-soft);
-               font-size: 1.1rem;
+               justify-content: space-between;
+               gap: 12px;
+               padding: 17px 20px;
+               border-bottom: 1px solid #dcecea;
+               background: linear-gradient(90deg, #f3fcfa 0%, #ffffff 100%);
           }
 
-          .branch-show-page .section-heading h2 {
-               margin: 0 0 4px;
-               font-size: 1.02rem;
+          .branch-show-card-title {
+               display: flex;
+               align-items: center;
+               gap: 9px;
+               margin: 0;
+               color: #176b68 !important;
+               font-size: .98rem;
                font-weight: 850;
           }
 
-          .branch-show-page .section-heading p {
-               margin: 0;
-               color: var(--bsh-muted);
-               font-size: .78rem;
-               line-height: 1.55;
+          .branch-show-card-title i {
+               color: #18a99b;
           }
 
-          .branch-show-page .info-grid {
+          .branch-show-card-body {
+               padding: 20px;
+          }
+
+          .branch-detail-grid {
                display: grid;
                grid-template-columns: repeat(2, minmax(0, 1fr));
                gap: 14px;
           }
 
-          .branch-show-page .info-item {
-               display: flex;
-               align-items: flex-start;
-               gap: 13px;
-               min-height: 92px;
-               padding: 16px;
-               border: 1px solid var(--bsh-border);
-               border-radius: 16px;
-               background: #fff;
-               transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
-          }
-
-          .branch-show-page .info-item:hover {
-               border-color: #bfdbfe;
-               transform: translateY(-2px);
-               box-shadow: 0 10px 22px rgba(37, 99, 235, .07);
-          }
-
-          .branch-show-page .info-icon {
-               display: inline-flex;
-               align-items: center;
-               justify-content: center;
-               flex: 0 0 42px;
-               width: 42px;
-               height: 42px;
-               border-radius: 13px;
-               color: var(--bsh-primary);
-               background: var(--bsh-primary-soft);
-               font-size: 1.05rem;
-          }
-
-          .branch-show-page .info-copy {
+          .branch-detail-item {
                min-width: 0;
+               padding: 14px;
+               border: 1px solid #e1eeee;
+               border-radius: 13px;
+               background: #fbfefd;
           }
 
-          .branch-show-page .info-label {
+          .branch-detail-item.full {
+               grid-column: 1 / -1;
+          }
+
+          .branch-detail-label {
                display: block;
-               margin-bottom: 5px;
-               color: #94a3b8;
-               font-size: .67rem;
-               font-weight: 800;
-               letter-spacing: .06em;
+               margin-bottom: 7px;
+               color: #7b9098;
+               font-size: .66rem;
+               font-weight: 850;
+               letter-spacing: .075em;
                text-transform: uppercase;
           }
 
-          .branch-show-page .info-value {
-               display: block;
-               color: #334155;
-               font-size: .86rem;
-               font-weight: 750;
+          .branch-detail-value {
+               color: #2d4650;
+               font-size: .83rem;
+               font-weight: 720;
                line-height: 1.55;
-               overflow-wrap: anywhere;
+               word-break: break-word;
           }
 
-          .branch-show-page .info-value a {
-               color: inherit;
+          .branch-detail-value a {
+               color: #0f8f83;
                text-decoration: none;
           }
 
-          .branch-show-page .info-value a:hover {
-               color: var(--bsh-primary);
+          .branch-detail-value a:hover {
                text-decoration: underline;
           }
 
-          .branch-show-page .address-box {
-               display: flex;
-               align-items: flex-start;
-               gap: 14px;
-               padding: 18px;
-               border: 1px solid #dbeafe;
-               border-radius: 17px;
-               background: #f8fbff;
-          }
-
-          .branch-show-page .address-box i {
-               flex: 0 0 auto;
-               margin-top: 2px;
-               color: #ef4444;
-               font-size: 1.2rem;
-          }
-
-          .branch-show-page .address-box p {
-               margin: 0;
-               color: #475569;
-               font-size: .84rem;
-               line-height: 1.75;
-               white-space: pre-line;
-          }
-
-          .branch-show-page .side-column {
-               position: sticky;
-               top: 22px;
-               display: grid;
-               gap: 20px;
-          }
-
-          .branch-show-page .status-card {
-               overflow: hidden;
-          }
-
-          .branch-show-page .status-header {
-               padding: 20px 21px;
-               border-bottom: 1px solid var(--bsh-border);
-          }
-
-          .branch-show-page .status-header h2,
-          .branch-show-page .meta-title,
-          .branch-show-page .action-title {
-               margin: 0;
-               font-size: .92rem;
-               font-weight: 850;
-          }
-
-          .branch-show-page .status-body {
-               padding: 22px;
-               text-align: center;
-          }
-
-          .branch-show-page .status-visual {
-               display: inline-flex;
-               align-items: center;
-               justify-content: center;
-               width: 78px;
-               height: 78px;
-               margin-bottom: 15px;
-               border-radius: 24px;
-               font-size: 2rem;
-          }
-
-          .branch-show-page .status-visual.active {
-               color: #15803d;
-               background: #dcfce7;
-               box-shadow: 0 0 0 9px #f0fdf4;
-          }
-
-          .branch-show-page .status-visual.inactive {
-               color: #b91c1c;
-               background: #fee2e2;
-               box-shadow: 0 0 0 9px #fef2f2;
-          }
-
-          .branch-show-page .status-badge {
+          .branch-code-badge,
+          .branch-status-badge,
+          .branch-approval-badge {
                display: inline-flex;
                align-items: center;
                gap: 7px;
-               padding: 8px 13px;
+               padding: 7px 10px;
+               font-size: .72rem;
+               font-weight: 850;
                border-radius: 999px;
-               font-size: .76rem;
+          }
+
+          .branch-code-badge {
+               color: #4f46a5;
+               border: 1px solid #d7d7fb;
+               background: #f3f3ff;
+          }
+
+          .branch-status-badge.active {
+               color: #08755e;
+               border: 1px solid #a9ead8;
+               background: #eafaf4;
+          }
+
+          .branch-status-badge.inactive {
+               color: #b23b52;
+               border: 1px solid #f2c3cc;
+               background: #fff4f6;
+          }
+
+          .branch-approval-badge.pending {
+               color: #9a6700;
+               border: 1px solid #f5db91;
+               background: #fffaf0;
+          }
+
+          .branch-approval-badge.approved {
+               color: #08755e;
+               border: 1px solid #a9ead8;
+               background: #eafaf4;
+          }
+
+          .branch-approval-badge.rejected {
+               color: #b23b52;
+               border: 1px solid #f2c3cc;
+               background: #fff4f6;
+          }
+
+          .branch-approval-badge.draft {
+               color: #586b75;
+               border: 1px solid #d5e0e3;
+               background: #f7fafb;
+          }
+
+          .branch-manager {
+               display: flex;
+               align-items: center;
+               gap: 12px;
+          }
+
+          .branch-manager-avatar {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               flex: 0 0 46px;
+               width: 46px;
+               height: 46px;
+               color: #0f766e;
+               font-size: .9rem;
+               font-weight: 850;
+               border: 1px solid #a7e7df;
+               border-radius: 14px;
+               background: linear-gradient(135deg, #eafaf7, #d9f6f1);
+          }
+
+          .branch-manager-name {
+               color: #2d4650;
+               font-size: .86rem;
                font-weight: 850;
           }
 
-          .branch-show-page .status-badge::before {
-               content: '';
-               width: 8px;
-               height: 8px;
-               border-radius: 50%;
+          .branch-manager-role {
+               margin-top: 2px;
+               color: #758a93;
+               font-size: .7rem;
           }
 
-          .branch-show-page .status-badge.active {
-               color: #166534;
-               background: #dcfce7;
-          }
-
-          .branch-show-page .status-badge.active::before {
-               background: #22c55e;
-          }
-
-          .branch-show-page .status-badge.inactive {
-               color: #991b1b;
-               background: #fee2e2;
-          }
-
-          .branch-show-page .status-badge.inactive::before {
-               background: #ef4444;
-          }
-
-          .branch-show-page .status-description {
-               margin: 14px 0 0;
-               color: var(--bsh-muted);
-               font-size: .74rem;
-               line-height: 1.6;
-          }
-
-          .branch-show-page .meta-card,
-          .branch-show-page .action-card {
-               padding: 21px;
-          }
-
-          .branch-show-page .meta-title,
-          .branch-show-page .action-title {
-               display: flex;
-               align-items: center;
-               gap: 10px;
-               margin-bottom: 16px;
-          }
-
-          .branch-show-page .meta-title i,
-          .branch-show-page .action-title i {
-               color: var(--bsh-primary);
-          }
-
-          .branch-show-page .meta-list {
+          .branch-summary-list {
                display: grid;
-               gap: 13px;
+               gap: 11px;
           }
 
-          .branch-show-page .meta-row {
+          .branch-summary-row {
                display: flex;
                align-items: flex-start;
                justify-content: space-between;
                gap: 15px;
-               padding-bottom: 12px;
-               border-bottom: 1px dashed #cbd5e1;
-               font-size: .74rem;
+               padding-bottom: 11px;
+               border-bottom: 1px dashed #dce9e7;
           }
 
-          .branch-show-page .meta-row:last-child {
+          .branch-summary-row:last-child {
                padding-bottom: 0;
                border-bottom: 0;
           }
 
-          .branch-show-page .meta-label {
-               color: var(--bsh-muted);
+          .branch-summary-key {
+               color: #748a93;
+               font-size: .73rem;
           }
 
-          .branch-show-page .meta-value {
-               color: #334155;
-               font-weight: 750;
-               text-align: right;
-          }
-
-          .branch-show-page .action-list {
-               display: grid;
-               gap: 10px;
-          }
-
-          .branch-show-page .action-button {
-               display: flex;
-               align-items: center;
-               justify-content: center;
-               gap: 9px;
-               width: 100%;
-               min-height: 45px;
-               padding: 10px 14px;
-               border-radius: 13px;
-               font-size: .8rem;
+          .branch-summary-value {
+               max-width: 58%;
+               color: #2d4650;
+               font-size: .75rem;
                font-weight: 800;
-               text-decoration: none;
-               transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease;
+               text-align: right;
+               word-break: break-word;
           }
 
-          .branch-show-page .action-button.edit {
-               border: 0;
-               color: #fff;
-               background: linear-gradient(135deg, var(--bsh-primary), var(--bsh-primary-dark));
-               box-shadow: 0 10px 21px rgba(37, 99, 235, .20);
-          }
-
-          .branch-show-page .action-button.edit:hover {
-               color: #fff;
-               transform: translateY(-2px);
-               box-shadow: 0 14px 25px rgba(37, 99, 235, .25);
-          }
-
-          .branch-show-page .action-button.print {
-               border: 1px solid #bfdbfe;
-               color: #1d4ed8;
-               background: #eff6ff;
-          }
-
-          .branch-show-page .action-button.print:hover {
-               color: #1e40af;
-               background: #dbeafe;
-               transform: translateY(-2px);
-          }
-
-          .branch-show-page .action-button.back {
-               border: 1px solid #cbd5e1;
-               color: #475569;
-               background: #fff;
-          }
-
-          .branch-show-page .action-button.back:hover {
-               color: var(--bsh-text);
-               background: #f8fafc;
-          }
-
-          .branch-print-sheet {
-               display: none;
-          }
-
-          @media (max-width: 1199.98px) {
-               .branch-show-page .detail-layout {
-                    grid-template-columns: minmax(0, 1fr) 310px;
-               }
+          .branch-note {
+               display: flex;
+               align-items: flex-start;
+               gap: 9px;
+               margin-top: 15px;
+               padding: 12px 13px;
+               color: #8e5f00;
+               font-size: .74rem;
+               line-height: 1.55;
+               border: 1px solid #f2d992;
+               border-radius: 12px;
+               background: #fffaf0;
           }
 
           @media (max-width: 991.98px) {
-               .branch-show-page .detail-layout {
+               .branch-show-grid {
                     grid-template-columns: 1fr;
-               }
-
-               .branch-show-page .side-column {
-                    position: static;
-                    grid-template-columns: repeat(3, minmax(0, 1fr));
                }
           }
 
           @media (max-width: 767.98px) {
                .branch-show-page {
-                    padding-top: 1rem !important;
+                    padding: 12px 10px 28px;
                }
 
-               .branch-show-page .page-hero {
-                    padding: 24px;
-                    border-radius: 20px;
-               }
-
-               .branch-show-page .hero-wrapper {
-                    align-items: flex-start !important;
+               .branch-show-hero {
+                    align-items: stretch;
                     flex-direction: column;
+                    padding: 24px 20px;
+                    border-radius: 18px;
                }
 
-               .branch-show-page .hero-actions {
-                    width: 100%;
-                    justify-content: stretch;
+               .branch-show-actions {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
                }
 
-               .branch-show-page .hero-button {
-                    flex: 1 1 0;
-               }
-
-               .branch-show-page .profile-cover {
-                    padding: 24px;
-               }
-
-               .branch-show-page .profile-cover-content {
-                    align-items: flex-start;
-               }
-
-               .branch-show-page .building-avatar {
-                    width: 64px;
-                    height: 64px;
-                    flex-basis: 64px;
-                    border-radius: 19px;
-               }
-
-               .branch-show-page .detail-section {
-                    padding: 21px;
-               }
-
-               .branch-show-page .info-grid,
-               .branch-show-page .side-column {
+               .branch-detail-grid {
                     grid-template-columns: 1fr;
+               }
+
+               .branch-detail-item.full {
+                    grid-column: auto;
                }
           }
 
           @media (max-width: 479.98px) {
-               .branch-show-page .hero-actions {
-                    flex-direction: column;
-               }
-
-               .branch-show-page .hero-button {
-                    width: 100%;
-               }
-
-               .branch-show-page .profile-cover-content {
-                    flex-direction: column;
-               }
-          }
-
-          @media print {
-               @page {
-                    size: A4 portrait;
-                    margin: 14mm;
-               }
-
-               html,
-               body {
-                    width: 210mm;
-                    min-height: 297mm;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    color: #111827 !important;
-                    background: #fff !important;
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-               }
-
-               body * {
-                    visibility: hidden !important;
-               }
-
-               .branch-print-sheet,
-               .branch-print-sheet * {
-                    visibility: visible !important;
-               }
-
-               .branch-print-sheet {
-                    position: absolute;
-                    inset: 0;
-                    display: block !important;
-                    width: 100%;
-                    color: #111827;
-                    background: #fff;
-                    font-family: Arial, Helvetica, sans-serif;
-               }
-
-               .branch-print-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 20px;
-                    padding-bottom: 18px;
-                    border-bottom: 3px solid #2563eb;
-               }
-
-               .branch-print-brand {
-                    display: flex;
-                    align-items: center;
-                    gap: 14px;
-               }
-
-               .branch-print-logo {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 56px;
-                    height: 56px;
-                    border-radius: 15px;
-                    color: #fff;
-                    background: #2563eb;
-                    font-size: 26px;
-               }
-
-               .branch-print-header h1 {
-                    margin: 0 0 4px;
-                    font-size: 22px;
-                    font-weight: 800;
-               }
-
-               .branch-print-header p {
-                    margin: 0;
-                    color: #64748b;
-                    font-size: 10px;
-               }
-
-               .branch-print-code {
-                    padding: 9px 13px;
-                    border: 1px solid #bfdbfe;
-                    border-radius: 9px;
-                    color: #1d4ed8;
-                    background: #eff6ff;
-                    font-size: 12px;
-                    font-weight: 800;
-                    letter-spacing: .06em;
-               }
-
-               .branch-print-summary {
-                    display: grid;
-                    grid-template-columns: minmax(0, 1fr) 150px;
-                    gap: 18px;
-                    margin: 22px 0;
-                    padding: 20px;
-                    border: 1px solid #dbeafe;
-                    border-radius: 14px;
-                    background: #f8fbff;
-               }
-
-               .branch-print-label {
-                    margin-bottom: 5px;
-                    color: #64748b;
-                    font-size: 10px;
-                    font-weight: 700;
-                    letter-spacing: .08em;
-                    text-transform: uppercase;
-               }
-
-               .branch-print-name {
-                    margin: 0 0 8px;
-                    font-size: 20px;
-                    font-weight: 800;
-               }
-
-               .branch-print-address {
-                    margin: 0;
-                    color: #475569;
-                    font-size: 12px;
-                    line-height: 1.65;
-                    white-space: pre-line;
-               }
-
-               .branch-print-status-wrap {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-left: 1px solid #dbeafe;
-               }
-
-               .branch-print-status {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 7px;
-                    padding: 8px 13px;
-                    border-radius: 999px;
-                    font-size: 11px;
-                    font-weight: 800;
-               }
-
-               .branch-print-status::before {
-                    content: '';
-                    width: 8px;
-                    height: 8px;
-                    border-radius: 50%;
-               }
-
-               .branch-print-status.active {
-                    color: #166534;
-                    background: #dcfce7;
-               }
-
-               .branch-print-status.active::before {
-                    background: #22c55e;
-               }
-
-               .branch-print-status.inactive {
-                    color: #991b1b;
-                    background: #fee2e2;
-               }
-
-               .branch-print-status.inactive::before {
-                    background: #ef4444;
-               }
-
-               .branch-print-section-title {
-                    margin: 0 0 10px;
-                    color: #1e3a8a;
-                    font-size: 13px;
-                    font-weight: 800;
-                    letter-spacing: .04em;
-                    text-transform: uppercase;
-               }
-
-               .branch-print-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    table-layout: fixed;
-               }
-
-               .branch-print-table th,
-               .branch-print-table td {
-                    padding: 11px 12px;
-                    border: 1px solid #e2e8f0;
-                    text-align: left;
-                    vertical-align: top;
-                    font-size: 11px;
-                    line-height: 1.5;
-                    overflow-wrap: anywhere;
-               }
-
-               .branch-print-table th {
-                    width: 28%;
-                    color: #475569;
-                    background: #f8fafc;
-                    font-weight: 700;
-               }
-
-               .branch-print-footer {
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: space-between;
-                    gap: 20px;
-                    margin-top: 28px;
-                    padding-top: 14px;
-                    border-top: 1px solid #cbd5e1;
-                    color: #64748b;
-                    font-size: 9px;
-               }
-
-               .branch-print-signature {
-                    width: 190px;
-                    color: #334155;
-                    text-align: center;
-               }
-
-               .branch-print-signature-space {
-                    height: 58px;
-               }
-
-               .branch-print-signature-line {
-                    padding-top: 6px;
-                    border-top: 1px solid #64748b;
-                    font-size: 10px;
-                    font-weight: 700;
+               .branch-show-actions {
+                    grid-template-columns: 1fr;
                }
           }
      </style>
-@endpush
 
-@section('content')
-     @php
-          $currentUser = auth()->user();
-          $canManageBranches =
-              ($currentUser?->hasRole('super_admin') ?? false) ||
-              ($currentUser?->hasRole('admin_operasional') ?? false);
-     @endphp
-     <div class="container-fluid branch-show-page py-4 px-3 px-lg-4">
-          <div class="show-shell">
-               <header class="page-hero mb-4">
-                    <div class="hero-wrapper d-flex align-items-center justify-content-between gap-4">
-                         <div class="hero-content">
-                              <div class="hero-heading">
-                                   <span class="hero-icon">
-                                        <i class="bi bi-building-check"></i>
-                                   </span>
-                                   <div>
-                                        <div class="hero-eyebrow">
-                                             <i class="bi bi-diagram-3-fill"></i>
-                                             Branch Management
-                                        </div>
-                                        <h1 class="hero-title">Detail Data Cabang</h1>
-                                        <p class="hero-description">
-                                             Lihat identitas, penanggung jawab, informasi kontak, status operasional, dan
-                                             riwayat pencatatan cabang.
-                                        </p>
-                                   </div>
-                              </div>
+     <div class="branch-show-page">
+          <div class="branch-show-shell">
+               <header class="branch-show-hero">
+                    <div>
+                         <div class="branch-show-eyebrow">
+                              <i class="bi bi-building-check"></i>
+                              Detail Cabang
                          </div>
+                         <h1>{{ $branch->branch_name }}</h1>
+                         <p>
+                              Informasi identitas, penanggung jawab, kontak, status operasional,
+                              dan status persetujuan cabang.
+                         </p>
+                    </div>
 
-                         <div class="hero-actions">
-                              <button type="button" class="hero-button print" onclick="window.print()">
-                                   <i class="bi bi-printer-fill"></i>
-                                   Cetak
-                              </button>
-                              @if ($canManageBranches && \Illuminate\Support\Facades\Route::has('branches.edit'))
-                                   <a href="{{ route('branches.edit', $branch->id) }}" class="hero-button edit">
-                                        <i class="bi bi-pencil-square"></i>
-                                        Edit Cabang
-                                   </a>
-                              @endif
-                              <a href="{{ route('branches.index') }}" class="hero-button back">
-                                   <i class="bi bi-arrow-left"></i>
-                                   Kembali
+                    <div class="branch-show-actions">
+                         <a href="{{ route('branches.index') }}" class="branch-show-button light">
+                              <i class="bi bi-arrow-left"></i>
+                              Kembali
+                         </a>
+
+                         @if ($canEdit)
+                              <a href="{{ route('branches.edit', $branch->id) }}" class="branch-show-button primary">
+                                   <i class="bi bi-pencil-square"></i>
+                                   Edit Cabang
                               </a>
-                         </div>
+                         @endif
                     </div>
                </header>
 
-               <div class="detail-layout">
-                    <main class="surface-card profile-card">
-                         <section class="profile-cover">
-                              <div class="profile-cover-content">
-                                   <span class="building-avatar">
-                                        <i class="bi bi-buildings-fill"></i>
+               <div class="branch-show-grid">
+                    <main>
+                         <section class="branch-show-card">
+                              <div class="branch-show-card-header">
+                                   <h2 class="branch-show-card-title">
+                                        <i class="bi bi-building"></i>
+                                        Identitas Cabang
+                                   </h2>
+                                   <span class="branch-code-badge">
+                                        <i class="bi bi-upc-scan"></i>
+                                        {{ $branch->branch_code }}
                                    </span>
-                                   <div>
-                                        <span class="profile-code">
-                                             <i class="bi bi-upc-scan"></i>
-                                             {{ $branch->branch_code }}
-                                        </span>
-                                        <h2 class="profile-name">{{ $branch->branch_name }}</h2>
-                                        <p class="profile-address">
-                                             <i class="bi bi-geo-alt-fill"></i>
-                                             <span>{{ $branch->address }}</span>
-                                        </p>
+                              </div>
+
+                              <div class="branch-show-card-body">
+                                   <div class="branch-detail-grid">
+                                        <div class="branch-detail-item">
+                                             <span class="branch-detail-label">Nama Cabang</span>
+                                             <div class="branch-detail-value">{{ $branch->branch_name }}</div>
+                                        </div>
+
+                                        <div class="branch-detail-item">
+                                             <span class="branch-detail-label">Kode Cabang</span>
+                                             <div class="branch-detail-value">{{ $branch->branch_code }}</div>
+                                        </div>
+
+                                        <div class="branch-detail-item full">
+                                             <span class="branch-detail-label">Alamat Lengkap</span>
+                                             <div class="branch-detail-value">
+                                                  {{ $branch->address ?: 'Alamat belum tersedia.' }}
+                                             </div>
+                                        </div>
                                    </div>
                               </div>
                          </section>
 
-                         <section class="detail-section">
-                              <div class="section-heading">
-                                   <span class="section-icon">
-                                        <i class="bi bi-info-circle"></i>
-                                   </span>
-                                   <div>
-                                        <h2>Informasi Cabang</h2>
-                                        <p>Identitas dan penanggung jawab utama cabang perusahaan.</p>
+                         <section class="branch-show-card">
+                              <div class="branch-show-card-header">
+                                   <h2 class="branch-show-card-title">
+                                        <i class="bi bi-person-vcard"></i>
+                                        Penanggung Jawab dan Kontak
+                                   </h2>
+                              </div>
+
+                              <div class="branch-show-card-body">
+                                   <div class="branch-detail-grid">
+                                        <div class="branch-detail-item full">
+                                             <span class="branch-detail-label">Kepala Cabang</span>
+                                             @if ($branch->manager)
+                                                  <div class="branch-manager">
+                                                       <div class="branch-manager-avatar">
+                                                            {{ mb_strtoupper(mb_substr($branch->manager->name, 0, 1)) }}
+                                                       </div>
+                                                       <div>
+                                                            <div class="branch-manager-name">{{ $branch->manager->name }}</div>
+                                                            <div class="branch-manager-role">
+                                                                 Kepala Cabang
+                                                                 @if (!empty($branch->manager->email))
+                                                                      · {{ $branch->manager->email }}
+                                                                 @endif
+                                                            </div>
+                                                       </div>
+                                                  </div>
+                                             @else
+                                                  <div class="branch-detail-value">Belum ditentukan.</div>
+                                             @endif
+                                        </div>
+
+                                        <div class="branch-detail-item">
+                                             <span class="branch-detail-label">Nomor Telepon</span>
+                                             <div class="branch-detail-value">
+                                                  @if ($branch->phone)
+                                                       <a href="tel:{{ $branch->phone }}">
+                                                            <i class="bi bi-telephone-fill me-1"></i>
+                                                            {{ $branch->phone }}
+                                                       </a>
+                                                  @else
+                                                       Belum tersedia.
+                                                  @endif
+                                             </div>
+                                        </div>
+
+                                        <div class="branch-detail-item">
+                                             <span class="branch-detail-label">Email Cabang</span>
+                                             <div class="branch-detail-value">
+                                                  @if ($branch->email)
+                                                       <a href="mailto:{{ $branch->email }}">
+                                                            <i class="bi bi-envelope-fill me-1"></i>
+                                                            {{ $branch->email }}
+                                                       </a>
+                                                  @else
+                                                       Belum tersedia.
+                                                  @endif
+                                             </div>
+                                        </div>
                                    </div>
-                              </div>
-
-                              <div class="info-grid">
-                                   <article class="info-item">
-                                        <span class="info-icon"><i class="bi bi-upc-scan"></i></span>
-                                        <div class="info-copy">
-                                             <span class="info-label">Kode Cabang</span>
-                                             <span class="info-value">{{ $branch->branch_code }}</span>
-                                        </div>
-                                   </article>
-
-                                   <article class="info-item">
-                                        <span class="info-icon"><i class="bi bi-buildings"></i></span>
-                                        <div class="info-copy">
-                                             <span class="info-label">Nama Cabang</span>
-                                             <span class="info-value">{{ $branch->branch_name }}</span>
-                                        </div>
-                                   </article>
-
-                                   <article class="info-item">
-                                        <span class="info-icon"><i class="bi bi-person-badge"></i></span>
-                                        <div class="info-copy">
-                                             <span class="info-label">Kepala Cabang</span>
-                                             <span class="info-value">
-                                                  {{ $branch->manager?->name ?? 'Belum ditentukan' }}
-                                             </span>
-                                        </div>
-                                   </article>
-
-                                   <article class="info-item">
-                                        <span class="info-icon"><i class="bi bi-activity"></i></span>
-                                        <div class="info-copy">
-                                             <span class="info-label">Status Operasional</span>
-                                             <span class="info-value">
-                                                  {{ (int) $branch->status === 1 ? 'Aktif' : 'Nonaktif' }}
-                                             </span>
-                                        </div>
-                                   </article>
-                              </div>
-                         </section>
-
-                         <section class="detail-section">
-                              <div class="section-heading">
-                                   <span class="section-icon">
-                                        <i class="bi bi-telephone"></i>
-                                   </span>
-                                   <div>
-                                        <h2>Informasi Kontak</h2>
-                                        <p>Kontak resmi yang digunakan untuk komunikasi operasional cabang.</p>
-                                   </div>
-                              </div>
-
-                              <div class="info-grid">
-                                   <article class="info-item">
-                                        <span class="info-icon"><i class="bi bi-telephone-fill"></i></span>
-                                        <div class="info-copy">
-                                             <span class="info-label">Nomor Telepon</span>
-                                             <span class="info-value">
-                                                  <a href="tel:{{ $branch->phone }}">{{ $branch->phone }}</a>
-                                             </span>
-                                        </div>
-                                   </article>
-
-                                   <article class="info-item">
-                                        <span class="info-icon"><i class="bi bi-envelope-fill"></i></span>
-                                        <div class="info-copy">
-                                             <span class="info-label">Email Cabang</span>
-                                             <span class="info-value">
-                                                  <a href="mailto:{{ $branch->email }}">{{ $branch->email }}</a>
-                                             </span>
-                                        </div>
-                                   </article>
-                              </div>
-                         </section>
-
-                         <section class="detail-section">
-                              <div class="section-heading">
-                                   <span class="section-icon">
-                                        <i class="bi bi-geo-alt"></i>
-                                   </span>
-                                   <div>
-                                        <h2>Alamat Lengkap</h2>
-                                        <p>Lokasi resmi cabang yang tersimpan pada sistem.</p>
-                                   </div>
-                              </div>
-
-                              <div class="address-box">
-                                   <i class="bi bi-geo-alt-fill"></i>
-                                   <p>{{ $branch->address }}</p>
                               </div>
                          </section>
                     </main>
 
-                    <aside class="side-column">
-                         <section class="surface-card status-card">
-                              <div class="status-header">
-                                   <h2>Status Cabang</h2>
+                    <aside>
+                         <section class="branch-show-card">
+                              <div class="branch-show-card-header">
+                                   <h2 class="branch-show-card-title">
+                                        <i class="bi bi-activity"></i>
+                                        Status Cabang
+                                   </h2>
                               </div>
-                              <div class="status-body">
-                                   @if ((int) $branch->status === 1)
-                                        <div class="status-visual active">
-                                             <i class="bi bi-check-circle-fill"></i>
+
+                              <div class="branch-show-card-body">
+                                   <div class="branch-summary-list">
+                                        <div class="branch-summary-row">
+                                             <span class="branch-summary-key">Operasional</span>
+                                             <span class="branch-summary-value">
+                                                  @if ((int) $branch->status === 1)
+                                                       <span class="branch-status-badge active">
+                                                            <i class="bi bi-check-circle-fill"></i> Aktif
+                                                       </span>
+                                                  @else
+                                                       <span class="branch-status-badge inactive">
+                                                            <i class="bi bi-pause-circle-fill"></i> Nonaktif
+                                                       </span>
+                                                  @endif
+                                             </span>
                                         </div>
-                                        <div>
-                                             <span class="status-badge active">Aktif</span>
-                                             <p class="status-description">
-                                                  Cabang tercatat aktif dan dapat menjalankan kegiatan operasional.
-                                             </p>
+
+                                        <div class="branch-summary-row">
+                                             <span class="branch-summary-key">Persetujuan</span>
+                                             <span class="branch-summary-value">
+                                                  @switch($approvalStatus)
+                                                       @case('pending')
+                                                            <span class="branch-approval-badge pending">
+                                                                 <i class="bi bi-hourglass-split"></i> Menunggu
+                                                            </span>
+                                                       @break
+
+                                                       @case('rejected')
+                                                            <span class="branch-approval-badge rejected">
+                                                                 <i class="bi bi-x-octagon-fill"></i> Ditolak
+                                                            </span>
+                                                       @break
+
+                                                       @case('draft')
+                                                            <span class="branch-approval-badge draft">
+                                                                 <i class="bi bi-file-earmark-text-fill"></i> Draft
+                                                            </span>
+                                                       @break
+
+                                                       @default
+                                                            <span class="branch-approval-badge approved">
+                                                                 <i class="bi bi-patch-check-fill"></i> Disetujui
+                                                            </span>
+                                                  @endswitch
+                                             </span>
                                         </div>
-                                   @else
-                                        <div class="status-visual inactive">
-                                             <i class="bi bi-x-circle-fill"></i>
+
+                                        @if ($approvalStatus === 'pending')
+                                             <div class="branch-summary-row">
+                                                  <span class="branch-summary-key">Tahap Berikutnya</span>
+                                                  <span class="branch-summary-value">
+                                                       {{ $pendingRoleLabel ?? 'Role terkait' }}
+                                                  </span>
+                                             </div>
+                                        @endif
+
+                                        <div class="branch-summary-row">
+                                             <span class="branch-summary-key">Dibuat</span>
+                                             <span class="branch-summary-value">
+                                                  {{ optional($branch->created_at)->format('d M Y, H:i') ?? '-' }}
+                                             </span>
                                         </div>
-                                        <div>
-                                             <span class="status-badge inactive">Nonaktif</span>
-                                             <p class="status-description">
-                                                  Cabang sedang tidak aktif dan tidak menjalankan kegiatan operasional.
-                                             </p>
+
+                                        <div class="branch-summary-row">
+                                             <span class="branch-summary-key">Diperbarui</span>
+                                             <span class="branch-summary-value">
+                                                  {{ optional($branch->updated_at)->format('d M Y, H:i') ?? '-' }}
+                                             </span>
+                                        </div>
+                                   </div>
+
+                                   @if ($approvalStatus === 'pending')
+                                        <div class="branch-note">
+                                             <i class="bi bi-info-circle-fill mt-1"></i>
+                                             <span>Data sedang dalam proses persetujuan sehingga pengubahan data dikunci sementara.</span>
                                         </div>
                                    @endif
-                              </div>
-                         </section>
 
-                         <section class="surface-card meta-card">
-                              <h2 class="meta-title">
-                                   <i class="bi bi-clock-history"></i>
-                                   Riwayat Data
-                              </h2>
-                              <div class="meta-list">
-                                   <div class="meta-row">
-                                        <span class="meta-label">ID Data</span>
-                                        <span class="meta-value">#{{ $branch->id }}</span>
-                                   </div>
-                                   <div class="meta-row">
-                                        <span class="meta-label">Dibuat</span>
-                                        <span class="meta-value">
-                                             {{ optional($branch->created_at)->format('d-m-Y H:i') ?? '-' }}
-                                        </span>
-                                   </div>
-                                   <div class="meta-row">
-                                        <span class="meta-label">Diperbarui</span>
-                                        <span class="meta-value">
-                                             {{ optional($branch->updated_at)->format('d-m-Y H:i') ?? '-' }}
-                                        </span>
-                                   </div>
-                              </div>
-                         </section>
-
-                         <section class="surface-card action-card">
-                              <h2 class="action-title">
-                                   <i class="bi bi-lightning-charge-fill"></i>
-                                   Aksi Cepat
-                              </h2>
-                              <div class="action-list">
-                                   @if ($canManageBranches && \Illuminate\Support\Facades\Route::has('branches.edit'))
-                                        <a href="{{ route('branches.edit', $branch->id) }}" class="action-button edit">
-                                             <i class="bi bi-pencil-square"></i>
-                                             Edit Data Cabang
-                                        </a>
+                                   @if ($approvalStatus === 'rejected' && !empty($branch->rejection_note))
+                                        <div class="branch-note">
+                                             <i class="bi bi-exclamation-circle-fill mt-1"></i>
+                                             <span><strong>Alasan penolakan:</strong> {{ $branch->rejection_note }}</span>
+                                        </div>
                                    @endif
-                                   <button type="button" class="action-button print" onclick="window.print()">
-                                        <i class="bi bi-printer-fill"></i>
-                                        Cetak Profil Cabang
-                                   </button>
-                                   <a href="{{ route('branches.index') }}" class="action-button back">
-                                        <i class="bi bi-arrow-left"></i>
-                                        Kembali ke Daftar
-                                   </a>
                               </div>
                          </section>
                     </aside>
                </div>
           </div>
      </div>
-
-     {{-- Printable A4 Profile --}}
-     <section class="branch-print-sheet" aria-hidden="true">
-          <header class="branch-print-header">
-               <div class="branch-print-brand">
-                    <div class="branch-print-logo">
-                         <i class="bi bi-buildings-fill"></i>
-                    </div>
-                    <div>
-                         <h1>PROFIL DATA CABANG</h1>
-                         <p>Dokumen informasi cabang perusahaan</p>
-                    </div>
-               </div>
-               <div class="branch-print-code">{{ $branch->branch_code }}</div>
-          </header>
-
-          <section class="branch-print-summary">
-               <div>
-                    <div class="branch-print-label">Nama Cabang</div>
-                    <h2 class="branch-print-name">{{ $branch->branch_name }}</h2>
-                    <p class="branch-print-address">{{ $branch->address }}</p>
-               </div>
-               <div class="branch-print-status-wrap">
-                    <span class="branch-print-status {{ (int) $branch->status === 1 ? 'active' : 'inactive' }}">
-                         {{ (int) $branch->status === 1 ? 'Aktif' : 'Nonaktif' }}
-                    </span>
-               </div>
-          </section>
-
-          <h3 class="branch-print-section-title">Informasi Lengkap</h3>
-          <table class="branch-print-table">
-               <tbody>
-                    <tr>
-                         <th>Kode Cabang</th>
-                         <td>{{ $branch->branch_code }}</td>
-                    </tr>
-                    <tr>
-                         <th>Nama Cabang</th>
-                         <td>{{ $branch->branch_name }}</td>
-                    </tr>
-                    <tr>
-                         <th>Kepala Cabang</th>
-                         <td>{{ $branch->manager?->name ?? 'Belum ditentukan' }}</td>
-                    </tr>
-                    <tr>
-                         <th>Nomor Telepon</th>
-                         <td>{{ $branch->phone }}</td>
-                    </tr>
-                    <tr>
-                         <th>Email Cabang</th>
-                         <td>{{ $branch->email }}</td>
-                    </tr>
-                    <tr>
-                         <th>Status Operasional</th>
-                         <td>{{ (int) $branch->status === 1 ? 'Aktif' : 'Nonaktif' }}</td>
-                    </tr>
-                    <tr>
-                         <th>Alamat Lengkap</th>
-                         <td style="white-space: pre-line;">{{ $branch->address }}</td>
-                    </tr>
-                    <tr>
-                         <th>Tanggal Dibuat</th>
-                         <td>{{ optional($branch->created_at)->format('d-m-Y H:i') ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                         <th>Terakhir Diperbarui</th>
-                         <td>{{ optional($branch->updated_at)->format('d-m-Y H:i') ?? '-' }}</td>
-                    </tr>
-               </tbody>
-          </table>
-
-          <footer class="branch-print-footer">
-               <div>
-                    <div>Dicetak pada: {{ now()->format('d-m-Y H:i') }}</div>
-                    <div>Dokumen ini dihasilkan melalui sistem Branch Management.</div>
-               </div>
-               <div class="branch-print-signature">
-                    <div>Penanggung Jawab</div>
-                    <div class="branch-print-signature-space"></div>
-                    <div class="branch-print-signature-line">
-                         {{ $branch->manager?->name ?? '________________________' }}
-                    </div>
-               </div>
-          </footer>
-     </section>
 @endsection
