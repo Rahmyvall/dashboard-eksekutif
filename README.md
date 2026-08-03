@@ -6,11 +6,9 @@ width="130"
 alt="Logo Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa"
 />
 
-Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa
+<h1 align="center">Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa</h1>
 
-Sistem informasi berbasis web untuk memonitor produktivitas karyawan, absensi, transaksi jasa, pendapatan, pengeluaran, dan kepuasan pelanggan secara terintegrasi.
-
-
+<p align="center">Sistem informasi berbasis web untuk memonitor produktivitas karyawan, absensi, transaksi jasa, pendapatan, pengeluaran, dan kepuasan pelanggan secara terintegrasi.</p>
 
 <br>
 
@@ -23,7 +21,7 @@ alt="Preview Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa"
 <br>
 
 <em>
-Tampilan Dashboard Eksekutif untuk memonitor produktivitas karyawan,
+Tampilan Dashboard Eksekutif untuk memonitor produktivitas karyawan,<br>
 transaksi jasa, pendapatan, dan aktivitas operasional perusahaan.
 </em>
 
@@ -35,6 +33,18 @@ Tentang Aplikasi
 
 Tampilan Aplikasi
 
+Halaman Login
+
+Dashboard Eksekutif
+
+Manajemen Karyawan
+
+Transaksi Jasa
+
+Kepuasan Pelanggan
+
+Galeri Tampilan
+
 Fitur Utama
 
 Teknologi yang Digunakan
@@ -42,6 +52,8 @@ Teknologi yang Digunakan
 Persyaratan Sistem
 
 Instalasi
+
+Perintah Pengembangan
 
 Struktur Modul Database
 
@@ -51,11 +63,17 @@ Keamanan
 
 Kontribusi
 
+Pelaporan Masalah
+
 Lisensi
+
+Penilaian Akhir
+
+Pengembang
 
 Tentang Aplikasi
 
-Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa merupakan aplikasi berbasis web yang dikembangkan untuk membantu perusahaan dalam memonitor dan mengelola aktivitas operasional secara terintegrasi.
+Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa merupakan aplikasi berbasis web yang dikembangkan untuk membantu perusahaan memonitor dan mengelola aktivitas operasional secara terintegrasi.
 
 Aplikasi ini mencakup pengelolaan:
 
@@ -212,46 +230,46 @@ Status penyelesaian keluhan
 Galeri Tampilan
 
 <table>
-    <tr>
-        <td align="center" width="50%">
-            <img
-                src="public/backend/assets/img/readme/login-page.png"
-                width="100%"
-                alt="Halaman Login"
-            />
-            <br>
-            <strong>Halaman Login</strong>
-        </td>
-        <td align="center" width="50%">
-            <img
-                src="public/backend/assets/img/readme/dashboard-eksekutif.png"
-                width="100%"
-                alt="Dashboard Eksekutif"
-            />
-            <br>
-            <strong>Dashboard Eksekutif</strong>
-        </td>
-    </tr>
-    <tr>
-        <td align="center" width="50%">
-            <img
-                src="public/backend/assets/img/readme/data-karyawan.png"
-                width="100%"
-                alt="Manajemen Karyawan"
-            />
-            <br>
-            <strong>Manajemen Karyawan</strong>
-        </td>
-        <td align="center" width="50%">
-            <img
-                src="public/backend/assets/img/readme/transaksi-jasa.png"
-                width="100%"
-                alt="Transaksi Jasa"
-            />
-            <br>
-            <strong>Transaksi Jasa</strong>
-        </td>
-    </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img
+        src="public/backend/assets/img/readme/login-page.png"
+        width="100%"
+        alt="Halaman Login"
+      />
+      <br>
+      <strong>Halaman Login</strong>
+    </td>
+    <td align="center" width="50%">
+      <img
+        src="public/backend/assets/img/readme/dashboard-eksekutif.png"
+        width="100%"
+        alt="Dashboard Eksekutif"
+      />
+      <br>
+      <strong>Dashboard Eksekutif</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img
+        src="public/backend/assets/img/readme/data-karyawan.png"
+        width="100%"
+        alt="Manajemen Karyawan"
+      />
+      <br>
+      <strong>Manajemen Karyawan</strong>
+    </td>
+    <td align="center" width="50%">
+      <img
+        src="public/backend/assets/img/readme/transaksi-jasa.png"
+        width="100%"
+        alt="Transaksi Jasa"
+      />
+      <br>
+      <strong>Transaksi Jasa</strong>
+    </td>
+  </tr>
 </table>
 
 Fitur Utama
@@ -621,27 +639,31 @@ http://127.0.0.1:8000
 
 Perintah Pengembangan
 
-Membersihkan cache aplikasi:
+Kebutuhan
+
+Perintah
+
+Membersihkan cache aplikasi
 
 php artisan optimize:clear
 
-Membuat ulang cache konfigurasi:
+Membuat ulang cache konfigurasi
 
 php artisan config:cache
 
-Membuat cache route:
+Membuat cache route
 
 php artisan route:cache
 
-Membuat cache view:
+Membuat cache view
 
 php artisan view:cache
 
-Menjalankan pengujian:
+Menjalankan pengujian
 
 php artisan test
 
-Menampilkan daftar route:
+Menampilkan daftar route
 
 php artisan route:list
 
@@ -673,48 +695,47 @@ Pendukung dashboard
 
 Tabel Utama
 
-users
-roles
-permissions
-role_user
-permission_role
+Modul
 
-departments
-positions
-employees
-work_schedules
-employee_schedules
+Tabel
 
-attendances
-leave_requests
+Autentikasi dan akses
 
-performance_periods
-performance_indicators
-employee_targets
-employee_activities
-employee_performances
+users, roles, permissions, role_user, permission_role
 
-customers
-service_categories
-services
+Organisasi dan karyawan
 
-service_orders
-service_order_items
-service_order_status_histories
-service_assignments
+departments, positions, employees, work_schedules, employee_schedules
 
-invoices
-payments
-expenses
+Absensi dan cuti
 
-customer_feedback
-customer_complaints
+attendances, leave_requests
 
-notifications
-audit_logs
-system_settings
+Produktivitas karyawan
 
-Nama tabel pivot role dan permission dapat berbeda tergantung implementasi package atau struktur database yang digunakan.
+performance_periods, performance_indicators, employee_targets, employee_activities, employee_performances
+
+Pelanggan dan jasa
+
+customers, service_categories, services
+
+Transaksi jasa
+
+service_orders, service_order_items, service_order_status_histories, service_assignments
+
+Keuangan transaksi
+
+invoices, payments, expenses
+
+Kepuasan pelanggan
+
+customer_feedback, customer_complaints
+
+Sistem pendukung
+
+notifications, audit_logs, system_settings
+
+Catatan: Nama tabel pivot role dan permission dapat berbeda tergantung implementasi package atau struktur database yang digunakan.
 
 Struktur Direktori Gambar
 
@@ -761,7 +782,7 @@ Pengelolaan session
 
 Soft delete untuk data tertentu
 
-Jangan mengunggah file .env, credential database, API key, atau informasi sensitif lainnya ke repository publik.
+[!WARNING]Jangan mengunggah file .env, credential database, API key, atau informasi sensitif lainnya ke repository publik.
 
 Kontribusi
 
@@ -783,7 +804,41 @@ git push origin feature/nama-fitur
 
 Buat Pull Request melalui GitHub.
 
-Gunakan format commit yang jelas dan konsisten, misalnya:
+Gunakan format commit yang jelas dan konsisten:
+
+Tipe
+
+Kegunaan
+
+feat
+
+Menambahkan fitur baru
+
+fix
+
+Memperbaiki kesalahan aplikasi
+
+docs
+
+Memperbarui dokumentasi
+
+style
+
+Memperbaiki format kode tanpa mengubah fungsi
+
+refactor
+
+Menyederhanakan struktur kode
+
+test
+
+Menambahkan atau memperbarui pengujian
+
+chore
+
+Memperbarui konfigurasi atau pekerjaan pendukung
+
+Contoh:
 
 feat: menambahkan fitur baru
 fix: memperbaiki kesalahan aplikasi
@@ -795,9 +850,7 @@ chore: memperbarui konfigurasi proyek
 
 Pelaporan Masalah
 
-Apabila menemukan bug atau masalah pada aplikasi, buat laporan melalui halaman berikut:
-
-https://github.com/Rahmyall/dashboard-monitoring-produktivitas-transaksi-jasa/issues
+Apabila menemukan bug atau masalah pada aplikasi, buat laporan melalui GitHub Issues.
 
 Sertakan informasi berikut:
 
@@ -819,14 +872,6 @@ Lisensi
 
 Proyek ini didistribusikan berdasarkan lisensi yang tercantum pada file LICENSE.
 
-Pengembang
-
-<div align="center">
-
-Dikembangkan untuk mendukung proses monitoring dan pengambilan keputusan pada perusahaan jasa.
-
-Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa
-
 Penilaian Akhir
 
 Secara visual, ERD ini sudah cukup luas dan mencakup sebagian besar kebutuhan dashboard eksekutif. Namun, dari sisi alur bisnis, desain database masih cenderung data-oriented dan belum sepenuhnya process-oriented.
@@ -839,19 +884,19 @@ Siapa mengerjakan apa, kapan pekerjaan dilakukan, berdasarkan jadwal apa, diveri
 
 Ketidakutuhan hubungan tersebut dapat menyebabkan kesulitan dalam melakukan:
 
-pelacakan pekerjaan setiap karyawan;
+Pelacakan pekerjaan setiap karyawan
 
-verifikasi realisasi aktivitas;
+Verifikasi realisasi aktivitas
 
-pengukuran produktivitas secara objektif;
+Pengukuran produktivitas secara objektif
 
-pencocokan pekerjaan dengan invoice;
+Pencocokan pekerjaan dengan invoice
 
-rekonsiliasi invoice dan pembayaran;
+Rekonsiliasi invoice dan pembayaran
 
-atribusi feedback pelanggan kepada karyawan yang tepat;
+Atribusi feedback pelanggan kepada karyawan yang tepat
 
-audit terhadap sumber data dashboard.
+Audit terhadap sumber data dashboard
 
 Risiko terhadap Dashboard Eksekutif
 
@@ -859,44 +904,52 @@ Tanpa perbaikan pada relasi dan alur bisnis tersebut, dashboard berisiko menghas
 
 Sebagai contoh, sistem dapat menampilkan nilai produktivitas karyawan yang tinggi, tetapi belum dapat membuktikan secara lengkap:
 
-pekerjaan atau item jasa yang menjadi dasar penilaian;
+Pekerjaan atau item jasa yang menjadi dasar penilaian
 
-jadwal kerja yang berlaku pada saat pekerjaan dilakukan;
+Jadwal kerja yang berlaku pada saat pekerjaan dilakukan
 
-durasi aktual pekerjaan;
+Durasi aktual pekerjaan
 
-pihak yang melakukan verifikasi;
+Pihak yang melakukan verifikasi
 
-invoice yang berasal dari pekerjaan tersebut;
+Invoice yang berasal dari pekerjaan tersebut
 
-pembayaran yang telah diterima perusahaan;
+Pembayaran yang telah diterima perusahaan
 
-feedback pelanggan terhadap karyawan yang benar-benar mengerjakan layanan.
+Feedback pelanggan terhadap karyawan yang benar-benar mengerjakan layanan
 
 Rekomendasi Akhir
 
 Sebelum aplikasi digunakan pada lingkungan produksi, diperlukan penyempurnaan pada:
 
-hubungan aktivitas karyawan dengan item pesanan jasa;
+Hubungan aktivitas karyawan dengan item pesanan jasa
 
-hubungan absensi dengan jadwal kerja;
+Hubungan absensi dengan jadwal kerja
 
-mekanisme penugasan dan verifikasi pekerjaan;
+Mekanisme penugasan dan verifikasi pekerjaan
 
-aturan perubahan status setiap proses;
+Aturan perubahan status setiap proses
 
-hubungan antara pesanan, invoice, pembayaran, dan pengeluaran;
+Hubungan antara pesanan, invoice, pembayaran, dan pengeluaran
 
-hubungan feedback pelanggan dengan karyawan atau item jasa;
+Hubungan feedback pelanggan dengan karyawan atau item jasa
 
-histori persetujuan, perubahan status, dan audit proses;
+Histori persetujuan, perubahan status, dan audit proses
 
-validasi serta constraint pada tingkat database.
+Validasi serta constraint pada tingkat database
 
 Kesimpulan
 
 Secara keseluruhan, rancangan database ini memiliki cakupan modul yang baik dan berpotensi mendukung kebutuhan monitoring perusahaan jasa. Namun, kualitas dashboard tidak hanya ditentukan oleh banyaknya tabel atau jumlah indikator yang ditampilkan, melainkan oleh kemampuan sistem dalam menyediakan data lineage, yaitu jalur asal-usul data yang jelas, konsisten, terverifikasi, dan dapat diaudit.
 
 Dengan memperbaiki hubungan antarmodul serta memperjelas alur proses bisnis, sistem dapat berkembang dari sekadar database pencatatan menjadi sistem monitoring yang benar-benar mampu mendukung pengambilan keputusan manajemen secara akurat dan dapat dipertanggungjawabkan.
+
+Pengembang
+
+<div align="center">
+
+Dikembangkan untuk mendukung proses monitoring dan pengambilan keputusan pada perusahaan jasa.
+
+<strong>Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa</strong>
 
 </div>
