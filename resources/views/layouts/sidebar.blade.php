@@ -3,11 +3,6 @@
     |--------------------------------------------------------------------------
     | NILAI DEFAULT SIDEBAR
     |--------------------------------------------------------------------------
-    |
-    | Nilai ini harus dibuat sebelum seluruh pemeriksaan role agar komponen
-    | sidebar tetap dapat dirender ketika session role kosong atau route
-    | dashboard khusus role belum tersedia.
-    |
     */
      $dashboardUrl = \Illuminate\Support\Facades\Route::has('dashboard') ? route('dashboard') : url('/');
 
@@ -21,11 +16,6 @@
     |--------------------------------------------------------------------------
     */
      $user = auth()->user();
-
-     /*
-      * Ambil role aktif dari session terlebih dahulu. Jika tidak ada, gunakan
-      * role pertama dari Spatie Permission.
-      */
      $spatieRole = '';
 
      if ($user && method_exists($user, 'getRoleNames')) {
@@ -51,9 +41,6 @@
          ->replaceMatches('/_+/', '_')
          ->toString();
 
-     /*
-      * Alias diarahkan ke nama role yang digunakan pada web.php/database.
-      */
      $roleAliases = [
          'superadmin' => 'super_admin',
          'super_admin' => 'super_admin',
@@ -101,12 +88,6 @@
     | HELPER
     |--------------------------------------------------------------------------
     */
-     /*
-      * Pemeriksaan role dibuat lebih kuat:
-      * 1. Memeriksa role aktif yang berasal dari session/user.
-      * 2. Memeriksa seluruh role Spatie milik user.
-      * 3. Menormalisasi spasi dan tanda hubung agar sesuai dengan slug web.php.
-      */
      $hasRole = static function (array $roles) use ($user, $activeRole, $roleAliases): bool {
          if (in_array($activeRole, $roles, true)) {
              return true;
@@ -202,9 +183,7 @@
      ];
 
      $dashboardName = $dashboardNames[$activeRole] ?? 'Dashboard';
-
-     $dashboardCandidates = $dashboardRouteCandidates[$activeRole] ?? ['dashboard'];
-     $resolvedDashboardUrl = $routeUrl($dashboardCandidates);
+     $resolvedDashboardUrl = $routeUrl($dashboardRouteCandidates[$activeRole] ?? ['dashboard']);
 
      if ($resolvedDashboardUrl !== '#') {
          $dashboardUrl = $resolvedDashboardUrl;
@@ -216,49 +195,146 @@
 
      /*
     |--------------------------------------------------------------------------
+    | CANDIDATE ROUTE SESUAI TABEL DATABASE
+    |--------------------------------------------------------------------------
+    |
+    | Nama pertama menjadi prioritas. Nama berikutnya merupakan fallback agar
+    | sidebar tetap kompatibel dengan pola route yang sudah ada di proyek.
+    |
+    */
+     $menuRoutes = [
+         // Master data
+         'branches' => ['branches.index', 'super-admin.branches.index'],
+         'departments' => ['super-admin.departments.index', 'departments.index'],
+         'positions' => ['super-admin.positions.index', 'positions.index'],
+         'employees' => ['employees.index', 'super-admin.employees.index'],
+         'employment' => [
+             'super-admin.employment.index',
+             'super-admin.employments.index',
+             'employment.index',
+             'employments.index',
+         ],
+         'customers' => ['super-admin.customers.index', 'customers.index'],
+         'serviceCategories' => ['service-categories.index', 'super-admin.service-categories.index'],
+         'services' => ['services.index', 'super-admin.services.index'],
+
+         // Proses layanan
+         'serviceOrders' => ['service-orders.index', 'super-admin.service-orders.index'],
+         'serviceOrdersCreate' => ['service-orders.create', 'super-admin.service-orders.create'],
+         'serviceOrderItems' => ['service-order-items.index', 'super-admin.service-order-items.index'],
+         'branchApprovalLogs' => [
+             'branch-approval-logs.index',
+             'super-admin.branch-approval-logs.index',
+             'service-orders.approvals.index',
+         ],
+         'workSchedules' => ['super-admin.work-schedules.index', 'work-schedules.index'],
+         'employeeSchedules' => ['employee-schedules.index', 'super-admin.employee-schedules.index'],
+         'employeeSchedulesMine' => [
+             'employee-schedules.mine',
+             'work-schedules.mine',
+             'employee-schedules.index',
+             'work-schedules.index',
+         ],
+         'employeeActivities' => ['employee-activities.index', 'super-admin.employee-activities.index'],
+         'employeeActivitiesMine' => [
+             'employee-activities.mine',
+             'employee-activities.my',
+             'employee-activities.index',
+         ],
+         'serviceOrderHistories' => [
+             'service-order-status-histories.index',
+             'service-orders.status-histories.index',
+             'super-admin.service-order-status-histories.index',
+         ],
+
+         // SDM operasional
+         'attendances' => ['attendances.index', 'super-admin.attendances.index'],
+         'attendancesMine' => ['attendances.mine', 'attendances.my', 'attendances.index'],
+         'leaveRequests' => ['leave-requests.index', 'super-admin.leave-requests.index'],
+         'leaveRequestsMine' => ['leave-requests.mine', 'leave-requests.my', 'leave-requests.index'],
+
+         // Keuangan
+         'expenses' => ['expenses.index', 'super-admin.expenses.index'],
+         'invoices' => ['invoices.index', 'super-admin.invoices.index'],
+         'payments' => ['payments.index', 'super-admin.payments.index'],
+
+         // Kinerja
+         'performanceIndicators' => [
+             'performance-indicators.index',
+             'super-admin.performance-indicators.index',
+             'kpi-indicators.index',
+         ],
+         'performancePeriods' => ['super-admin.performance-periods.index', 'performance-periods.index'],
+         'performanceRoles' => [
+             'performance-roles.index',
+             'performance-role.index',
+             'super-admin.performance-roles.index',
+         ],
+         'employeeTargets' => ['employee-targets.index', 'super-admin.employee-targets.index'],
+         'employeePerformance' => [
+             'employee-performance.index',
+             'employee-performances.index',
+             'employee-kpi-results.index',
+         ],
+         'employeePerformanceMine' => [
+             'employee-performance.mine',
+             'employee-performances.mine',
+             'employee-kpi-results.mine',
+             'employee-kpi-results.my',
+             'employee-kpi-results.index',
+         ],
+         'performanceDetails' => [
+             'performance-details.index',
+             'super-admin.performance-details.index',
+             'performance-evaluations.index',
+         ],
+         'performanceDetailsMine' => [
+             'performance-details.mine',
+             'performance-evaluations.mine',
+             'performance-evaluations.my',
+             'performance-evaluations.index',
+         ],
+
+         // Pelayanan pelanggan
+         'customerFeedback' => ['customer-feedback.index', 'super-admin.customer-feedback.index'],
+         'customerComplaints' => [
+             'customer-complaints.index',
+             'super-admin.customer-complaints.index',
+             'complaints.index',
+         ],
+         'customerComplaintsCreate' => [
+             'customer-complaints.create',
+             'super-admin.customer-complaints.create',
+             'complaints.create',
+         ],
+
+         // Laporan dan snapshot
+         'dashboardSnapshots' => ['dashboard-snapshots.index', 'super-admin.dashboard-snapshots.index'],
+         'reportServices' => ['reports.services', 'reports.transactions'],
+         'reportPerformance' => ['reports.performance'],
+         'reportCustomers' => ['reports.customers', 'reports.satisfaction'],
+         'reportComplaints' => ['reports.complaints'],
+         'reportFinance' => ['reports.finance'],
+
+         // Sistem
+         'users' => ['super-admin.users.index', 'users.index'],
+         'roles' => ['super-admin.roles.index', 'roles.index'],
+         'permissions' => ['permissions.index', 'super-admin.permissions.index'],
+         'auditLogs' => ['audit-logs.index', 'super-admin.audit-logs.index'],
+         'systemSettings' => ['system-settings.index', 'settings.index'],
+         'notifications' => ['notifications.index'],
+         'profile' => ['profile.index', 'profile.edit'],
+     ];
+
+     $menuUrl = static function (string $key, array $parameters = []) use ($menuRoutes, $routeUrl): string {
+         return $routeUrl($menuRoutes[$key] ?? [], $parameters);
+     };
+
+     /*
+    |--------------------------------------------------------------------------
     | HAK AKSES MENU
     |--------------------------------------------------------------------------
     */
-     $canAccessBranches = $hasRole(['super_admin', 'direktur_utama', 'admin_operasional', 'auditor_internal']);
-
-     /*
-      * Menu Departemen dapat dilihat oleh lima role.
-      * Pembatasan create, edit, delete, trash, restore, dan force delete
-      * tetap dilakukan melalui middleware route khusus Super Admin.
-      */
-     $canAccessDepartments = $hasRole([
-         'super_admin',
-         'direktur_utama',
-         'hrd_manager',
-         'manager_departemen',
-         'auditor_internal',
-     ]);
-
-     /*
-      * Menu Jabatan dapat dilihat oleh lima role.
-      * Seluruh aksi pengelolaan tetap diamankan oleh middleware route.
-      */
-     $canAccessPositions = $hasRole([
-         'super_admin',
-         'direktur_utama',
-         'hrd_manager',
-         'manager_departemen',
-         'auditor_internal',
-     ]);
-
-     /*
-      * Menu Data Pelanggan dapat dilihat oleh role berikut.
-      * Hak akses aksi tetap wajib diamankan melalui middleware/permission route.
-      */
-     $canAccessCustomers = $hasRole([
-         'super_admin',
-         'direktur_utama',
-         'admin_pelayanan',
-         'admin_operasional',
-         'finance_staff',
-         'auditor_internal',
-     ]);
-
      $canAccessMasterData = $hasRole([
          'super_admin',
          'direktur_utama',
@@ -270,10 +346,29 @@
          'auditor_internal',
      ]);
 
-     $canAccessTransactions = $hasRole([
+     $canAccessServiceProcess = $hasRole([
          'super_admin',
          'direktur_utama',
+         'manager_departemen',
+         'karyawan',
          'admin_pelayanan',
+         'admin_operasional',
+         'finance_staff',
+         'auditor_internal',
+     ]);
+
+     $canAccessHrOperations = $hasRole([
+         'super_admin',
+         'direktur_utama',
+         'hrd_manager',
+         'manager_departemen',
+         'karyawan',
+         'auditor_internal',
+     ]);
+
+     $canAccessFinance = $hasRole([
+         'super_admin',
+         'direktur_utama',
          'admin_operasional',
          'finance_staff',
          'auditor_internal',
@@ -289,9 +384,13 @@
          'auditor_internal',
      ]);
 
-     $canAccessSatisfaction = $hasRole(['super_admin', 'direktur_utama', 'admin_pelayanan', 'auditor_internal']);
-
-     $canAccessComplaints = $hasRole(['super_admin', 'direktur_utama', 'admin_pelayanan', 'auditor_internal']);
+     $canAccessCustomerService = $hasRole([
+         'super_admin',
+         'direktur_utama',
+         'admin_pelayanan',
+         'admin_operasional',
+         'auditor_internal',
+     ]);
 
      $canAccessReports = $hasRole([
          'super_admin',
@@ -307,104 +406,111 @@
      $canAccessSystem = $hasRole(['super_admin', 'hrd_manager', 'auditor_internal']);
 
      /*
-      * Pastikan route index Departemen benar-benar terdaftar.
-      */
-     $departmentsRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.departments.index');
-
-     /*
-      * Pastikan route index Jabatan benar-benar terdaftar.
-      */
-     $positionsRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.positions.index');
-
-     /*
-      * Pastikan route index Data Pelanggan benar-benar terdaftar.
-      */
-     $customersRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.customers.index');
-
-     /*
-      * Pastikan route index Jadwal Kerja benar-benar terdaftar.
-      * Menu pengelolaan Work Schedule hanya ditampilkan untuk Super Admin.
-      */
-     $workSchedulesRouteExists = \Illuminate\Support\Facades\Route::has('super-admin.work-schedules.index');
-
-     /*
     |--------------------------------------------------------------------------
-    | STATUS SUBMENU
+    | STATUS SUBMENU BERDASARKAN ROUTE TABEL
     |--------------------------------------------------------------------------
     */
      $masterDataOpen = $routeActive(
          'branches.*',
+         'super-admin.branches.*',
+         'departments.*',
          'super-admin.departments.*',
+         'positions.*',
          'super-admin.positions.*',
          'employees.*',
+         'super-admin.employees.*',
+         'employment.*',
+         'employments.*',
+         'super-admin.employment.*',
+         'super-admin.employments.*',
+         'customers.*',
          'super-admin.customers.*',
          'service-categories.*',
+         'super-admin.service-categories.*',
          'services.*',
+         'super-admin.services.*',
      );
 
-     $transactionsOpen = $routeActive('transactions.*', 'transaction-assignments.*');
+     $serviceProcessOpen = $routeActive(
+         'service-orders.*',
+         'super-admin.service-orders.*',
+         'service-order-items.*',
+         'super-admin.service-order-items.*',
+         'branch-approval-logs.*',
+         'super-admin.branch-approval-logs.*',
+         'work-schedules.*',
+         'super-admin.work-schedules.*',
+         'employee-schedules.*',
+         'super-admin.employee-schedules.*',
+         'employee-activities.*',
+         'super-admin.employee-activities.*',
+         'service-order-status-histories.*',
+         'super-admin.service-order-status-histories.*',
+     );
+
+     $hrOperationsOpen = $routeActive(
+         'attendances.*',
+         'super-admin.attendances.*',
+         'leave-requests.*',
+         'super-admin.leave-requests.*',
+     );
+
+     $financeOpen = $routeActive(
+         'expenses.*',
+         'super-admin.expenses.*',
+         'invoices.*',
+         'super-admin.invoices.*',
+         'payments.*',
+         'super-admin.payments.*',
+     );
 
      $performanceOpen = $routeActive(
-         'kpi-categories.*',
-         'kpi-indicators.*',
+         'performance-indicators.*',
+         'super-admin.performance-indicators.*',
+         'performance-periods.*',
+         'super-admin.performance-periods.*',
+         'performance-roles.*',
+         'performance-role.*',
          'employee-targets.*',
+         'super-admin.employee-targets.*',
+         'employee-performance.*',
+         'employee-performances.*',
          'employee-kpi-results.*',
+         'performance-details.*',
+         'super-admin.performance-details.*',
          'performance-evaluations.*',
-         'super-admin.work-schedules.*',
-         'work-schedules.*',
-         'employee-schedules.*',
      );
 
-     $satisfactionOpen = $routeActive('surveys.*', 'survey-questions.*', 'survey-responses.*');
-     $complaintsOpen = $routeActive('complaint-categories.*', 'complaints.*');
-     $reportsOpen = $routeActive('reports.*');
+     $customerServiceOpen = $routeActive(
+         'customer-feedback.*',
+         'super-admin.customer-feedback.*',
+         'customer-complaints.*',
+         'super-admin.customer-complaints.*',
+         'complaints.*',
+     );
+
+     $reportsOpen = $routeActive('reports.*', 'dashboard-snapshots.*', 'super-admin.dashboard-snapshots.*');
 
      $systemOpen = $routeActive(
          'super-admin.users.*',
+         'users.*',
          'super-admin.roles.*',
+         'roles.*',
          'permissions.*',
+         'super-admin.permissions.*',
+         'audit-logs.*',
+         'super-admin.audit-logs.*',
+         'system-settings.*',
          'settings.*',
-         'activity-logs.*',
      );
 
      /*
     |--------------------------------------------------------------------------
-    | LABEL MENU CABANG
+    | VARIABEL FINAL
     |--------------------------------------------------------------------------
     */
-     $branchMenuLabel = $isDirektur || $isAuditor ? 'Persetujuan Cabang' : 'Data Cabang';
-
-     /*
-    |--------------------------------------------------------------------------
-    | URL MENU KARYAWAN
-    |--------------------------------------------------------------------------
-    */
-     $employeeKpiUrl = $routeUrl(
-         $isKaryawan
-             ? ['employee-kpi-results.mine', 'employee-kpi-results.my', 'employee-kpi-results.index']
-             : ['employee-kpi-results.index'],
-     );
-
-     $employeeEvaluationUrl = $routeUrl(
-         $isKaryawan
-             ? ['performance-evaluations.mine', 'performance-evaluations.my', 'performance-evaluations.index']
-             : ['performance-evaluations.index'],
-     );
-
-     $employeeScheduleUrl = $routeUrl([
-         'work-schedules.mine',
-         'employee-schedules.mine',
-         'work-schedules.index',
-         'employee-schedules.index',
-     ]);
-
-     /*
-      * Variabel final yang digunakan HTML sidebar.
-      */
      $safeDashboardUrl = filled($dashboardUrl ?? null) ? (string) $dashboardUrl : url('/');
-
      $safeDashboardName = filled($dashboardName ?? null) ? (string) $dashboardName : 'Dashboard';
-
      $safeActiveRoleLabel = filled($activeRoleLabel ?? null) ? (string) $activeRoleLabel : 'Pengguna';
 @endphp
 
@@ -451,6 +557,8 @@
 
                {{-- ======================================================== --}}
                {{-- MASTER DATA --}}
+               {{-- Tabel: branches, departments, positions, employees, employment, --}}
+               {{-- customers, service_categories, services --}}
                {{-- ======================================================== --}}
                @if ($canAccessMasterData)
                     <li class="nav-label">
@@ -466,49 +574,54 @@
                          </a>
 
                          <nav id="submenu-master-data" class="nav nav-sub" aria-label="Menu Master Data">
-                              @if ($canAccessBranches && \Illuminate\Support\Facades\Route::has('branches.index'))
-                                   <a href="{{ route('branches.index') }}"
-                                        class="nav-sub-link {{ $routeActive('branches.*') ? 'active' : '' }}">
-                                        {{ $branchMenuLabel }}
+                              @if ($isSuperAdmin || $isDirektur || $isOperasional || $isAuditor)
+                                   <a href="{{ $menuUrl('branches') }}"
+                                        class="nav-sub-link {{ $routeActive('branches.*', 'super-admin.branches.*') ? 'active' : '' }}">
+                                        Data Cabang
                                    </a>
                               @endif
 
-                              @if (($canAccessDepartments ?? false) && ($departmentsRouteExists ?? false))
-                                   <a href="{{ route('super-admin.departments.index') }}"
-                                        class="nav-sub-link {{ $routeActive('super-admin.departments.*') ? 'active' : '' }}">
+                              @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isAuditor)
+                                   <a href="{{ $menuUrl('departments') }}"
+                                        class="nav-sub-link {{ $routeActive('departments.*', 'super-admin.departments.*') ? 'active' : '' }}">
                                         Data Departemen
                                    </a>
-                              @endif
 
-                              @if (($canAccessPositions ?? false) && ($positionsRouteExists ?? false))
-                                   <a href="{{ route('super-admin.positions.index') }}"
-                                        class="nav-sub-link {{ $routeActive('super-admin.positions.*') ? 'active' : '' }}">
+                                   <a href="{{ $menuUrl('positions') }}"
+                                        class="nav-sub-link {{ $routeActive('positions.*', 'super-admin.positions.*') ? 'active' : '' }}">
                                         Data Jabatan
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isOperasional || $isAuditor)
-                                   <a href="{{ $routeUrl('employees.index') }}"
-                                        class="nav-sub-link {{ $routeActive('employees.*') ? 'active' : '' }}">
+                                   <a href="{{ $menuUrl('employees') }}"
+                                        class="nav-sub-link {{ $routeActive('employees.*', 'super-admin.employees.*') ? 'active' : '' }}">
                                         Data Karyawan
+                                   </a>
+
+                                   <a href="{{ $menuUrl('employment') }}"
+                                        class="nav-sub-link {{ $routeActive('employment.*', 'employments.*', 'super-admin.employment.*', 'super-admin.employments.*')
+                                            ? 'active'
+                                            : '' }}">
+                                        Employment
                                    </a>
                               @endif
 
-                              @if (($canAccessCustomers ?? false) && ($customersRouteExists ?? false))
-                                   <a href="{{ route('super-admin.customers.index') }}"
-                                        class="nav-sub-link {{ $routeActive('super-admin.customers.*') ? 'active' : '' }}">
+                              @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isKeuangan || $isAuditor)
+                                   <a href="{{ $menuUrl('customers') }}"
+                                        class="nav-sub-link {{ $routeActive('customers.*', 'super-admin.customers.*') ? 'active' : '' }}">
                                         Data Pelanggan
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isAuditor)
-                                   <a href="{{ $routeUrl('service-categories.index') }}"
-                                        class="nav-sub-link {{ $routeActive('service-categories.*') ? 'active' : '' }}">
+                                   <a href="{{ $menuUrl('serviceCategories') }}"
+                                        class="nav-sub-link {{ $routeActive('service-categories.*', 'super-admin.service-categories.*') ? 'active' : '' }}">
                                         Kategori Layanan
                                    </a>
 
-                                   <a href="{{ $routeUrl('services.index') }}"
-                                        class="nav-sub-link {{ $routeActive('services.*') ? 'active' : '' }}">
+                                   <a href="{{ $menuUrl('services') }}"
+                                        class="nav-sub-link {{ $routeActive('services.*', 'super-admin.services.*') ? 'active' : '' }}">
                                         Data Layanan
                                    </a>
                               @endif
@@ -517,39 +630,90 @@
                @endif
 
                {{-- ======================================================== --}}
-               {{-- TRANSAKSI JASA --}}
+               {{-- PROSES LAYANAN --}}
+               {{-- Alur tabel: service_orders -> service_order_items -> --}}
+               {{-- branch_approval_logs -> work_schedules -> --}}
+               {{-- employee_schedules -> employee_activities -> --}}
+               {{-- service_order_status_histories --}}
                {{-- ======================================================== --}}
-               @if ($canAccessTransactions)
+               @if ($canAccessServiceProcess)
                     <li class="nav-label">
-                         <span class="content-label">Operasional Jasa</span>
+                         <span class="content-label">Operasional Layanan</span>
                     </li>
 
-                    <li class="nav-item {{ $transactionsOpen ? 'show' : '' }}">
+                    <li class="nav-item {{ $serviceProcessOpen ? 'show' : '' }}">
                          <a href="javascript:void(0);"
-                              class="nav-link with-sub {{ $transactionsOpen ? 'active' : '' }}"
-                              aria-expanded="{{ $transactionsOpen ? 'true' : 'false' }}"
-                              aria-controls="submenu-transaksi">
+                              class="nav-link with-sub {{ $serviceProcessOpen ? 'active' : '' }}"
+                              aria-expanded="{{ $serviceProcessOpen ? 'true' : 'false' }}"
+                              aria-controls="submenu-proses-layanan">
                               <i data-feather="briefcase"></i>
-                              <span>Transaksi Jasa</span>
+                              <span>Proses Layanan</span>
                          </a>
 
-                         <nav id="submenu-transaksi" class="nav nav-sub" aria-label="Menu Transaksi Jasa">
-                              <a href="#"
-                                   class="nav-sub-link {{ $routeActive('transactions.index', 'transactions.show', 'transactions.edit') ? 'active' : '' }}">
-                                   Daftar Transaksi
-                              </a>
-
-                              @if ($isSuperAdmin || $isPelayanan || $isOperasional)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('transactions.create') ? 'active' : '' }}">
-                                        Tambah Transaksi
+                         <nav id="submenu-proses-layanan" class="nav nav-sub" aria-label="Menu Proses Layanan">
+                              @if (!$isKaryawan)
+                                   <a href="{{ $menuUrl('serviceOrders') }}"
+                                        class="nav-sub-link {{ $routeActive('service-orders.*', 'super-admin.service-orders.*') ? 'active' : '' }}">
+                                        1. Pesanan Layanan
                                    </a>
+
+                                   @if ($isSuperAdmin || $isPelayanan || $isOperasional)
+                                        <a href="{{ $menuUrl('serviceOrdersCreate') }}"
+                                             class="nav-sub-link {{ $routeActive('service-orders.create', 'super-admin.service-orders.create') ? 'active' : '' }}">
+                                             Tambah Pesanan
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin || $isPelayanan || $isOperasional || $isAuditor)
+                                        <a href="{{ $menuUrl('serviceOrderItems') }}"
+                                             class="nav-sub-link {{ $routeActive('service-order-items.*', 'super-admin.service-order-items.*') ? 'active' : '' }}">
+                                             2. Item Pesanan
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin || $isDirektur || $isManager || $isOperasional || $isAuditor)
+                                        <a href="{{ $menuUrl('branchApprovalLogs') }}"
+                                             class="nav-sub-link {{ $routeActive('branch-approval-logs.*', 'super-admin.branch-approval-logs.*', 'service-orders.approvals.*') ? 'active' : '' }}">
+                                             3. Persetujuan Cabang
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin || $isManager || $isOperasional || $isAuditor)
+                                        <a href="{{ $menuUrl('workSchedules') }}"
+                                             class="nav-sub-link {{ $routeActive('work-schedules.*', 'super-admin.work-schedules.*') ? 'active' : '' }}">
+                                             4. Jadwal Kerja
+                                        </a>
+
+                                        <a href="{{ $menuUrl('employeeSchedules') }}"
+                                             class="nav-sub-link {{ $routeActive('employee-schedules.*', 'super-admin.employee-schedules.*') ? 'active' : '' }}">
+                                             5. Penugasan Karyawan
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin || $isManager || $isOperasional || $isAuditor)
+                                        <a href="{{ $menuUrl('employeeActivities') }}"
+                                             class="nav-sub-link {{ $routeActive('employee-activities.*', 'super-admin.employee-activities.*') ? 'active' : '' }}">
+                                             6. Aktivitas Pekerjaan
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isAuditor)
+                                        <a href="{{ $menuUrl('serviceOrderHistories') }}"
+                                             class="nav-sub-link {{ $routeActive('service-order-status-histories.*', 'super-admin.service-order-status-histories.*', 'service-orders.status-histories.*') ? 'active' : '' }}">
+                                             7. Riwayat Status Pesanan
+                                        </a>
+                                   @endif
                               @endif
 
-                              @if ($isSuperAdmin || $isOperasional)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('transaction-assignments.*') ? 'active' : '' }}">
-                                        Penugasan Karyawan
+                              @if ($isKaryawan)
+                                   <a href="{{ $menuUrl('employeeSchedulesMine') }}"
+                                        class="nav-sub-link {{ $routeActive('employee-schedules.mine', 'employee-schedules.my', 'work-schedules.mine') ? 'active' : '' }}">
+                                        Jadwal Kerja Saya
+                                   </a>
+
+                                   <a href="{{ $menuUrl('employeeActivitiesMine') }}"
+                                        class="nav-sub-link {{ $routeActive('employee-activities.mine', 'employee-activities.my') ? 'active' : '' }}">
+                                        Aktivitas Saya
                                    </a>
                               @endif
                          </nav>
@@ -557,139 +721,186 @@
                @endif
 
                {{-- ======================================================== --}}
-               {{-- KINERJA KARYAWAN / AKTIVITAS SAYA --}}
+               {{-- SDM OPERASIONAL --}}
+               {{-- Tabel: attendances, leave_requests --}}
+               {{-- ======================================================== --}}
+               @if ($canAccessHrOperations)
+                    <li class="nav-label">
+                         <span class="content-label">SDM Operasional</span>
+                    </li>
+
+                    <li class="nav-item {{ $hrOperationsOpen ? 'show' : '' }}">
+                         <a href="javascript:void(0);"
+                              class="nav-link with-sub {{ $hrOperationsOpen ? 'active' : '' }}"
+                              aria-expanded="{{ $hrOperationsOpen ? 'true' : 'false' }}"
+                              aria-controls="submenu-sdm-operasional">
+                              <i data-feather="users"></i>
+                              <span>{{ $isKaryawan ? 'Administrasi Saya' : 'SDM Operasional' }}</span>
+                         </a>
+
+                         <nav id="submenu-sdm-operasional" class="nav nav-sub" aria-label="Menu SDM Operasional">
+                              <a href="{{ $menuUrl($isKaryawan ? 'attendancesMine' : 'attendances') }}"
+                                   class="nav-sub-link {{ $routeActive('attendances.*', 'super-admin.attendances.*') ? 'active' : '' }}">
+                                   {{ $isKaryawan ? 'Kehadiran Saya' : 'Data Kehadiran' }}
+                              </a>
+
+                              <a href="{{ $menuUrl($isKaryawan ? 'leaveRequestsMine' : 'leaveRequests') }}"
+                                   class="nav-sub-link {{ $routeActive('leave-requests.*', 'super-admin.leave-requests.*') ? 'active' : '' }}">
+                                   {{ $isKaryawan ? 'Pengajuan Cuti Saya' : 'Pengajuan Cuti' }}
+                              </a>
+                         </nav>
+                    </li>
+               @endif
+
+               {{-- ======================================================== --}}
+               {{-- KEUANGAN LAYANAN --}}
+               {{-- Alur tabel: expenses -> invoices -> payments --}}
+               {{-- ======================================================== --}}
+               @if ($canAccessFinance)
+                    <li class="nav-label">
+                         <span class="content-label">Keuangan Layanan</span>
+                    </li>
+
+                    <li class="nav-item {{ $financeOpen ? 'show' : '' }}">
+                         <a href="javascript:void(0);" class="nav-link with-sub {{ $financeOpen ? 'active' : '' }}"
+                              aria-expanded="{{ $financeOpen ? 'true' : 'false' }}" aria-controls="submenu-keuangan">
+                              <i data-feather="credit-card"></i>
+                              <span>Keuangan Layanan</span>
+                         </a>
+
+                         <nav id="submenu-keuangan" class="nav nav-sub" aria-label="Menu Keuangan Layanan">
+                              @if ($isSuperAdmin || $isOperasional || $isKeuangan || $isAuditor)
+                                   <a href="{{ $menuUrl('expenses') }}"
+                                        class="nav-sub-link {{ $routeActive('expenses.*', 'super-admin.expenses.*') ? 'active' : '' }}">
+                                        8. Pengeluaran
+                                   </a>
+                              @endif
+
+                              <a href="{{ $menuUrl('invoices') }}"
+                                   class="nav-sub-link {{ $routeActive('invoices.*', 'super-admin.invoices.*') ? 'active' : '' }}">
+                                   9. Invoice
+                              </a>
+
+                              <a href="{{ $menuUrl('payments') }}"
+                                   class="nav-sub-link {{ $routeActive('payments.*', 'super-admin.payments.*') ? 'active' : '' }}">
+                                   10. Pembayaran
+                              </a>
+                         </nav>
+                    </li>
+               @endif
+
+               {{-- ======================================================== --}}
+               {{-- PELAYANAN PELANGGAN --}}
+               {{-- Tabel: customer_feedback, customer_complaints --}}
+               {{-- ======================================================== --}}
+               @if ($canAccessCustomerService)
+                    <li class="nav-label">
+                         <span class="content-label">Pelayanan Pelanggan</span>
+                    </li>
+
+                    <li class="nav-item {{ $customerServiceOpen ? 'show' : '' }}">
+                         <a href="javascript:void(0);"
+                              class="nav-link with-sub {{ $customerServiceOpen ? 'active' : '' }}"
+                              aria-expanded="{{ $customerServiceOpen ? 'true' : 'false' }}"
+                              aria-controls="submenu-pelanggan">
+                              <i data-feather="message-circle"></i>
+                              <span>Pelayanan Pelanggan</span>
+                         </a>
+
+                         <nav id="submenu-pelanggan" class="nav nav-sub" aria-label="Menu Pelayanan Pelanggan">
+                              <a href="{{ $menuUrl('customerFeedback') }}"
+                                   class="nav-sub-link {{ $routeActive('customer-feedback.*', 'super-admin.customer-feedback.*') ? 'active' : '' }}">
+                                   11. Feedback Pelanggan
+                              </a>
+
+                              <a href="{{ $menuUrl('customerComplaints') }}"
+                                   class="nav-sub-link {{ $routeActive('customer-complaints.*', 'super-admin.customer-complaints.*', 'complaints.*') ? 'active' : '' }}">
+                                   12. Keluhan Pelanggan
+                              </a>
+
+                              @if ($isSuperAdmin || $isPelayanan)
+                                   <a href="{{ $menuUrl('customerComplaintsCreate') }}"
+                                        class="nav-sub-link {{ $routeActive('customer-complaints.create', 'super-admin.customer-complaints.create', 'complaints.create') ? 'active' : '' }}">
+                                        Tambah Keluhan
+                                   </a>
+                              @endif
+                         </nav>
+                    </li>
+               @endif
+
+               {{-- ======================================================== --}}
+               {{-- KINERJA KARYAWAN --}}
+               {{-- Tabel: performance_indicators, performance_periods, --}}
+               {{-- performance_role, employee_targets, employee_performance, --}}
+               {{-- performance_details --}}
                {{-- ======================================================== --}}
                @if ($canAccessPerformance)
                     <li class="nav-label">
                          <span class="content-label">
-                              {{ $isKaryawan ? 'Aktivitas Saya' : 'Kinerja Karyawan' }}
+                              {{ $isKaryawan ? 'Kinerja Saya' : 'Kinerja Karyawan' }}
                          </span>
                     </li>
 
                     <li class="nav-item {{ $performanceOpen ? 'show' : '' }}">
-                         <a href="javascript:void(0);" class="nav-link with-sub {{ $performanceOpen ? 'active' : '' }}"
+                         <a href="javascript:void(0);"
+                              class="nav-link with-sub {{ $performanceOpen ? 'active' : '' }}"
                               aria-expanded="{{ $performanceOpen ? 'true' : 'false' }}"
                               aria-controls="submenu-kinerja">
                               <i data-feather="bar-chart-2"></i>
                               <span>{{ $isKaryawan ? 'Kinerja Saya' : 'Kinerja Karyawan' }}</span>
                          </a>
 
-                         <nav id="submenu-kinerja" class="nav nav-sub" aria-label="Menu Kinerja">
-                              @if ($isSuperAdmin && ($workSchedulesRouteExists ?? false))
-                                   <a href="{{ route('super-admin.work-schedules.index') }}"
-                                        class="nav-sub-link {{ $routeActive('super-admin.work-schedules.*') ? 'active' : '' }}">
-                                        Jadwal Kerja
+                         <nav id="submenu-kinerja" class="nav nav-sub" aria-label="Menu Kinerja Karyawan">
+                              @if (!$isKaryawan)
+                                   @if ($isSuperAdmin || $isHrd)
+                                        <a href="{{ $menuUrl('performanceIndicators') }}"
+                                             class="nav-sub-link {{ $routeActive('performance-indicators.*', 'super-admin.performance-indicators.*', 'kpi-indicators.*') ? 'active' : '' }}">
+                                             Indikator Kinerja
+                                        </a>
+                                   @endif
+
+                                   {{-- Performance Period saat ini hanya memiliki route Super Admin. --}}
+                                   @if ($isSuperAdmin)
+                                        <a href="{{ $menuUrl('performancePeriods') }}"
+                                             class="nav-sub-link {{ $routeActive('performance-periods.*', 'super-admin.performance-periods.*') ? 'active' : '' }}">
+                                             Periode Penilaian
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin || $isHrd)
+                                        <a href="{{ $menuUrl('performanceRoles') }}"
+                                             class="nav-sub-link {{ $routeActive('performance-roles.*', 'performance-role.*', 'super-admin.performance-roles.*') ? 'active' : '' }}">
+                                             Bobot Kinerja per Role
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager)
+                                        <a href="{{ $menuUrl('employeeTargets') }}"
+                                             class="nav-sub-link {{ $routeActive('employee-targets.*', 'super-admin.employee-targets.*') ? 'active' : '' }}">
+                                             Target Karyawan
+                                        </a>
+                                   @endif
+
+                                   <a href="{{ $menuUrl('employeePerformance') }}"
+                                        class="nav-sub-link {{ $routeActive('employee-performance.*', 'employee-performances.*', 'employee-kpi-results.*') ? 'active' : '' }}">
+                                        Hasil Kinerja
+                                   </a>
+
+                                   <a href="{{ $menuUrl('performanceDetails') }}"
+                                        class="nav-sub-link {{ $routeActive('performance-details.*', 'super-admin.performance-details.*', 'performance-evaluations.*') ? 'active' : '' }}">
+                                        Detail Penilaian
                                    </a>
                               @endif
 
-                              @if ($isSuperAdmin || $isHrd)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('kpi-categories.*') ? 'active' : '' }}">
-                                        Kategori KPI
+                              @if ($isKaryawan)
+                                   <a href="{{ $menuUrl('employeePerformanceMine') }}"
+                                        class="nav-sub-link {{ $routeActive('employee-performance.mine', 'employee-performances.mine', 'employee-kpi-results.mine', 'employee-kpi-results.my') ? 'active' : '' }}">
+                                        Hasil Kinerja Saya
                                    </a>
 
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('kpi-indicators.*') ? 'active' : '' }}">
-                                        Indikator KPI
-                                   </a>
-                              @endif
-
-                              @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('employee-targets.*') ? 'active' : '' }}">
-                                        Target Karyawan
-                                   </a>
-                              @endif
-
-                              <a href="{{ $employeeKpiUrl }}"
-                                   class="nav-sub-link {{ $routeActive('employee-kpi-results.*') ? 'active' : '' }}">
-                                   {{ $isKaryawan ? 'Hasil KPI Saya' : 'Hasil KPI' }}
-                              </a>
-
-                              <a href="{{ $employeeEvaluationUrl }}"
-                                   class="nav-sub-link {{ $routeActive('performance-evaluations.*') ? 'active' : '' }}">
-                                   {{ $isKaryawan ? 'Evaluasi Saya' : 'Evaluasi Kinerja' }}
-                              </a>
-                         </nav>
-                    </li>
-
-                    @if ($isKaryawan)
-                         <li class="nav-item">
-                              <a href="{{ $employeeScheduleUrl }}"
-                                   class="nav-link {{ $routeActive('work-schedules.*', 'employee-schedules.*') ? 'active' : '' }}">
-                                   <i data-feather="calendar"></i>
-                                   <span>Jadwal Kerja</span>
-                              </a>
-                         </li>
-                    @endif
-               @endif
-
-               {{-- ======================================================== --}}
-               {{-- KEPUASAN PELANGGAN --}}
-               {{-- ======================================================== --}}
-               @if ($canAccessSatisfaction)
-                    <li class="nav-label">
-                         <span class="content-label">Pelayanan Pelanggan</span>
-                    </li>
-
-                    <li class="nav-item {{ $satisfactionOpen ? 'show' : '' }}">
-                         <a href="javascript:void(0);"
-                              class="nav-link with-sub {{ $satisfactionOpen ? 'active' : '' }}"
-                              aria-expanded="{{ $satisfactionOpen ? 'true' : 'false' }}"
-                              aria-controls="submenu-kepuasan">
-                              <i data-feather="smile"></i>
-                              <span>Kepuasan Pelanggan</span>
-                         </a>
-
-                         <nav id="submenu-kepuasan" class="nav nav-sub" aria-label="Menu Kepuasan Pelanggan">
-                              @if ($isSuperAdmin || $isPelayanan)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('surveys.*') ? 'active' : '' }}">
-                                        Data Survei
-                                   </a>
-
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('survey-questions.*') ? 'active' : '' }}">
-                                        Pertanyaan Survei
-                                   </a>
-                              @endif
-
-                              <a href="#"
-                                   class="nav-sub-link {{ $routeActive('survey-responses.*') ? 'active' : '' }}">
-                                   Hasil Survei
-                              </a>
-                         </nav>
-                    </li>
-               @endif
-
-               {{-- ======================================================== --}}
-               {{-- KELUHAN PELANGGAN --}}
-               {{-- ======================================================== --}}
-               @if ($canAccessComplaints)
-                    <li class="nav-item {{ $complaintsOpen ? 'show' : '' }}">
-                         <a href="javascript:void(0);"
-                              class="nav-link with-sub {{ $complaintsOpen ? 'active' : '' }}"
-                              aria-expanded="{{ $complaintsOpen ? 'true' : 'false' }}"
-                              aria-controls="submenu-keluhan">
-                              <i data-feather="message-square"></i>
-                              <span>Keluhan Pelanggan</span>
-                         </a>
-
-                         <nav id="submenu-keluhan" class="nav nav-sub" aria-label="Menu Keluhan Pelanggan">
-                              <a href="#"
-                                   class="nav-sub-link {{ $routeActive('complaints.index', 'complaints.show', 'complaints.edit') ? 'active' : '' }}">
-                                   Daftar Keluhan
-                              </a>
-
-                              @if ($isSuperAdmin || $isPelayanan)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('complaints.create') ? 'active' : '' }}">
-                                        Tambah Keluhan
-                                   </a>
-
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('complaint-categories.*') ? 'active' : '' }}">
-                                        Kategori Keluhan
+                                   <a href="{{ $menuUrl('performanceDetailsMine') }}"
+                                        class="nav-sub-link {{ $routeActive('performance-details.mine', 'performance-evaluations.mine', 'performance-evaluations.my') ? 'active' : '' }}">
+                                        Detail Penilaian Saya
                                    </a>
                               @endif
                          </nav>
@@ -698,6 +909,8 @@
 
                {{-- ======================================================== --}}
                {{-- LAPORAN --}}
+               {{-- dashboard_snapshots diposisikan sebagai arsip laporan, --}}
+               {{-- bukan transaksi operasional. --}}
                {{-- ======================================================== --}}
                @if ($canAccessReports)
                     <li class="nav-label">
@@ -713,35 +926,42 @@
 
                          <nav id="submenu-laporan" class="nav nav-sub" aria-label="Menu Laporan">
                               @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isKeuangan || $isAuditor)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('reports.transactions') ? 'active' : '' }}">
-                                        Laporan Transaksi
+                                   <a href="{{ $menuUrl('reportServices') }}"
+                                        class="nav-sub-link {{ $routeActive('reports.services', 'reports.transactions') ? 'active' : '' }}">
+                                        Laporan Layanan
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isHrd || $isManager || $isAuditor)
-                                   <a href="#"
+                                   <a href="{{ $menuUrl('reportPerformance') }}"
                                         class="nav-sub-link {{ $routeActive('reports.performance') ? 'active' : '' }}">
                                         Laporan Kinerja
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isAuditor)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('reports.satisfaction') ? 'active' : '' }}">
-                                        Laporan Kepuasan
+                                   <a href="{{ $menuUrl('reportCustomers') }}"
+                                        class="nav-sub-link {{ $routeActive('reports.customers', 'reports.satisfaction') ? 'active' : '' }}">
+                                        Laporan Feedback
                                    </a>
 
-                                   <a href="#"
+                                   <a href="{{ $menuUrl('reportComplaints') }}"
                                         class="nav-sub-link {{ $routeActive('reports.complaints') ? 'active' : '' }}">
                                         Laporan Keluhan
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isDirektur || $isKeuangan || $isAuditor)
-                                   <a href="#"
+                                   <a href="{{ $menuUrl('reportFinance') }}"
                                         class="nav-sub-link {{ $routeActive('reports.finance') ? 'active' : '' }}">
                                         Laporan Keuangan
+                                   </a>
+                              @endif
+
+                              @if ($isSuperAdmin || $isDirektur || $isAuditor)
+                                   <a href="{{ $menuUrl('dashboardSnapshots') }}"
+                                        class="nav-sub-link {{ $routeActive('dashboard-snapshots.*', 'super-admin.dashboard-snapshots.*') ? 'active' : '' }}">
+                                        Snapshot Dashboard
                                    </a>
                               @endif
                          </nav>
@@ -749,7 +969,9 @@
                @endif
 
                {{-- ======================================================== --}}
-               {{-- PENGATURAN SISTEM --}}
+               {{-- SISTEM --}}
+               {{-- Tabel: users, roles, permissions, audit_logs, --}}
+               {{-- system_settings. Tabel pivot/framework tidak dijadikan menu. --}}
                {{-- ======================================================== --}}
                @if ($canAccessSystem)
                     <li class="nav-label">
@@ -765,31 +987,34 @@
 
                          <nav id="submenu-sistem" class="nav nav-sub" aria-label="Menu Pengaturan Sistem">
                               @if ($isSuperAdmin || $isHrd)
-                                   <a href="{{ $routeUrl('super-admin.users.index') }}"
-                                        class="nav-sub-link {{ $routeActive('super-admin.users.*') ? 'active' : '' }}">
-
+                                   <a href="{{ $menuUrl('users') }}"
+                                        class="nav-sub-link {{ $routeActive('super-admin.users.*', 'users.*') ? 'active' : '' }}">
                                         Pengguna
-
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin)
-                                   <a href="{{ $routeUrl('super-admin.roles.index') }}"
-                                        class="nav-sub-link {{ $routeActive('super-admin.roles.*', 'permissions.*') ? 'active' : '' }}">
-                                        Role dan Hak Akses
+                                   <a href="{{ $menuUrl('roles') }}"
+                                        class="nav-sub-link {{ $routeActive('super-admin.roles.*', 'roles.*') ? 'active' : '' }}">
+                                        Role
+                                   </a>
+
+                                   <a href="{{ $menuUrl('permissions') }}"
+                                        class="nav-sub-link {{ $routeActive('permissions.*', 'super-admin.permissions.*') ? 'active' : '' }}">
+                                        Hak Akses
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin || $isAuditor)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('activity-logs.*') ? 'active' : '' }}">
-                                        Log Aktivitas
+                                   <a href="{{ $menuUrl('auditLogs') }}"
+                                        class="nav-sub-link {{ $routeActive('audit-logs.*', 'super-admin.audit-logs.*') ? 'active' : '' }}">
+                                        Log Audit
                                    </a>
                               @endif
 
                               @if ($isSuperAdmin)
-                                   <a href="#"
-                                        class="nav-sub-link {{ $routeActive('settings.*') ? 'active' : '' }}">
+                                   <a href="{{ $menuUrl('systemSettings') }}"
+                                        class="nav-sub-link {{ $routeActive('system-settings.*', 'settings.*') ? 'active' : '' }}">
                                         Pengaturan Aplikasi
                                    </a>
                               @endif
@@ -799,13 +1024,22 @@
 
                {{-- ======================================================== --}}
                {{-- AKUN --}}
+               {{-- Tabel: notifications serta profil pengguna --}}
                {{-- ======================================================== --}}
                <li class="nav-label">
                     <span class="content-label">Akun</span>
                </li>
 
                <li class="nav-item">
-                    <a href="{{ $routeUrl(['profile.index', 'profile.edit']) }}"
+                    <a href="{{ $menuUrl('notifications') }}"
+                         class="nav-link {{ $routeActive('notifications.*') ? 'active' : '' }}">
+                         <i data-feather="bell"></i>
+                         <span>Notifikasi</span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
+                    <a href="{{ $menuUrl('profile') }}"
                          class="nav-link {{ $routeActive('profile.*') ? 'active' : '' }}">
                          <i data-feather="user"></i>
                          <span>Profil Saya</span>
@@ -885,8 +1119,6 @@
 
                sidebar.dataset.submenuInitialized = 'true';
 
-               // Capture phase dipakai agar tidak bentrok/dijalankan dua kali
-               // dengan handler submenu bawaan template.
                sidebar.addEventListener('click', function(event) {
                     const toggle = event.target.closest('.nav-link.with-sub');
 
@@ -905,7 +1137,6 @@
 
                     const willOpen = !currentItem.classList.contains('show');
 
-                    // Accordion: tutup submenu lain sebelum membuka submenu aktif.
                     sidebar.querySelectorAll('.nav-item.show').forEach(function(openedItem) {
                          if (openedItem !== currentItem) {
                               openedItem.classList.remove('show');

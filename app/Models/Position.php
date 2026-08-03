@@ -278,4 +278,8 @@ class Position extends Model
             default => "Level {$this->level}",
         };
     }
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
 }

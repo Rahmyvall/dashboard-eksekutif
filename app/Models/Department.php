@@ -338,4 +338,13 @@ class Department extends Model
             'id'
         )->where('status', Position::STATUS_ACTIVE);
     }
+
+    /**
+     * Relasi karyawan pada departemen.
+     */
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
+    }
+
 }

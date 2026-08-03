@@ -5,12 +5,15 @@ declare (strict_types = 1);
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\PerformancePeriodController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WorkScheduleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Models\PerformancePeriod;
 use App\Models\WorkSchedule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -26,6 +29,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::model('workSchedule', WorkSchedule::class);
+Route::model('performancePeriod', PerformancePeriod::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -470,6 +474,137 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
 
     /*
     |--------------------------------------------------------------------------
+    | Shared Employee / Employment Management
+    |--------------------------------------------------------------------------
+    |
+    | Index dan Show:
+    | - super_admin
+    | - direktur_utama
+    | - hrd_manager
+    | - manager_departemen
+    | - admin_operasional
+    | - auditor_internal
+    |
+    | Create, Store, Edit, Update, dan Delete:
+    | - super_admin
+    | - hrd_manager
+    |
+    | Recycle Bin:
+    | - super_admin
+    |
+    */
+
+    Route::prefix('super-admin')
+        ->name('super-admin.')
+        ->group(function (): void {
+            Route::prefix('employees')
+                ->name('employees.')
+                ->controller(EmployeeController::class)
+                ->group(function (): void {
+                    /*
+                    |----------------------------------------------------------
+                    | Create dan Store — Super Admin + HRD Manager
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware('role:super_admin|hrd_manager')
+                        ->group(function (): void {
+                            Route::get('/create', 'create')
+                                ->name('create');
+
+                            Route::post('/', 'store')
+                                ->name('store');
+                        });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Recycle Bin — khusus Super Admin
+                    |----------------------------------------------------------
+                    |
+                    | Route statis wajib berada sebelum /{employee}.
+                    |
+                    */
+
+                    Route::middleware('role:super_admin')
+                        ->group(function (): void {
+                            Route::get('/trash', 'trash')
+                                ->name('trash');
+
+                            Route::post('/{id}/restore', 'restore')
+                                ->whereNumber('id')
+                                ->name('restore');
+
+                            Route::delete('/{id}/force-delete', 'forceDelete')
+                                ->whereNumber('id')
+                                ->name('force-delete');
+                        });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Edit, Update, dan Soft Delete
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware('role:super_admin|hrd_manager')
+                        ->group(function (): void {
+                            Route::get('/{employee}/edit', 'edit')
+                                ->whereNumber('employee')
+                                ->name('edit');
+
+                            Route::match(
+                                ['put', 'patch'],
+                                '/{employee}',
+                                'update'
+                            )
+                                ->whereNumber('employee')
+                                ->name('update');
+
+                            Route::delete('/{employee}', 'destroy')
+                                ->whereNumber('employee')
+                                ->name('destroy');
+                        });
+
+                    /*
+                    |----------------------------------------------------------
+                    | Index dan Show
+                    |----------------------------------------------------------
+                    */
+
+                    Route::middleware(
+                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|admin_operasional|auditor_internal'
+                    )->group(function (): void {
+                        Route::get('/', 'index')
+                            ->name('index');
+
+                        /*
+                         * Diletakkan paling bawah agar create dan trash tidak
+                         * dianggap sebagai parameter {employee}.
+                         */
+                        Route::get('/{employee}', 'show')
+                            ->whereNumber('employee')
+                            ->name('show');
+                    });
+                });
+
+            /*
+            |--------------------------------------------------------------
+            | Alias Employment untuk menu sidebar
+            |--------------------------------------------------------------
+            |
+            | Menyediakan nama route super-admin.employment.index agar menu
+            | "Employment" pada sidebar dapat membuka daftar karyawan yang sama.
+            |
+            */
+
+            Route::get('/employment', [EmployeeController::class, 'index'])
+                ->middleware(
+                    'role:super_admin|direktur_utama|hrd_manager|manager_departemen|admin_operasional|auditor_internal'
+                )
+                ->name('employment.index');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
     | Shared Customer Management
     |--------------------------------------------------------------------------
     |
@@ -689,6 +824,24 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
                         ->whereNumber('workSchedule')
                         ->name('show');
                 });
+
+            /*
+            |--------------------------------------------------------------------------
+            | Performance Period Management
+            |--------------------------------------------------------------------------
+            |
+            | CRUD tabel performance_periods. Parameter route dibuat
+            | {performancePeriod} agar sesuai dengan parameter controller.
+            |
+            */
+
+            Route::resource(
+                'performance-periods',
+                PerformancePeriodController::class
+            )
+                ->parameters([
+                    'performance-periods' => 'performancePeriod',
+                ]);
 
             /*
         |--------------------------------------------------------------------------

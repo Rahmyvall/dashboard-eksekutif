@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Department;
+use App\Models\PerformancePeriod;
 use App\Models\Position;
 use App\Models\Role;
 use App\Models\User;
@@ -262,6 +263,86 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | PERIODE PENILAIAN KINERJA
+        |--------------------------------------------------------------------------
+        |
+        | Data diambil langsung dari tabel performance_periods:
+        | id, name, start_date, end_date, period_type, status,
+        | created_at, dan updated_at.
+        |
+        */
+
+        $today = now()->toDateString();
+
+        $performancePeriodSummary = [
+            'total'     => PerformancePeriod::query()->count(),
+
+            'draft'     => PerformancePeriod::query()
+                ->where('status', 'draft')
+                ->count(),
+
+            'active'    => PerformancePeriod::query()
+                ->where('status', 'active')
+                ->count(),
+
+            'completed' => PerformancePeriod::query()
+                ->where('status', 'completed')
+                ->count(),
+
+            'inactive'  => PerformancePeriod::query()
+                ->where('status', 'inactive')
+                ->count(),
+
+            /*
+             * Periode aktif yang tanggalnya mencakup hari ini.
+             */
+            'current'   => PerformancePeriod::query()
+                ->where('status', 'active')
+                ->whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today)
+                ->count(),
+
+            /*
+             * Periode yang belum dimulai.
+             */
+            'upcoming'  => PerformancePeriod::query()
+                ->whereDate('start_date', '>', $today)
+                ->count(),
+
+            /*
+             * Periode yang tanggal akhirnya telah lewat.
+             */
+            'expired'   => PerformancePeriod::query()
+                ->whereDate('end_date', '<', $today)
+                ->count(),
+        ];
+
+        $currentPerformancePeriod = PerformancePeriod::query()
+            ->where('status', 'active')
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->orderBy('end_date')
+            ->orderBy('start_date')
+            ->first();
+
+        $performancePeriods = PerformancePeriod::query()
+            ->select([
+                'id',
+                'name',
+                'start_date',
+                'end_date',
+                'period_type',
+                'status',
+                'created_at',
+                'updated_at',
+            ])
+            ->orderByDesc('start_date')
+            ->orderByDesc('updated_at')
+            ->limit(5)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
         | PENGGUNA BERDASARKAN ROLE
         |--------------------------------------------------------------------------
         */
@@ -330,6 +411,98 @@ class DashboardController extends Controller
             ? route('super-admin.users.index')
             : '#';
 
+        $performancePeriodsUrl = Route::has(
+            'super-admin.performance-periods.index'
+        )
+            ? route('super-admin.performance-periods.index')
+            : '#';
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRIORITAS MONITORING
+        |--------------------------------------------------------------------------
+        |
+        | Variabel ini digunakan oleh bagian "Prioritas Monitoring"
+        | pada dashboard super admin.
+        |
+        */
+
+        $monitoringPriorities = [];
+
+        if ($pendingBranch > 0) {
+            $monitoringPriorities[] = [
+                'icon'         => 'git-branch',
+                'title'        => 'Persetujuan cabang tertunda',
+                'description'  => sprintf(
+                    '%d cabang masih menunggu proses persetujuan.',
+                    $pendingBranch
+                ),
+                'status'       => 'Perlu tindakan',
+                'status_class' => 'warning',
+                'action'       => 'Periksa data cabang',
+                'url'          => Route::has('super-admin.branches.index')
+                    ? route('super-admin.branches.index')
+                    : '#',
+            ];
+        }
+
+        if (! $currentPerformancePeriod) {
+            $monitoringPriorities[] = [
+                'icon'         => 'calendar',
+                'title'        => 'Belum ada periode penilaian aktif',
+                'description'  => 'Tidak ditemukan periode berstatus aktif yang mencakup tanggal hari ini.',
+                'status'       => 'Prioritas',
+                'status_class' => 'danger',
+                'action'       => 'Kelola periode penilaian',
+                'url'          => $performancePeriodsUrl,
+            ];
+        } else {
+            $daysRemaining = now()
+                ->startOfDay()
+                ->diffInDays(
+                    $currentPerformancePeriod->end_date,
+                    false
+                );
+
+            if ($daysRemaining >= 0 && $daysRemaining <= 7) {
+                $monitoringPriorities[] = [
+                    'icon'         => 'clock',
+                    'title'        => 'Periode penilaian segera berakhir',
+                    'description'  => sprintf(
+                        'Periode "%s" berakhir dalam %d hari.',
+                        $currentPerformancePeriod->name,
+                        $daysRemaining
+                    ),
+                    'status'       => 'Segera',
+                    'status_class' => 'warning',
+                    'action'       => 'Lihat periode',
+                    'url'          => Route::has(
+                        'super-admin.performance-periods.show'
+                    )
+                        ? route(
+                        'super-admin.performance-periods.show',
+                        $currentPerformancePeriod
+                    )
+                        : $performancePeriodsUrl,
+                ];
+            }
+        }
+
+        if ($performancePeriodSummary['draft'] > 0) {
+            $monitoringPriorities[] = [
+                'icon'         => 'edit-3',
+                'title'        => 'Periode masih berstatus draft',
+                'description'  => sprintf(
+                    '%d periode penilaian belum diaktifkan.',
+                    $performancePeriodSummary['draft']
+                ),
+                'status'       => 'Draft',
+                'status_class' => 'info',
+                'action'       => 'Tinjau periode',
+                'url'          => $performancePeriodsUrl,
+            ];
+        }
+
         /*
         |--------------------------------------------------------------------------
         | SIMPAN ROLE AKTIF
@@ -349,32 +522,38 @@ class DashboardController extends Controller
         );
 
         return view($dashboard, [
-            'user'                 => $user,
-            'activeRole'           => $activeRole,
-            'activeRoleName'       => $roleName,
-            'activeRoleId'         => $activeRole->id,
+            'user'                     => $user,
+            'activeRole'               => $activeRole,
+            'activeRoleName'           => $roleName,
+            'activeRoleId'             => $activeRole->id,
 
-            'activeRoleLabel'      => Str::of($roleName)
+            'activeRoleLabel'          => Str::of($roleName)
                 ->replace('_', ' ')
                 ->title()
                 ->toString(),
 
-            'branchSummary'        => $branchSummary,
-            'branchAngle'          => $branchAngle,
+            'branchSummary'            => $branchSummary,
+            'branchAngle'              => $branchAngle,
 
             /*
              * Data dashboard berdasarkan database.
              */
-            'departmentSummary'    => $departmentSummary,
-            'positions'            => $positions,
-            'roleSummary'          => $roleSummary,
-            'totalActivePositions' => $totalActivePositions,
+            'departmentSummary'        => $departmentSummary,
+            'positions'                => $positions,
+            'roleSummary'              => $roleSummary,
+            'totalActivePositions'     => $totalActivePositions,
+
+            'performancePeriods'       => $performancePeriods,
+            'performancePeriodSummary' => $performancePeriodSummary,
+            'currentPerformancePeriod' => $currentPerformancePeriod,
+            'monitoringPriorities'     => $monitoringPriorities,
 
             /*
              * URL tombol pada dashboard.
              */
-            'positionsUrl'         => $positionsUrl,
-            'usersUrl'             => $usersUrl,
+            'positionsUrl'             => $positionsUrl,
+            'usersUrl'                 => $usersUrl,
+            'performancePeriodsUrl'    => $performancePeriodsUrl,
         ]);
     }
 
