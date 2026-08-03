@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DepartmentApiController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\WorkScheduleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -782,5 +783,139 @@ Route::prefix('customers')
             ]
         )
             ->whereNumber('customer')
+            ->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Work Schedule API
+|--------------------------------------------------------------------------
+|
+| Database work_schedules:
+| - id
+| - name
+| - start_time
+| - end_time
+| - late_tolerance_minutes
+| - working_hours
+| - status
+| - created_at
+| - updated_at
+|
+*/
+
+Route::prefix('work-schedules')
+    ->name('api.work-schedules.')
+    ->group(function (): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ALL WORK SCHEDULE
+        |--------------------------------------------------------------------------
+        |
+        | Query parameter:
+        | - search
+        | - status: active | inactive
+        | - sort_by
+        | - sort_direction: asc | desc
+        | - per_page
+        |
+        */
+
+        Route::get(
+            '/',
+            [
+                WorkScheduleController::class,
+                'index',
+            ]
+        )->name('index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE WORK SCHEDULE
+        |--------------------------------------------------------------------------
+        |
+        | Body JSON:
+        | {
+        |     "name": "Jadwal Kerja Reguler",
+        |     "start_time": "08:00",
+        |     "end_time": "17:00",
+        |     "late_tolerance_minutes": 15,
+        |     "working_hours": 8,
+        |     "status": "active"
+        | }
+        |
+        */
+
+        Route::post(
+            '/',
+            [
+                WorkScheduleController::class,
+                'store',
+            ]
+        )->name('store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DETAIL WORK SCHEDULE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/{workSchedule}',
+            [
+                WorkScheduleController::class,
+                'show',
+            ]
+        )
+            ->whereNumber('workSchedule')
+            ->name('show');
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE WORK SCHEDULE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::put(
+            '/{workSchedule}',
+            [
+                WorkScheduleController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('workSchedule')
+            ->name('update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PARTIAL UPDATE WORK SCHEDULE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{workSchedule}',
+            [
+                WorkScheduleController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('workSchedule')
+            ->name('patch');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE WORK SCHEDULE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::delete(
+            '/{workSchedule}',
+            [
+                WorkScheduleController::class,
+                'destroy',
+            ]
+        )
+            ->whereNumber('workSchedule')
             ->name('destroy');
     });
