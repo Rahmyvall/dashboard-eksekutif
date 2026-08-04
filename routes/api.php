@@ -4,6 +4,7 @@ declare (strict_types = 1);
 
 use App\Http\Controllers\Api\BranchApiController;
 use App\Http\Controllers\Api\DepartmentApiController;
+use App\Http\Controllers\Api\PerformancePeriodController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
 use App\Http\Controllers\Api\V1\CustomerController;
@@ -917,5 +918,189 @@ Route::prefix('work-schedules')
             ]
         )
             ->whereNumber('workSchedule')
+            ->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Performance Period API
+|--------------------------------------------------------------------------
+|
+| Database performance_periods:
+| - id
+| - name
+| - start_date
+| - end_date
+| - period_type
+| - status
+| - created_at
+| - updated_at
+|
+| Base URL:
+| http://127.0.0.1:8000/api/v1/performance-periods
+|
+*/
+
+Route::prefix('v1/performance-periods')
+    ->name('api.v1.performance-periods.')
+    ->group(function (): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | CURRENT PERFORMANCE PERIOD
+        |--------------------------------------------------------------------------
+        |
+        | Mengambil periode berstatus active yang mencakup tanggal hari ini.
+        | Route statis harus berada sebelum /{performancePeriod}.
+        |
+        */
+
+        Route::get(
+            '/current',
+            [
+                PerformancePeriodController::class,
+                'current',
+            ]
+        )->name('current');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PERFORMANCE PERIOD SUMMARY
+        |--------------------------------------------------------------------------
+        |
+        | Menghasilkan ringkasan:
+        | - total
+        | - draft
+        | - active
+        | - completed
+        | - inactive
+        | - current
+        | - upcoming
+        | - expired
+        |
+        */
+
+        Route::get(
+            '/summary',
+            [
+                PerformancePeriodController::class,
+                'summary',
+            ]
+        )->name('summary');
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ALL PERFORMANCE PERIOD
+        |--------------------------------------------------------------------------
+        |
+        | Query parameter:
+        | - search
+        | - status
+        | - period_type
+        | - date
+        | - sort
+        | - direction
+        | - per_page
+        |
+        */
+
+        Route::get(
+            '/',
+            [
+                PerformancePeriodController::class,
+                'index',
+            ]
+        )->name('index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE PERFORMANCE PERIOD
+        |--------------------------------------------------------------------------
+        |
+        | Body JSON:
+        | {
+        |     "name": "Penilaian Tahunan 2026",
+        |     "start_date": "2026-01-01",
+        |     "end_date": "2026-12-31",
+        |     "period_type": "annual",
+        |     "status": "active"
+        | }
+        |
+        */
+
+        Route::post(
+            '/',
+            [
+                PerformancePeriodController::class,
+                'store',
+            ]
+        )->name('store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DETAIL PERFORMANCE PERIOD
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/{performancePeriod}',
+            [
+                PerformancePeriodController::class,
+                'show',
+            ]
+        )
+            ->whereNumber('performancePeriod')
+            ->name('show');
+
+        /*
+        |--------------------------------------------------------------------------
+        | FULL UPDATE PERFORMANCE PERIOD
+        |--------------------------------------------------------------------------
+        */
+
+        Route::put(
+            '/{performancePeriod}',
+            [
+                PerformancePeriodController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('performancePeriod')
+            ->name('update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PARTIAL UPDATE PERFORMANCE PERIOD
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{performancePeriod}',
+            [
+                PerformancePeriodController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('performancePeriod')
+            ->name('patch');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE PERFORMANCE PERIOD
+        |--------------------------------------------------------------------------
+        |
+        | Tabel performance_periods tidak memiliki deleted_at,
+        | sehingga data dihapus permanen.
+        |
+        */
+
+        Route::delete(
+            '/{performancePeriod}',
+            [
+                PerformancePeriodController::class,
+                'destroy',
+            ]
+        )
+            ->whereNumber('performancePeriod')
             ->name('destroy');
     });
