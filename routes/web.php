@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\PerformanceIndicatorController;
 use App\Http\Controllers\Admin\PerformancePeriodController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WorkScheduleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Models\PerformanceIndicator;
 use App\Models\PerformancePeriod;
 use App\Models\WorkSchedule;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +32,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::model('workSchedule', WorkSchedule::class);
 Route::model('performancePeriod', PerformancePeriod::class);
+Route::model('performanceIndicator', PerformanceIndicator::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -842,6 +845,125 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
                 ->parameters([
                     'performance-periods' => 'performancePeriod',
                 ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Performance Indicator Management
+            |--------------------------------------------------------------------------
+            |
+            | CRUD tabel performance_indicators dengan parameter route
+            | {performanceIndicator}. Route statis dan aksi khusus diletakkan
+            | sebelum route dinamis agar tidak tertangkap sebagai ID model.
+            |
+            */
+
+            Route::prefix('performance-indicators')
+                ->name('performance-indicators.')
+                ->controller(PerformanceIndicatorController::class)
+                ->group(function (): void {
+                    /*
+                    |----------------------------------------------------------
+                    | Daftar, tambah, dan simpan
+                    |----------------------------------------------------------
+                    */
+                    Route::get('/', 'index')
+                        ->name('index');
+
+                    Route::get('/create', 'create')
+                        ->name('create');
+
+                    Route::post('/', 'store')
+                        ->name('store');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Export Excel dan PDF
+                    |----------------------------------------------------------
+                    |
+                    | Ekspor mengikuti filter halaman daftar dan harus berada
+                    | sebelum route dinamis /{performanceIndicator}.
+                    |
+                    */
+                    Route::get('/export/excel', 'exportExcel')
+                        ->name('export-excel');
+
+                    Route::get('/export/pdf', 'exportPdf')
+                        ->name('export-pdf');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Aksi massal
+                    |----------------------------------------------------------
+                    |
+                    | Route ini harus berada sebelum /{performanceIndicator}.
+                    |
+                    */
+                    Route::patch('/bulk-status', 'bulkStatus')
+                        ->name('bulk-status');
+
+                    Route::delete('/bulk-destroy', 'bulkDestroy')
+                        ->name('bulk-destroy');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Aksi status per indikator
+                    |----------------------------------------------------------
+                    */
+                    Route::patch(
+                        '/{performanceIndicator}/toggle-status',
+                        'toggleStatus'
+                    )
+                        ->whereNumber('performanceIndicator')
+                        ->name('toggle-status');
+
+                    Route::patch(
+                        '/{performanceIndicator}/activate',
+                        'activate'
+                    )
+                        ->whereNumber('performanceIndicator')
+                        ->name('activate');
+
+                    Route::patch(
+                        '/{performanceIndicator}/deactivate',
+                        'deactivate'
+                    )
+                        ->whereNumber('performanceIndicator')
+                        ->name('deactivate');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Edit, update, dan hapus
+                    |----------------------------------------------------------
+                    */
+                    Route::get('/{performanceIndicator}/edit', 'edit')
+                        ->whereNumber('performanceIndicator')
+                        ->name('edit');
+
+                    Route::match(
+                        ['put', 'patch'],
+                        '/{performanceIndicator}',
+                        'update'
+                    )
+                        ->whereNumber('performanceIndicator')
+                        ->name('update');
+
+                    Route::delete('/{performanceIndicator}', 'destroy')
+                        ->whereNumber('performanceIndicator')
+                        ->name('destroy');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Detail indikator
+                    |----------------------------------------------------------
+                    |
+                    | Diletakkan paling bawah agar create dan bulk action tidak
+                    | dianggap sebagai parameter {performanceIndicator}.
+                    |
+                    */
+                    Route::get('/{performanceIndicator}', 'show')
+                        ->whereNumber('performanceIndicator')
+                        ->name('show');
+                });
 
             /*
         |--------------------------------------------------------------------------

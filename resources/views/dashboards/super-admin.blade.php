@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Super Admin | Monitoring Kinerja & Kepuasan Pelanggan')
+@section('title', 'Dashboard Super Admin | Monitoring Kinerja Organisasi')
 
 @section('content')
      @php
@@ -39,13 +39,13 @@
                   ? route('super-admin.performance-periods.index')
                   : '#');
 
-          $reportsUrl = Route::has('super-admin.reports.index') ? route('super-admin.reports.index') : '#';
+          $performanceIndicatorsUrl =
+              $performanceIndicatorsUrl ??
+              (Route::has('super-admin.performance-indicators.index')
+                  ? route('super-admin.performance-indicators.index')
+                  : '#');
 
           $settingsUrl = Route::has('super-admin.settings.index') ? route('super-admin.settings.index') : '#';
-
-          $surveysUrl = Route::has('super-admin.surveys.index') ? route('super-admin.surveys.index') : '#';
-
-          $complaintsUrl = Route::has('super-admin.complaints.index') ? route('super-admin.complaints.index') : '#';
 
           /*
           |--------------------------------------------------------------------------
@@ -55,6 +55,9 @@
 
           $positions = collect($positions ?? []);
           $performancePeriods = collect($performancePeriods ?? []);
+          $performanceIndicators = collect($performanceIndicators ?? []);
+          $indicatorWeightChart = collect($indicatorWeightChart ?? []);
+          $indicatorDirectionSummary = collect($indicatorDirectionSummary ?? []);
           $departmentSummary = collect($departmentSummary ?? []);
           $roleSummary = collect($roleSummary ?? []);
           $monitoringPriorities = collect($monitoringPriorities ?? []);
@@ -86,7 +89,7 @@
               (float) ($branchSummary['inactive_percentage'] ??
                   round(((int) $branchSummary['inactive'] / $branchTotal) * 100, 1));
 
-          $branchAngle = min(360, max(0, $branchSummary['active_percentage'] * 3.6));
+          $branchAngle = min(360, max(0, (float) ($branchAngle ?? $branchSummary['active_percentage'] * 3.6)));
 
           $performancePeriodSummary = array_merge(
               [
@@ -103,6 +106,66 @@
           );
 
           $currentPerformancePeriod = $currentPerformancePeriod ?? null;
+
+          $indicatorSummary = array_merge(
+              [
+                  'total' => $performanceIndicators->count(),
+                  'active' => $performanceIndicators->where('status', 'active')->count(),
+                  'inactive' => $performanceIndicators->where('status', 'inactive')->count(),
+                  'active_percentage' => 0.0,
+                  'total_active_weight' => 0.0,
+                  'average_weight' => 0.0,
+              ],
+              $indicatorSummary ?? [],
+          );
+
+          $indicatorTotal = max(0, (int) $indicatorSummary['total']);
+          $indicatorActive = max(0, (int) $indicatorSummary['active']);
+          $indicatorInactive = max(0, (int) $indicatorSummary['inactive']);
+
+          $indicatorSummary['active_percentage'] =
+              $indicatorTotal > 0
+                  ? min(
+                      100,
+                      max(
+                          0,
+                          (float) ($indicatorSummary['active_percentage'] ?:
+                          round(($indicatorActive / $indicatorTotal) * 100, 1)),
+                      ),
+                  )
+                  : 0.0;
+
+          $indicatorSummary['total_active_weight'] = max(0, (float) $indicatorSummary['total_active_weight']);
+
+          $indicatorSummary['average_weight'] = max(0, (float) $indicatorSummary['average_weight']);
+
+          if ($indicatorDirectionSummary->isEmpty()) {
+              $indicatorDirectionSummary = collect([
+                  [
+                      'key' => 'increase',
+                      'total' => 0,
+                      'percentage' => 0.0,
+                      'class' => 'success',
+                  ],
+                  [
+                      'key' => 'decrease',
+                      'total' => 0,
+                      'percentage' => 0.0,
+                      'class' => 'warning',
+                  ],
+                  [
+                      'key' => 'exact',
+                      'total' => 0,
+                      'percentage' => 0.0,
+                      'class' => 'info',
+                  ],
+              ]);
+          }
+
+          $indicatorAngle = min(360, max(0, (float) ($indicatorAngle ?? $indicatorSummary['active_percentage'] * 3.6)));
+
+          $indicatorChartColumnCount = max(1, $indicatorWeightChart->count());
+
           $totalActivePositions = (int) ($totalActivePositions ?? $positions->where('status', 'active')->count());
 
           $totalUsers = (int) $roleSummary->sum(fn($role) => (int) data_get($role, 'users', 0));
@@ -148,6 +211,18 @@
                   'theme' => 'orange',
               ],
               [
+                  'label' => 'Indikator Kinerja Aktif',
+                  'value' => $indicatorActive,
+                  'suffix' => '',
+                  'icon' => 'target',
+                  'description' =>
+                      number_format($indicatorSummary['total_active_weight'], 2, ',', '.') .
+                      '% total bobot indikator aktif',
+                  'trend' => number_format($indicatorSummary['active_percentage'], 1, ',', '.') . '% aktif',
+                  'trend_type' => 'up',
+                  'theme' => 'purple',
+              ],
+              [
                   'label' => 'Pengguna Terdaftar',
                   'value' => $totalUsers,
                   'suffix' => '',
@@ -161,47 +236,9 @@
 
           /*
           |--------------------------------------------------------------------------
-          | DATA VISUALISASI TAMBAHAN
+          | DATA PENDUKUNG DASHBOARD
           |--------------------------------------------------------------------------
           */
-
-          $performanceTrend = $performanceTrend ?? [
-              ['month' => 'Jan', 'full_month' => 'Januari', 'target' => 90, 'actual' => 82, 'satisfaction' => 84],
-              ['month' => 'Feb', 'full_month' => 'Februari', 'target' => 90, 'actual' => 84, 'satisfaction' => 85],
-              ['month' => 'Mar', 'full_month' => 'Maret', 'target' => 91, 'actual' => 86, 'satisfaction' => 87],
-              ['month' => 'Apr', 'full_month' => 'April', 'target' => 91, 'actual' => 85, 'satisfaction' => 86],
-              ['month' => 'Mei', 'full_month' => 'Mei', 'target' => 92, 'actual' => 88, 'satisfaction' => 89],
-              ['month' => 'Jun', 'full_month' => 'Juni', 'target' => 92, 'actual' => 89, 'satisfaction' => 90],
-          ];
-
-          $actualAverage =
-              count($performanceTrend) > 0
-                  ? round(array_sum(array_column($performanceTrend, 'actual')) / count($performanceTrend), 1)
-                  : 0;
-
-          $targetAverage =
-              count($performanceTrend) > 0
-                  ? round(array_sum(array_column($performanceTrend, 'target')) / count($performanceTrend), 1)
-                  : 0;
-
-          $channelPerformance = $channelPerformance ?? [
-              [
-                  'name' => 'WhatsApp',
-                  'responses' => 438,
-                  'score' => 91,
-                  'icon' => 'message-circle',
-                  'class' => 'success',
-              ],
-              ['name' => 'Email', 'responses' => 286, 'score' => 87, 'icon' => 'mail', 'class' => 'info'],
-              ['name' => 'Telepon', 'responses' => 245, 'score' => 85, 'icon' => 'phone', 'class' => 'warning'],
-              [
-                  'name' => 'Layanan Langsung',
-                  'responses' => 315,
-                  'score' => 90,
-                  'icon' => 'map-pin',
-                  'class' => 'primary',
-              ],
-          ];
 
           if ($roleSummary->isEmpty()) {
               $roleSummary = collect([
@@ -211,31 +248,43 @@
               ]);
           }
 
-          $systemActivities = $systemActivities ?? [
-              [
-                  'title' => 'Dashboard siap digunakan',
-                  'description' => 'Data utama berhasil dimuat dari sistem.',
-                  'time' => 'Baru saja',
-                  'icon' => 'check-circle',
-                  'theme' => 'green',
+          $systemActivities = collect(
+              $systemActivities ?? [
+                  [
+                      'title' => 'Dashboard siap digunakan',
+                      'description' => 'Data utama berhasil dimuat dari database.',
+                      'time' => 'Baru saja',
+                      'icon' => 'check-circle',
+                      'theme' => 'green',
+                  ],
+                  [
+                      'title' => 'Indikator kinerja terhubung',
+                      'description' =>
+                          number_format($indicatorTotal, 0, ',', '.') .
+                          ' indikator tersedia pada modul performance indicators.',
+                      'time' => 'Hari ini',
+                      'icon' => 'target',
+                      'theme' => 'purple',
+                  ],
+                  [
+                      'title' => 'Periode penilaian terhubung',
+                      'description' =>
+                          number_format((int) $performancePeriodSummary['total'], 0, ',', '.') .
+                          ' periode penilaian tersedia.',
+                      'time' => 'Hari ini',
+                      'icon' => 'calendar',
+                      'theme' => 'blue',
+                  ],
               ],
-              [
-                  'title' => 'Periode penilaian terhubung',
-                  'description' => 'Modul performance periods tersedia pada dashboard.',
-                  'time' => 'Hari ini',
-                  'icon' => 'calendar',
-                  'theme' => 'blue',
-              ],
-              [
-                  'title' => 'Monitoring pengguna aktif',
-                  'description' => 'Informasi role dan pengguna telah diperbarui.',
-                  'time' => 'Hari ini',
-                  'icon' => 'users',
-                  'theme' => 'purple',
-              ],
-          ];
+          );
 
           $quickActions = [
+              [
+                  'label' => 'Indikator Kinerja',
+                  'description' => 'Kode, bobot, arah target, dan status',
+                  'icon' => 'target',
+                  'url' => $performanceIndicatorsUrl,
+              ],
               [
                   'label' => 'Periode Penilaian',
                   'description' => 'Atur periode dan status',
@@ -253,12 +302,6 @@
                   'description' => 'Struktur dan level jabatan',
                   'icon' => 'briefcase',
                   'url' => $positionsUrl,
-              ],
-              [
-                  'label' => 'Pengaturan Sistem',
-                  'description' => 'Konfigurasi aplikasi',
-                  'icon' => 'settings',
-                  'url' => $settingsUrl,
               ],
           ];
      @endphp
@@ -622,7 +665,7 @@
           /* KPI */
           .sad-stat-grid {
                display: grid;
-               grid-template-columns: repeat(4, minmax(0, 1fr));
+               grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
                gap: 20px;
                margin-bottom: 24px;
           }
@@ -686,6 +729,14 @@
                background: rgba(37, 99, 235, 0.07);
           }
 
+          .sad-stat-card.theme-purple::before {
+               background: linear-gradient(180deg, #7c3aed, #a78bfa);
+          }
+
+          .sad-stat-card.theme-purple::after {
+               background: rgba(124, 58, 237, 0.07);
+          }
+
           .sad-stat-card:hover {
                transform: translateY(-4px);
                border-color: rgba(79, 70, 229, 0.24);
@@ -727,6 +778,11 @@
           .theme-blue .sad-stat-icon {
                color: #1d4ed8;
                background: rgba(37, 99, 235, 0.11);
+          }
+
+          .theme-purple .sad-stat-icon {
+               color: #6d28d9;
+               background: rgba(124, 58, 237, 0.11);
           }
 
           .sad-stat-trend {
@@ -954,7 +1010,10 @@
                display: grid;
                grid-template-columns: 34px minmax(0, 1fr);
                gap: 11px;
-               height: 330px;
+               height: 342px;
+               overflow-x: auto;
+               overflow-y: hidden;
+               scrollbar-width: thin;
           }
 
           .sad-chart-y-axis {
@@ -970,6 +1029,7 @@
 
           .sad-chart-content {
                position: relative;
+               min-width: max(680px, calc(var(--sad-chart-columns, 1) * 82px));
                height: 330px;
           }
 
@@ -990,7 +1050,8 @@
                position: absolute;
                inset: 0;
                display: grid;
-               grid-template-columns: repeat(6, minmax(38px, 1fr));
+               grid-template-columns:
+                    repeat(var(--sad-chart-columns, 1), minmax(54px, 1fr));
                gap: 14px;
           }
 
@@ -1585,6 +1646,31 @@
                font-size: 10px;
           }
 
+          .sad-empty-state strong {
+               display: block;
+               margin-bottom: 6px;
+               color: var(--sad-heading);
+               font-size: 13px;
+          }
+
+          .sad-empty-state span {
+               display: block;
+               color: var(--sad-muted);
+               font-size: 10px;
+               line-height: 1.55;
+          }
+
+          .sad-health-label {
+               display: inline-flex;
+               align-items: center;
+               gap: 7px;
+          }
+
+          .sad-health-label svg {
+               width: 14px;
+               height: 14px;
+          }
+
           /* LISTS */
           .sad-channel-list,
           .sad-role-list,
@@ -1955,10 +2041,10 @@
           }
 
           /* ======================================================================
-                  HERO BRIGHTNESS PATCH
-                  Mempertahankan struktur template yang ada dan hanya memperbaiki
-                  warna hero agar lebih terang, kontras, dan mudah dibaca.
-                  ====================================================================== */
+                            HERO BRIGHTNESS PATCH
+                            Mempertahankan struktur template yang ada dan hanya memperbaiki
+                            warna hero agar lebih terang, kontras, dan mudah dibaca.
+                            ====================================================================== */
           .sad-dashboard .sad-hero {
                border-color: rgba(255, 255, 255, 0.34);
                background:
@@ -2101,9 +2187,9 @@
                          Kelola Pengguna
                     </a>
 
-                    <a href="{{ $performancePeriodsUrl }}" class="sad-button sad-button-secondary">
-                         <i data-feather="calendar"></i>
-                         Periode Penilaian
+                    <a href="{{ $performanceIndicatorsUrl }}" class="sad-button sad-button-secondary">
+                         <i data-feather="target"></i>
+                         Indikator Kinerja
                     </a>
                </div>
           </section>
@@ -2214,7 +2300,22 @@
                @endforeach
           </section>
 
+          @php
+               $directionLabels = [
+                   'increase' => 'Semakin besar semakin baik',
+                   'decrease' => 'Semakin kecil semakin baik',
+                   'exact' => 'Harus sesuai target',
+               ];
+
+               $directionIcons = [
+                   'increase' => 'trending-up',
+                   'decrease' => 'trending-down',
+                   'exact' => 'crosshair',
+               ];
+          @endphp
+
           <section class="sad-main-grid">
+               {{-- Grafik bobot indikator --}}
                <article class="sad-card">
                     <header class="sad-card-header">
                          <div class="sad-card-heading">
@@ -2223,311 +2324,222 @@
                               </span>
 
                               <div>
-                                   <h2 class="sad-card-title">Tren Capaian Kinerja</h2>
+                                   <h2 class="sad-card-title">Distribusi Bobot Indikator Kinerja</h2>
                                    <p class="sad-card-subtitle">
-                                        Perbandingan target dan realisasi KPI organisasi selama enam bulan terakhir.
+                                        Perbandingan bobot indikator aktif berdasarkan data
+                                        <code>performance_indicators</code>.
                                    </p>
                               </div>
                          </div>
 
-                         <button type="button" class="sad-card-action">
-                              6 bulan terakhir
-                              <i data-feather="chevron-down"></i>
-                         </button>
+                         <span class="sad-card-action">
+                              Top {{ $indicatorWeightChart->count() }} indikator aktif
+                         </span>
                     </header>
 
                     <div class="sad-chart-body">
                          <div class="sad-chart-summary">
                               <div class="sad-chart-legends">
                                    <span class="sad-chart-legend">
-                                        <span class="sad-chart-legend-dot target"></span>
-                                        Target KPI
-                                   </span>
-
-                                   <span class="sad-chart-legend">
                                         <span class="sad-chart-legend-dot actual"></span>
-                                        Realisasi KPI
+                                        Bobot indikator
                                    </span>
                               </div>
 
                               <div class="sad-chart-rate">
-                                   <strong>{{ number_format($actualAverage, 1, ',', '.') }}%</strong>
-                                   <span>Rata-rata realisasi dari target
-                                        {{ number_format($targetAverage, 1, ',', '.') }}%</span>
+                                   <strong>
+                                        {{ number_format($indicatorSummary['average_weight'], 2, ',', '.') }}%
+                                   </strong>
+                                   <span>
+                                        Rata-rata bobot dari
+                                        {{ number_format($indicatorSummary['active'], 0, ',', '.') }}
+                                        indikator aktif
+                                   </span>
                               </div>
                          </div>
 
-                         <div class="sad-chart-area">
-                              <div class="sad-chart-y-axis">
-                                   <span>100</span>
-                                   <span>75</span>
-                                   <span>50</span>
-                                   <span>25</span>
-                                   <span>0</span>
-                              </div>
-
-                              <div class="sad-chart-content">
-                                   <div class="sad-chart-lines">
-                                        <span class="sad-chart-line"></span>
-                                        <span class="sad-chart-line"></span>
-                                        <span class="sad-chart-line"></span>
-                                        <span class="sad-chart-line"></span>
-                                        <span class="sad-chart-line"></span>
+                         @if ($indicatorWeightChart->isNotEmpty())
+                              <div class="sad-chart-area">
+                                   <div class="sad-chart-y-axis">
+                                        <span>100</span>
+                                        <span>75</span>
+                                        <span>50</span>
+                                        <span>25</span>
+                                        <span>0</span>
                                    </div>
 
-                                   <div class="sad-chart-columns">
-                                        @foreach ($performanceTrend as $performance)
-                                             <div class="sad-chart-column">
-                                                  <div class="sad-chart-bars">
-                                                       <div class="sad-chart-bar target"
-                                                            style="height: {{ $performance['target'] }}%;">
-                                                            <span class="sad-chart-tooltip">Target
-                                                                 {{ $performance['target'] }}%</span>
+                                   <div class="sad-chart-content"
+                                        style="--sad-chart-columns: {{ $indicatorChartColumnCount }};">
+                                        <div class="sad-chart-lines">
+                                             <span class="sad-chart-line"></span>
+                                             <span class="sad-chart-line"></span>
+                                             <span class="sad-chart-line"></span>
+                                             <span class="sad-chart-line"></span>
+                                             <span class="sad-chart-line"></span>
+                                        </div>
+
+                                        <div class="sad-chart-columns">
+                                             @foreach ($indicatorWeightChart as $indicator)
+                                                  @php
+                                                       $safeWeight = max(0, min(100, (float) $indicator['weight']));
+                                                  @endphp
+
+                                                  <div class="sad-chart-column">
+                                                       <div class="sad-chart-bars">
+                                                            <div class="sad-chart-bar actual"
+                                                                 style="height: {{ $safeWeight }}%;" role="img"
+                                                                 aria-label="Bobot {{ $indicator['code'] }} sebesar {{ $safeWeight }} persen">
+                                                                 <span class="sad-chart-tooltip">
+                                                                      {{ $indicator['code'] }}<br>
+                                                                      {{ $indicator['name'] }}<br>
+                                                                      Bobot:
+                                                                      {{ number_format($safeWeight, 2, ',', '.') }}%
+                                                                 </span>
+                                                            </div>
                                                        </div>
 
-                                                       <div class="sad-chart-bar actual"
-                                                            style="height: {{ $performance['actual'] }}%;">
-                                                            <span class="sad-chart-tooltip">
-                                                                 Realisasi {{ $performance['actual'] }}%<br>
-                                                                 Kepuasan {{ $performance['satisfaction'] }}%
-                                                            </span>
-                                                       </div>
+                                                       <span class="sad-chart-month"
+                                                            title="{{ $indicator['code'] }} — {{ $indicator['name'] }}">
+                                                            {{ $indicator['code'] }}
+                                                       </span>
                                                   </div>
-
-                                                  <span class="sad-chart-month" title="{{ $performance['full_month'] }}">
-                                                       {{ $performance['month'] }}
-                                                  </span>
-                                             </div>
-                                        @endforeach
+                                             @endforeach
+                                        </div>
                                    </div>
                               </div>
-                         </div>
+                         @else
+                              <div class="sad-empty-state is-visible">
+                                   <i data-feather="bar-chart"></i>
+                                   <strong>Belum ada indikator aktif</strong>
+                                   <span>
+                                        Tambahkan atau aktifkan indikator agar grafik bobot dapat ditampilkan.
+                                   </span>
+                              </div>
+                         @endif
                     </div>
                </article>
 
+               {{-- Ringkasan status dan arah target --}}
                <article class="sad-card">
-
                     <header class="sad-card-header">
                          <div class="sad-card-heading">
-
                               <span class="sad-card-heading-icon">
-                                   <i data-feather="git-branch"></i>
+                                   <i data-feather="target"></i>
                               </span>
 
                               <div>
-                                   <h2 class="sad-card-title">
-                                        Data Cabang
-                                   </h2>
-
+                                   <h2 class="sad-card-title">Ringkasan Performance Indicator</h2>
                                    <p class="sad-card-subtitle">
-                                        Ringkasan status dan perkembangan cabang perusahaan.
+                                        Komposisi status, total bobot aktif, dan arah target indikator.
                                    </p>
                               </div>
-
                          </div>
                     </header>
 
-
                     <div class="sad-satisfaction-body">
-
-
-                         {{-- SUMMARY CABANG --}}
+                         {{-- Ring status aktif --}}
                          <div class="sad-score-summary">
-
                               <div class="sad-score-ring"
                                    style="
-                 background:
-                 conic-gradient(
-                    var(--sad-success) 0deg {{ $branchAngle }}deg,
-                    var(--sad-border) {{ $branchAngle }}deg 360deg
-                 );">
-
+                        background:
+                        conic-gradient(
+                            var(--sad-success) 0deg {{ $indicatorAngle }}deg,
+                            var(--sad-border) {{ $indicatorAngle }}deg 360deg
+                        );
+                    ">
                                    <span class="sad-score-ring-value">
-                                        {{ $branchSummary['active_percentage'] }}%
+                                        {{ number_format($indicatorSummary['active_percentage'], 1, ',', '.') }}%
                                    </span>
-
                               </div>
 
-
                               <div class="sad-score-details">
-
                                    <h3>
-                                        {{ $branchSummary['active'] }}
-                                        Cabang Aktif
+                                        {{ number_format($indicatorSummary['active'], 0, ',', '.') }}
+                                        Indikator Aktif
                                    </h3>
-
 
                                    <p>
                                         Dari total
-                                        {{ number_format($branchSummary['total'], 0, ',', '.') }}
-                                        cabang yang terdaftar.
+                                        {{ number_format($indicatorSummary['total'], 0, ',', '.') }}
+                                        indikator yang terdaftar.
                                    </p>
 
-
                                    <span class="sad-score-status">
-                                        Operasional berjalan
+                                        Total bobot aktif:
+                                        {{ number_format($indicatorSummary['total_active_weight'], 2, ',', '.') }}%
                                    </span>
-
                               </div>
-
                          </div>
 
-
-
-                         {{-- STATUS CABANG --}}
+                         {{-- Ringkasan status --}}
                          <div class="sad-sentiment-grid">
-
-
                               <div class="sad-sentiment-card">
-
                                    <strong>
-                                        {{ $branchSummary['active'] }}
+                                        {{ number_format($indicatorSummary['total'], 0, ',', '.') }}
                                    </strong>
-
-                                   <span>
-                                        Aktif
-                                   </span>
-
+                                   <span>Total</span>
                               </div>
 
-
-
                               <div class="sad-sentiment-card">
-
                                    <strong>
-                                        {{ $branchSummary['pending'] }}
+                                        {{ number_format($indicatorSummary['active'], 0, ',', '.') }}
                                    </strong>
-
-                                   <span>
-                                        Approval
-                                   </span>
-
+                                   <span>Aktif</span>
                               </div>
 
-
-
                               <div class="sad-sentiment-card">
-
                                    <strong>
-                                        {{ $branchSummary['inactive'] }}
+                                        {{ number_format($indicatorSummary['inactive'], 0, ',', '.') }}
                                    </strong>
-
-                                   <span>
-                                        Nonaktif
-                                   </span>
-
+                                   <span>Nonaktif</span>
                               </div>
-
-
                          </div>
 
-
-
-
-                         {{-- DETAIL --}}
+                         {{-- Distribusi arah target --}}
                          <div class="sad-health-list">
+                              @forelse ($indicatorDirectionSummary as $direction)
+                                   @php
+                                        $directionKey = (string) data_get($direction, 'key', '');
+                                        $directionTotal = max(0, (int) data_get($direction, 'total', 0));
+                                        $directionPercentage = min(
+                                            100,
+                                            max(0, (float) data_get($direction, 'percentage', 0)),
+                                        );
+                                        $directionClass = in_array(
+                                            data_get($direction, 'class'),
+                                            ['success', 'warning', 'info', 'danger', 'primary'],
+                                            true,
+                                        )
+                                            ? data_get($direction, 'class')
+                                            : 'info';
+                                   @endphp
 
+                                   <div>
+                                        <div class="sad-health-top">
+                                             <span class="sad-health-label">
+                                                  <i data-feather="{{ $directionIcons[$directionKey] ?? 'circle' }}"></i>
+                                                  {{ $directionLabels[$directionKey] ?? \Illuminate\Support\Str::of($directionKey)->replace('_', ' ')->title() }}
+                                             </span>
 
-                              <div>
-
-                                   <div class="sad-health-top">
-
-                                        <span class="sad-health-label">
-                                             Cabang Aktif
-                                        </span>
-
-
-                                        <span class="sad-health-value">
-                                             {{ $branchSummary['active_percentage'] }}%
-                                        </span>
-
-                                   </div>
-
-
-                                   <div class="sad-progress">
-
-                                        <div class="sad-progress-bar success"
-                                             style="
-                         width:
-                         {{ $branchSummary['active_percentage'] }}%;
-                         ">
+                                             <span class="sad-health-value">
+                                                  {{ number_format($directionPercentage, 1, ',', '.') }}%
+                                                  ({{ $directionTotal }})
+                                             </span>
                                         </div>
 
-                                   </div>
-
-
-                              </div>
-
-
-
-
-                              <div>
-
-                                   <div class="sad-health-top">
-
-                                        <span class="sad-health-label">
-                                             Menunggu Approval
-                                        </span>
-
-
-                                        <span class="sad-health-value">
-                                             {{ $branchSummary['pending_percentage'] }}%
-                                        </span>
-
-                                   </div>
-
-
-                                   <div class="sad-progress">
-
-                                        <div class="sad-progress-bar warning"
-                                             style="
-                         width:
-                         {{ $branchSummary['pending_percentage'] }}%;
-                         ">
+                                        <div class="sad-progress">
+                                             <div class="sad-progress-bar {{ $directionClass }}"
+                                                  style="width: {{ $directionPercentage }}%;"></div>
                                         </div>
-
                                    </div>
-
-                              </div>
-
-
-
-
-                              <div>
-
-                                   <div class="sad-health-top">
-
-                                        <span class="sad-health-label">
-                                             Cabang Nonaktif
-                                        </span>
-
-
-                                        <span class="sad-health-value">
-                                             {{ $branchSummary['inactive_percentage'] }}%
-                                        </span>
-
+                              @empty
+                                   <div class="sad-empty-state is-visible">
+                                        <i data-feather="target"></i>
+                                        <strong>Distribusi arah target belum tersedia</strong>
                                    </div>
-
-
-                                   <div class="sad-progress">
-
-                                        <div class="sad-progress-bar danger"
-                                             style="
-                         width:
-                         {{ $branchSummary['inactive_percentage'] }}%;
-                         ">
-                                        </div>
-
-                                   </div>
-
-                              </div>
-
-
+                              @endforelse
                          </div>
-
-
                     </div>
-
                </article>
           </section>
 
@@ -2826,50 +2838,85 @@
                     <header class="sad-card-header">
                          <div class="sad-card-heading">
                               <span class="sad-card-heading-icon">
-                                   <i data-feather="radio"></i>
+                                   <i data-feather="target"></i>
                               </span>
 
                               <div>
-                                   <h2 class="sad-card-title">Kepuasan Berdasarkan Kanal</h2>
+                                   <h2 class="sad-card-title">Indikator Kinerja Terbaru</h2>
                                    <p class="sad-card-subtitle">
-                                        Perbandingan skor pengalaman pelanggan pada setiap kanal layanan.
+                                        Ringkasan master indikator berdasarkan kode, bobot,
+                                        arah target, dan status.
                                    </p>
                               </div>
                          </div>
 
-                         <a href="{{ $surveysUrl }}" class="sad-card-action">
-                              Kelola survei
+                         <a href="{{ $performanceIndicatorsUrl }}" class="sad-card-action">
+                              Kelola indikator
                               <i data-feather="arrow-up-right"></i>
                          </a>
                     </header>
 
                     <div class="sad-channel-list">
-                         @foreach ($channelPerformance as $channel)
+                         @forelse ($performanceIndicators as $indicator)
+                              @php
+                                   $indicatorStatus = strtolower((string) data_get($indicator, 'status', 'inactive'));
+
+                                   $indicatorDirection = strtolower(
+                                       (string) data_get($indicator, 'target_direction', 'exact'),
+                                   );
+
+                                   $indicatorWeight = min(100, max(0, (float) data_get($indicator, 'weight', 0)));
+
+                                   $indicatorProgressClass = match ($indicatorDirection) {
+                                       'increase' => 'success',
+                                       'decrease' => 'warning',
+                                       'exact' => 'info',
+                                       default => 'primary',
+                                   };
+                              @endphp
+
                               <div class="sad-channel-item">
                                    <div class="sad-channel-header">
                                         <div class="sad-channel-identity">
                                              <span class="sad-channel-icon">
-                                                  <i data-feather="{{ $channel['icon'] }}"></i>
+                                                  <i
+                                                       data-feather="{{ $directionIcons[$indicatorDirection] ?? 'target' }}"></i>
                                              </span>
 
                                              <span>
-                                                  <strong class="sad-channel-name">{{ $channel['name'] }}</strong>
+                                                  <strong class="sad-channel-name">
+                                                       {{ data_get($indicator, 'code', '-') }}
+                                                       —
+                                                       {{ data_get($indicator, 'name', 'Tanpa nama') }}
+                                                  </strong>
+
                                                   <span class="sad-channel-meta">
-                                                       {{ number_format($channel['responses'], 0, ',', '.') }} respons
-                                                       pelanggan
+                                                       {{ $directionLabels[$indicatorDirection] ?? \Illuminate\Support\Str::of($indicatorDirection)->replace('_', ' ')->title() }}
+                                                       ·
+                                                       {{ data_get($indicator, 'unit', '-') }}
+                                                       ·
+                                                       {{ $indicatorStatus === 'active' ? 'Aktif' : 'Tidak aktif' }}
                                                   </span>
                                              </span>
                                         </div>
 
-                                        <span class="sad-channel-score">{{ $channel['score'] }}%</span>
+                                        <span class="sad-channel-score">
+                                             {{ number_format($indicatorWeight, 2, ',', '.') }}%
+                                        </span>
                                    </div>
 
                                    <div class="sad-progress">
-                                        <div class="sad-progress-bar {{ $channel['class'] }}"
-                                             style="width: {{ $channel['score'] }}%;"></div>
+                                        <div class="sad-progress-bar {{ $indicatorProgressClass }}"
+                                             style="width: {{ $indicatorWeight }}%;"></div>
                                    </div>
                               </div>
-                         @endforeach
+                         @empty
+                              <div class="sad-empty-state is-visible">
+                                   <i data-feather="target"></i>
+                                   <h4>Indikator belum tersedia</h4>
+                                   <p>Tambahkan indikator kinerja agar data tampil di dashboard.</p>
+                              </div>
+                         @endforelse
                     </div>
                </article>
 

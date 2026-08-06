@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Department;
+use App\Models\PerformanceIndicator;
 use App\Models\PerformancePeriod;
 use App\Models\Position;
 use App\Models\Role;
@@ -13,6 +14,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
@@ -343,6 +345,170 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | MASTER INDIKATOR KINERJA
+        |--------------------------------------------------------------------------
+        |
+        | Data diambil dari tabel performance_indicators:
+        | id, code, name, description, unit, weight, target_direction,
+        | status, created_at, dan updated_at.
+        |
+        */
+
+        $indicatorAggregate = PerformanceIndicator::query()
+            ->selectRaw(
+                '
+                COUNT(*) AS total,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS active,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS inactive,
+                COALESCE(
+                    SUM(CASE WHEN status = ? THEN weight ELSE 0 END),
+                    0
+                ) AS total_active_weight,
+                COALESCE(
+                    AVG(CASE WHEN status = ? THEN weight END),
+                    0
+                ) AS average_weight
+                ',
+                [
+                    PerformanceIndicator::STATUS_ACTIVE,
+                    PerformanceIndicator::STATUS_INACTIVE,
+                    PerformanceIndicator::STATUS_ACTIVE,
+                    PerformanceIndicator::STATUS_ACTIVE,
+                ]
+            )
+            ->first();
+
+        $indicatorTotal    = (int) ($indicatorAggregate?->total ?? 0);
+        $indicatorActive   = (int) ($indicatorAggregate?->active ?? 0);
+        $indicatorInactive = (int) ($indicatorAggregate?->inactive ?? 0);
+
+        $indicatorActivePercentage = $indicatorTotal > 0
+            ? round(
+            ($indicatorActive / $indicatorTotal) * 100,
+            1
+        )
+            : 0.0;
+
+        $indicatorSummary = [
+            'total'               => $indicatorTotal,
+            'active'              => $indicatorActive,
+            'inactive'            => $indicatorInactive,
+            'active_percentage'   => $indicatorActivePercentage,
+            'total_active_weight' => round(
+                (float) ($indicatorAggregate?->total_active_weight ?? 0),
+                2
+            ),
+            'average_weight'      => round(
+                (float) ($indicatorAggregate?->average_weight ?? 0),
+                2
+            ),
+        ];
+
+        /*
+         * Menampilkan maksimal sepuluh indikator aktif dengan bobot terbesar
+         * agar grafik tetap terbaca pada layar desktop maupun perangkat kecil.
+         */
+        $indicatorWeightChart = PerformanceIndicator::query()
+            ->active()
+            ->orderByDesc('weight')
+            ->orderBy('code')
+            ->limit(10)
+            ->get([
+                'id',
+                'code',
+                'name',
+                'weight',
+            ])
+            ->map(
+                static function (
+                    PerformanceIndicator $indicator
+                ): array {
+                    return [
+                        'id'     => $indicator->id,
+                        'code'   => $indicator->code,
+                        'name'   => $indicator->name,
+                        'weight' => round(
+                            (float) $indicator->weight,
+                            2
+                        ),
+                    ];
+                }
+            )
+            ->values();
+
+        /*
+         * Distribusi arah target untuk grafik ringkasan.
+         */
+        $directionCounts = PerformanceIndicator::query()
+            ->select([
+                'target_direction',
+                DB::raw('COUNT(*) AS total'),
+            ])
+            ->groupBy('target_direction')
+            ->pluck('total', 'target_direction');
+
+        $directionClasses = [
+            PerformanceIndicator::DIRECTION_INCREASE => 'success',
+            PerformanceIndicator::DIRECTION_DECREASE => 'warning',
+            PerformanceIndicator::DIRECTION_EXACT    => 'info',
+        ];
+
+        $indicatorDirectionSummary = collect(
+            PerformanceIndicator::validTargetDirections()
+        )
+            ->map(
+                static function (
+                    string $direction
+                ) use (
+                    $directionCounts,
+                    $directionClasses,
+                    $indicatorTotal
+                ): array {
+                    $total = (int) ($directionCounts[$direction] ?? 0);
+
+                    return [
+                        'key'        => $direction,
+                        'total'      => $total,
+                        'percentage' => $indicatorTotal > 0
+                            ? round(
+                            ($total / $indicatorTotal) * 100,
+                            1
+                        )
+                            : 0.0,
+                        'class'      => $directionClasses[$direction] ?? 'info',
+                    ];
+                }
+            )
+            ->values();
+
+        $indicatorAngle = round(
+            ($indicatorActivePercentage / 100) * 360,
+            2
+        );
+
+        /*
+         * Data indikator terbaru untuk kebutuhan tabel atau ringkasan
+         * tambahan pada dashboard.
+         */
+        $performanceIndicators = PerformanceIndicator::query()
+            ->select([
+                'id',
+                'code',
+                'name',
+                'description',
+                'unit',
+                'weight',
+                'target_direction',
+                'status',
+                'created_at',
+                'updated_at',
+            ])
+            ->latest('updated_at')
+            ->limit(5)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
         | PENGGUNA BERDASARKAN ROLE
         |--------------------------------------------------------------------------
         */
@@ -415,6 +581,12 @@ class DashboardController extends Controller
             'super-admin.performance-periods.index'
         )
             ? route('super-admin.performance-periods.index')
+            : '#';
+
+        $performanceIndicatorsUrl = Route::has(
+            'super-admin.performance-indicators.index'
+        )
+            ? route('super-admin.performance-indicators.index')
             : '#';
 
         /*
@@ -503,6 +675,31 @@ class DashboardController extends Controller
             ];
         }
 
+        if ($indicatorSummary['total'] === 0) {
+            $monitoringPriorities[] = [
+                'icon'         => 'target',
+                'title'        => 'Master indikator belum tersedia',
+                'description'  => 'Belum ada data pada tabel performance_indicators.',
+                'status'       => 'Prioritas',
+                'status_class' => 'danger',
+                'action'       => 'Tambah indikator kinerja',
+                'url'          => $performanceIndicatorsUrl,
+            ];
+        } elseif ($indicatorSummary['active'] === 0) {
+            $monitoringPriorities[] = [
+                'icon'         => 'alert-circle',
+                'title'        => 'Tidak ada indikator aktif',
+                'description'  => sprintf(
+                    '%d indikator terdaftar, tetapi semuanya berstatus tidak aktif.',
+                    $indicatorSummary['total']
+                ),
+                'status'       => 'Perlu tindakan',
+                'status_class' => 'warning',
+                'action'       => 'Kelola indikator',
+                'url'          => $performanceIndicatorsUrl,
+            ];
+        }
+
         /*
         |--------------------------------------------------------------------------
         | SIMPAN ROLE AKTIF
@@ -522,38 +719,49 @@ class DashboardController extends Controller
         );
 
         return view($dashboard, [
-            'user'                     => $user,
-            'activeRole'               => $activeRole,
-            'activeRoleName'           => $roleName,
-            'activeRoleId'             => $activeRole->id,
+            'user'                      => $user,
+            'activeRole'                => $activeRole,
+            'activeRoleName'            => $roleName,
+            'activeRoleId'              => $activeRole->id,
 
-            'activeRoleLabel'          => Str::of($roleName)
+            'activeRoleLabel'           => Str::of($roleName)
                 ->replace('_', ' ')
                 ->title()
                 ->toString(),
 
-            'branchSummary'            => $branchSummary,
-            'branchAngle'              => $branchAngle,
+            'branchSummary'             => $branchSummary,
+            'branchAngle'               => $branchAngle,
 
             /*
              * Data dashboard berdasarkan database.
              */
-            'departmentSummary'        => $departmentSummary,
-            'positions'                => $positions,
-            'roleSummary'              => $roleSummary,
-            'totalActivePositions'     => $totalActivePositions,
+            'departmentSummary'         => $departmentSummary,
+            'positions'                 => $positions,
+            'roleSummary'               => $roleSummary,
+            'totalActivePositions'      => $totalActivePositions,
 
-            'performancePeriods'       => $performancePeriods,
-            'performancePeriodSummary' => $performancePeriodSummary,
-            'currentPerformancePeriod' => $currentPerformancePeriod,
-            'monitoringPriorities'     => $monitoringPriorities,
+            'performancePeriods'        => $performancePeriods,
+            'performancePeriodSummary'  => $performancePeriodSummary,
+            'currentPerformancePeriod'  => $currentPerformancePeriod,
+
+            /*
+             * Data master indikator dan grafik dashboard.
+             */
+            'performanceIndicators'     => $performanceIndicators,
+            'indicatorWeightChart'      => $indicatorWeightChart,
+            'indicatorSummary'          => $indicatorSummary,
+            'indicatorDirectionSummary' => $indicatorDirectionSummary,
+            'indicatorAngle'            => $indicatorAngle,
+
+            'monitoringPriorities'      => $monitoringPriorities,
 
             /*
              * URL tombol pada dashboard.
              */
-            'positionsUrl'             => $positionsUrl,
-            'usersUrl'                 => $usersUrl,
-            'performancePeriodsUrl'    => $performancePeriodsUrl,
+            'positionsUrl'              => $positionsUrl,
+            'usersUrl'                  => $usersUrl,
+            'performancePeriodsUrl'     => $performancePeriodsUrl,
+            'performanceIndicatorsUrl'  => $performanceIndicatorsUrl,
         ]);
     }
 

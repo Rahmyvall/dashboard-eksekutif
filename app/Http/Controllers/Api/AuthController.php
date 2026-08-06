@@ -10,13 +10,14 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    /**
+     * Login User
+     */
     public function login(LoginRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
-        $user = User::query()
-            ->where('email', $validated['email'])
-            ->first();
+        $user = User::where('email', $validated['email'])->first();
 
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return response()->json([
@@ -26,8 +27,16 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $tokenName      = $validated['device_name'] ?? 'department-api';
-        $plainTextToken = $user->createToken($tokenName, ['*'])->plainTextToken;
+        // Optional:
+        // hapus token lama user agar tidak menumpuk
+        $user->tokens()->delete();
+
+        $deviceName = $validated['device_name'] ?? 'api-client';
+
+        $token = $user->createToken(
+            $deviceName,
+            ['*']
+        )->plainTextToken;
 
         return response()->json([
             'success' => true,
@@ -38,15 +47,26 @@ class AuthController extends Controller
                     'name'  => $user->name,
                     'email' => $user->email,
                 ],
-                'token'      => $plainTextToken,
+                'token'      => $token,
                 'token_type' => 'Bearer',
             ],
-        ]);
+        ], 200);
     }
 
+    /**
+     * Get Current User
+     */
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak terautentikasi.',
+                'data'    => null,
+            ], 401);
+        }
 
         return response()->json([
             'success' => true,
@@ -56,17 +76,24 @@ class AuthController extends Controller
                 'name'  => $user->name,
                 'email' => $user->email,
             ],
-        ]);
+        ], 200);
     }
 
+    /**
+     * Logout User
+     */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()?->currentAccessToken()?->delete();
+        $user = $request->user();
+
+        if ($user && $user->currentAccessToken()) {
+            $user->currentAccessToken()->delete();
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Logout berhasil.',
             'data'    => null,
-        ]);
+        ], 200);
     }
 }

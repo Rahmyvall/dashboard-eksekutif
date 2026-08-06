@@ -4,6 +4,7 @@ declare (strict_types = 1);
 
 use App\Http\Controllers\Api\BranchApiController;
 use App\Http\Controllers\Api\DepartmentApiController;
+use App\Http\Controllers\Api\PerformanceIndicatorController;
 use App\Http\Controllers\Api\PerformancePeriodController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
@@ -1102,5 +1103,124 @@ Route::prefix('v1/performance-periods')
             ]
         )
             ->whereNumber('performancePeriod')
+            ->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Performance Indicator API
+|--------------------------------------------------------------------------
+|
+| Database performance_indicators:
+| - id
+| - code
+| - name
+| - description
+| - unit
+| - weight
+| - target_direction
+| - status
+| - created_at
+| - updated_at
+|
+| Base URL:
+| http://127.0.0.1:8000/api/v1/performance-indicators
+|
+*/
+
+Route::prefix('v1/performance-indicators')
+    ->name('api.v1.performance-indicators.')
+    ->group(function (): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ALL PERFORMANCE INDICATOR
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/',
+            [
+                PerformanceIndicatorController::class,
+                'index',
+            ]
+        )->name('index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE PERFORMANCE INDICATOR
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post(
+            '/',
+            [
+                PerformanceIndicatorController::class,
+                'store',
+            ]
+        )->name('store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DETAIL PERFORMANCE INDICATOR
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/{indicator}',
+            [
+                PerformanceIndicatorController::class,
+                'show',
+            ]
+        )
+            ->whereNumber('indicator')
+            ->name('show');
+
+        /*
+        |--------------------------------------------------------------------------
+        | FULL UPDATE PERFORMANCE INDICATOR
+        |--------------------------------------------------------------------------
+        */
+
+        Route::put(
+            '/{indicator}',
+            [
+                PerformanceIndicatorController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('indicator')
+            ->name('update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PARTIAL UPDATE PERFORMANCE INDICATOR
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{indicator}',
+            [
+                PerformanceIndicatorController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('indicator')
+            ->name('patch');
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE PERFORMANCE INDICATOR
+        |--------------------------------------------------------------------------
+        */
+
+        Route::delete(
+            '/{indicator}',
+            [
+                PerformanceIndicatorController::class,
+                'destroy',
+            ]
+        )
+            ->whereNumber('indicator')
             ->name('destroy');
     });
