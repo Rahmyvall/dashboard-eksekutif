@@ -28,24 +28,39 @@
           |--------------------------------------------------------------------------
           */
 
-          $usersUrl = $usersUrl ?? (Route::has('super-admin.users.index') ? route('super-admin.users.index') : '#');
+          $usersUrl =
+              $usersUrl ??
+              (\Illuminate\Support\Facades\Route::has('super-admin.users.index')
+                  ? route('super-admin.users.index')
+                  : '#');
 
           $positionsUrl =
-              $positionsUrl ?? (Route::has('super-admin.positions.index') ? route('super-admin.positions.index') : '#');
+              $positionsUrl ??
+              (\Illuminate\Support\Facades\Route::has('super-admin.positions.index')
+                  ? route('super-admin.positions.index')
+                  : '#');
 
           $performancePeriodsUrl =
               $performancePeriodsUrl ??
-              (Route::has('super-admin.performance-periods.index')
+              (\Illuminate\Support\Facades\Route::has('super-admin.performance-periods.index')
                   ? route('super-admin.performance-periods.index')
                   : '#');
 
           $performanceIndicatorsUrl =
               $performanceIndicatorsUrl ??
-              (Route::has('super-admin.performance-indicators.index')
+              (\Illuminate\Support\Facades\Route::has('super-admin.performance-indicators.index')
                   ? route('super-admin.performance-indicators.index')
                   : '#');
 
-          $settingsUrl = Route::has('super-admin.settings.index') ? route('super-admin.settings.index') : '#';
+          $serviceCategoriesUrl =
+              $serviceCategoriesUrl ??
+              (\Illuminate\Support\Facades\Route::has('super-admin.service-categories.index')
+                  ? route('super-admin.service-categories.index')
+                  : '#');
+
+          $settingsUrl = \Illuminate\Support\Facades\Route::has('super-admin.settings.index')
+              ? route('super-admin.settings.index')
+              : '#';
 
           /*
           |--------------------------------------------------------------------------
@@ -56,6 +71,7 @@
           $positions = collect($positions ?? []);
           $performancePeriods = collect($performancePeriods ?? []);
           $performanceIndicators = collect($performanceIndicators ?? []);
+          $serviceCategories = collect($serviceCategories ?? []);
           $indicatorWeightChart = collect($indicatorWeightChart ?? []);
           $indicatorDirectionSummary = collect($indicatorDirectionSummary ?? []);
           $departmentSummary = collect($departmentSummary ?? []);
@@ -164,6 +180,38 @@
 
           $indicatorAngle = min(360, max(0, (float) ($indicatorAngle ?? $indicatorSummary['active_percentage'] * 3.6)));
 
+          /*
+          |--------------------------------------------------------------------------
+          | RINGKASAN KATEGORI LAYANAN
+          |--------------------------------------------------------------------------
+          */
+
+          $serviceCategorySummary = array_merge(
+              [
+                  'total' => $serviceCategories->count(),
+                  'active' => $serviceCategories->where('status', 'active')->count(),
+                  'inactive' => $serviceCategories->where('status', 'inactive')->count(),
+                  'active_percentage' => 0.0,
+              ],
+              $serviceCategorySummary ?? [],
+          );
+
+          $serviceCategoryTotal = max(0, (int) ($serviceCategorySummary['total'] ?? 0));
+          $serviceCategoryActive = max(0, (int) ($serviceCategorySummary['active'] ?? 0));
+          $serviceCategoryInactive = max(0, (int) ($serviceCategorySummary['inactive'] ?? 0));
+
+          $serviceCategorySummary['active_percentage'] =
+              $serviceCategoryTotal > 0
+                  ? min(
+                      100,
+                      max(
+                          0,
+                          (float) ($serviceCategorySummary['active_percentage'] ?? 0 ?:
+                          round(($serviceCategoryActive / $serviceCategoryTotal) * 100, 1)),
+                      ),
+                  )
+                  : 0.0;
+
           $indicatorChartColumnCount = max(1, $indicatorWeightChart->count());
 
           $totalActivePositions = (int) ($totalActivePositions ?? $positions->where('status', 'active')->count());
@@ -223,6 +271,20 @@
                   'theme' => 'purple',
               ],
               [
+                  'label' => 'Kategori Layanan',
+                  'value' => $serviceCategoryTotal,
+                  'suffix' => '',
+                  'icon' => 'layers',
+                  'description' =>
+                      number_format($serviceCategoryActive, 0, ',', '.') .
+                      ' kategori aktif dari ' .
+                      number_format($serviceCategoryTotal, 0, ',', '.') .
+                      ' kategori',
+                  'trend' => number_format($serviceCategorySummary['active_percentage'], 1, ',', '.') . '% aktif',
+                  'trend_type' => 'up',
+                  'theme' => 'blue',
+              ],
+              [
                   'label' => 'Pengguna Terdaftar',
                   'value' => $totalUsers,
                   'suffix' => '',
@@ -230,7 +292,7 @@
                   'description' => $totalRoles . ' role terhubung ke sistem',
                   'trend' => 'Terkelola',
                   'trend_type' => 'up',
-                  'theme' => 'blue',
+                  'theme' => 'indigo',
               ],
           ];
 
@@ -275,10 +337,29 @@
                       'icon' => 'calendar',
                       'theme' => 'blue',
                   ],
+                  [
+                      'title' => 'Kategori layanan terhubung',
+                      'description' =>
+                          number_format($serviceCategoryTotal, 0, ',', '.') .
+                          ' kategori tersedia: ' .
+                          number_format($serviceCategoryActive, 0, ',', '.') .
+                          ' aktif dan ' .
+                          number_format($serviceCategoryInactive, 0, ',', '.') .
+                          ' tidak aktif.',
+                      'time' => 'Hari ini',
+                      'icon' => 'layers',
+                      'theme' => 'blue',
+                  ],
               ],
           );
 
           $quickActions = [
+              [
+                  'label' => 'Kategori Layanan',
+                  'description' => 'Kode, nama, deskripsi, status, dan sampah data',
+                  'icon' => 'layers',
+                  'url' => $serviceCategoriesUrl,
+              ],
               [
                   'label' => 'Indikator Kinerja',
                   'description' => 'Kode, bobot, arah target, dan status',
@@ -2041,10 +2122,10 @@
           }
 
           /* ======================================================================
-                            HERO BRIGHTNESS PATCH
-                            Mempertahankan struktur template yang ada dan hanya memperbaiki
-                            warna hero agar lebih terang, kontras, dan mudah dibaca.
-                            ====================================================================== */
+                                 HERO BRIGHTNESS PATCH
+                                 Mempertahankan struktur template yang ada dan hanya memperbaiki
+                                 warna hero agar lebih terang, kontras, dan mudah dibaca.
+                                 ====================================================================== */
           .sad-dashboard .sad-hero {
                border-color: rgba(255, 255, 255, 0.34);
                background:
@@ -2154,7 +2235,7 @@
 
                     <p class="sad-hero-description">
                          Selamat datang, {{ $currentUserName }}. Pantau struktur organisasi,
-                         periode penilaian, status cabang, pengguna, dan aktivitas sistem
+                         kategori layanan, periode penilaian, status cabang, pengguna, dan aktivitas sistem
                          melalui dashboard eksekutif yang terpusat.
                     </p>
 
@@ -2187,9 +2268,9 @@
                          Kelola Pengguna
                     </a>
 
-                    <a href="{{ $performanceIndicatorsUrl }}" class="sad-button sad-button-secondary">
-                         <i data-feather="target"></i>
-                         Indikator Kinerja
+                    <a href="{{ $serviceCategoriesUrl }}" class="sad-button sad-button-secondary">
+                         <i data-feather="layers"></i>
+                         Kategori Layanan
                     </a>
                </div>
           </section>
@@ -2207,17 +2288,50 @@
 
                          @if ($currentPerformancePeriod)
                               @php
-                                   $currentStartDate = $currentPerformancePeriod->start_date
-                                       ? \Illuminate\Support\Carbon::parse($currentPerformancePeriod->start_date)
-                                       : null;
+                                   $currentPeriodName = (string) data_get(
+                                       $currentPerformancePeriod,
+                                       'name',
+                                       'Periode Aktif',
+                                   );
 
-                                   $currentEndDate = $currentPerformancePeriod->end_date
-                                       ? \Illuminate\Support\Carbon::parse($currentPerformancePeriod->end_date)
-                                       : null;
+                                   $currentPeriodType = (string) data_get(
+                                       $currentPerformancePeriod,
+                                       'period_type',
+                                       '-',
+                                   );
+
+                                   $currentStartDate = null;
+                                   $currentEndDate = null;
+
+                                   try {
+                                       $currentStartValue = data_get($currentPerformancePeriod, 'start_date');
+
+                                       if ($currentStartValue) {
+                                           $currentStartDate =
+                                               $currentStartValue instanceof \Illuminate\Support\Carbon
+                                                   ? $currentStartValue
+                                                   : \Illuminate\Support\Carbon::parse($currentStartValue);
+                                       }
+                                   } catch (\Throwable) {
+                                       $currentStartDate = null;
+                                   }
+
+                                   try {
+                                       $currentEndValue = data_get($currentPerformancePeriod, 'end_date');
+
+                                       if ($currentEndValue) {
+                                           $currentEndDate =
+                                               $currentEndValue instanceof \Illuminate\Support\Carbon
+                                                   ? $currentEndValue
+                                                   : \Illuminate\Support\Carbon::parse($currentEndValue);
+                                       }
+                                   } catch (\Throwable) {
+                                       $currentEndDate = null;
+                                   }
                               @endphp
 
                               <strong class="sad-period-title">
-                                   {{ $currentPerformancePeriod->name }}
+                                   {{ $currentPeriodName }}
                               </strong>
 
                               <span class="sad-period-meta">
@@ -2228,7 +2342,7 @@
                                    </span>
 
                                    <span>
-                                        {{ \Illuminate\Support\Str::of($currentPerformancePeriod->period_type)->replace('_', ' ')->title() }}
+                                        {{ \Illuminate\Support\Str::of($currentPeriodType)->replace('_', ' ')->title() }}
                                    </span>
 
                                    <span class="sad-badge success">Aktif</span>
@@ -2554,7 +2668,7 @@
                               <div>
                                    <h2 class="sad-card-title">Prioritas Monitoring</h2>
                                    <p class="sad-card-subtitle">
-                                        Temuan yang memerlukan keputusan atau tindak lanjut administrator.
+                                        Menampilkan maksimal 5 temuan prioritas yang memerlukan tindak lanjut administrator.
                                    </p>
                               </div>
                          </div>
@@ -2565,29 +2679,39 @@
                     </header>
 
                     <div class="sad-priority-list">
-                         @forelse ($monitoringPriorities as $priority)
+                         @forelse ($monitoringPriorities->take(5) as $priority)
+                              @php
+                                   $priorityIcon = (string) data_get($priority, 'icon', 'alert-circle');
+                                   $priorityTitle = (string) data_get($priority, 'title', 'Prioritas');
+                                   $priorityStatus = (string) data_get($priority, 'status', 'Monitoring');
+                                   $priorityStatusClass = (string) data_get($priority, 'status_class', 'neutral');
+                                   $priorityDescription = (string) data_get($priority, 'description', '-');
+                                   $priorityAction = (string) data_get($priority, 'action', 'Lihat');
+                                   $priorityUrl = (string) data_get($priority, 'url', '#');
+                              @endphp
+
                               <div class="sad-priority-item">
                                    <span class="sad-priority-icon">
-                                        <i data-feather="{{ $priority['icon'] }}"></i>
+                                        <i data-feather="{{ $priorityIcon }}"></i>
                                    </span>
 
                                    <div class="sad-priority-content">
                                         <div class="sad-priority-heading">
                                              <h3 class="sad-priority-title">
-                                                  {{ $priority['title'] }}
+                                                  {{ $priorityTitle }}
                                              </h3>
 
-                                             <span class="sad-badge {{ $priority['status_class'] }}">
-                                                  {{ $priority['status'] }}
+                                             <span class="sad-badge {{ $priorityStatusClass }}">
+                                                  {{ $priorityStatus }}
                                              </span>
                                         </div>
 
                                         <p class="sad-priority-description">
-                                             {{ $priority['description'] }}
+                                             {{ $priorityDescription }}
                                         </p>
 
-                                        <a href="{{ $priority['url'] }}" class="sad-priority-action">
-                                             {{ $priority['action'] }}
+                                        <a href="{{ $priorityUrl }}" class="sad-priority-action">
+                                             {{ $priorityAction }}
                                              <i data-feather="arrow-right"></i>
                                         </a>
                                    </div>
@@ -2612,12 +2736,13 @@
                               <div>
                                    <h2 class="sad-card-title">Periode Penilaian</h2>
                                    <p class="sad-card-subtitle">
-                                        Daftar periode berdasarkan rentang tanggal, jenis, dan status.
+                                        Menampilkan maksimal 5 periode terbaru berdasarkan rentang tanggal, jenis, dan
+                                        status.
                                    </p>
                               </div>
                          </div>
 
-                         @if (Route::has('super-admin.performance-periods.index'))
+                         @if (\Illuminate\Support\Facades\Route::has('super-admin.performance-periods.index'))
                               <a href="{{ route('super-admin.performance-periods.index') }}" class="sad-card-action">
                                    <i data-feather="list"></i>
                                    Lihat semua periode
@@ -2671,11 +2796,18 @@
                               </thead>
 
                               <tbody id="performancePeriodTableBody">
-                                   @forelse ($performancePeriods as $performancePeriod)
+                                   @forelse ($performancePeriods->take(5) as $performancePeriod)
                                         @php
-                                             $status = strtolower((string) $performancePeriod->status);
+                                             $periodId = data_get($performancePeriod, 'id', '-');
+                                             $periodName = (string) data_get($performancePeriod, 'name', 'Tanpa nama');
 
-                                             $type = strtolower((string) $performancePeriod->period_type);
+                                             $status = strtolower(
+                                                 (string) data_get($performancePeriod, 'status', 'inactive'),
+                                             );
+
+                                             $type = strtolower(
+                                                 (string) data_get($performancePeriod, 'period_type', '-'),
+                                             );
 
                                              $statusClass = match ($status) {
                                                  'active' => 'success',
@@ -2690,7 +2822,10 @@
                                                  'draft' => 'Draft',
                                                  'completed' => 'Selesai',
                                                  'inactive' => 'Tidak Aktif',
-                                                 default => ucfirst($status),
+                                                 default => \Illuminate\Support\Str::of($status)
+                                                     ->replace('_', ' ')
+                                                     ->title()
+                                                     ->toString(),
                                              };
 
                                              $typeLabel = match ($type) {
@@ -2700,30 +2835,70 @@
                                                  'annual' => 'Tahunan',
                                                  default => \Illuminate\Support\Str::of($type)
                                                      ->replace('_', ' ')
-                                                     ->title(),
+                                                     ->title()
+                                                     ->toString(),
                                              };
 
-                                             $startDate = $performancePeriod->start_date
-                                                 ? \Illuminate\Support\Carbon::parse($performancePeriod->start_date)
-                                                 : null;
+                                             $startDate = null;
+                                             $endDate = null;
+                                             $updatedAt = null;
 
-                                             $endDate = $performancePeriod->end_date
-                                                 ? \Illuminate\Support\Carbon::parse($performancePeriod->end_date)
-                                                 : null;
+                                             try {
+                                                 $startValue = data_get($performancePeriod, 'start_date');
+
+                                                 if ($startValue) {
+                                                     $startDate =
+                                                         $startValue instanceof \Illuminate\Support\Carbon
+                                                             ? $startValue
+                                                             : \Illuminate\Support\Carbon::parse($startValue);
+                                                 }
+                                             } catch (\Throwable) {
+                                                 $startDate = null;
+                                             }
+
+                                             try {
+                                                 $endValue = data_get($performancePeriod, 'end_date');
+
+                                                 if ($endValue) {
+                                                     $endDate =
+                                                         $endValue instanceof \Illuminate\Support\Carbon
+                                                             ? $endValue
+                                                             : \Illuminate\Support\Carbon::parse($endValue);
+                                                 }
+                                             } catch (\Throwable) {
+                                                 $endDate = null;
+                                             }
+
+                                             try {
+                                                 $updatedValue = data_get($performancePeriod, 'updated_at');
+
+                                                 if ($updatedValue) {
+                                                     $updatedAt =
+                                                         $updatedValue instanceof \Illuminate\Support\Carbon
+                                                             ? $updatedValue
+                                                             : \Illuminate\Support\Carbon::parse($updatedValue);
+                                                 }
+                                             } catch (\Throwable) {
+                                                 $updatedAt = null;
+                                             }
 
                                              $duration =
-                                                 $startDate && $endDate ? $startDate->diffInDays($endDate) + 1 : null;
+                                                 $startDate && $endDate
+                                                     ? (int) $startDate->diffInDays($endDate) + 1
+                                                     : null;
 
                                              $searchKeyword = strtolower(
-                                                 $performancePeriod->name .
-                                                     ' ' .
-                                                     $type .
-                                                     ' ' .
-                                                     $typeLabel .
-                                                     ' ' .
-                                                     $status .
-                                                     ' ' .
-                                                     $statusLabel,
+                                                 trim(
+                                                     $periodName .
+                                                         ' ' .
+                                                         $type .
+                                                         ' ' .
+                                                         $typeLabel .
+                                                         ' ' .
+                                                         $status .
+                                                         ' ' .
+                                                         $statusLabel,
+                                                 ),
                                              );
                                         @endphp
 
@@ -2737,11 +2912,11 @@
 
                                                        <span>
                                                             <strong class="sad-unit-name">
-                                                                 {{ $performancePeriod->name }}
+                                                                 {{ $periodName }}
                                                             </strong>
 
                                                             <span class="sad-unit-code">
-                                                                 ID #{{ $performancePeriod->id }}
+                                                                 ID #{{ $periodId }}
                                                             </span>
                                                        </span>
                                                   </div>
@@ -2777,29 +2952,29 @@
 
                                              <td>
                                                   <span class="sad-leader">
-                                                       {{ $performancePeriod->updated_at?->format('d M Y') ?? '-' }}
+                                                       {{ $updatedAt?->format('d M Y') ?? '-' }}
                                                   </span>
 
                                                   <span class="sad-updated">
-                                                       {{ $performancePeriod->updated_at?->diffForHumans() ?? '-' }}
+                                                       {{ $updatedAt?->diffForHumans() ?? '-' }}
                                                   </span>
                                              </td>
 
                                              <td>
                                                   <div class="sad-row-actions">
-                                                       @if (Route::has('super-admin.performance-periods.show'))
-                                                            <a href="{{ route('super-admin.performance-periods.show', $performancePeriod) }}"
+                                                       @if (\Illuminate\Support\Facades\Route::has('super-admin.performance-periods.show'))
+                                                            <a href="{{ route('super-admin.performance-periods.show', $periodId) }}"
                                                                  class="sad-action-menu"
-                                                                 aria-label="Lihat periode {{ $performancePeriod->name }}"
+                                                                 aria-label="Lihat periode {{ $periodName }}"
                                                                  title="Detail">
                                                                  <i data-feather="eye"></i>
                                                             </a>
                                                        @endif
 
-                                                       @if (Route::has('super-admin.performance-periods.edit'))
-                                                            <a href="{{ route('super-admin.performance-periods.edit', $performancePeriod) }}"
+                                                       @if (\Illuminate\Support\Facades\Route::has('super-admin.performance-periods.edit'))
+                                                            <a href="{{ route('super-admin.performance-periods.edit', $periodId) }}"
                                                                  class="sad-action-menu"
-                                                                 aria-label="Edit periode {{ $performancePeriod->name }}"
+                                                                 aria-label="Edit periode {{ $periodName }}"
                                                                  title="Edit">
                                                                  <i data-feather="edit-2"></i>
                                                             </a>
@@ -2844,7 +3019,7 @@
                               <div>
                                    <h2 class="sad-card-title">Indikator Kinerja Terbaru</h2>
                                    <p class="sad-card-subtitle">
-                                        Ringkasan master indikator berdasarkan kode, bobot,
+                                        Menampilkan maksimal 5 indikator terbaru berdasarkan kode, bobot,
                                         arah target, dan status.
                                    </p>
                               </div>
@@ -2857,7 +3032,7 @@
                     </header>
 
                     <div class="sad-channel-list">
-                         @forelse ($performanceIndicators as $indicator)
+                         @forelse ($performanceIndicators->take(5) as $indicator)
                               @php
                                    $indicatorStatus = strtolower((string) data_get($indicator, 'status', 'inactive'));
 
@@ -2930,7 +3105,7 @@
                               <div>
                                    <h2 class="sad-card-title">Pengguna dan Hak Akses</h2>
                                    <p class="sad-card-subtitle">
-                                        Ringkasan pengguna berdasarkan role dan status keaktifan.
+                                        Menampilkan maksimal 5 role pengguna berdasarkan status keaktifan.
                                    </p>
                               </div>
                          </div>
@@ -2942,29 +3117,38 @@
                     </header>
 
                     <div class="sad-role-list">
-                         @foreach ($roleSummary as $role)
+                         @foreach ($roleSummary->take(5) as $role)
+                              @php
+                                   $roleName = (string) data_get($role, 'name', 'Role');
+                                   $roleIcon = (string) data_get($role, 'icon', 'user');
+                                   $roleUsers = max(0, (int) data_get($role, 'users', 0));
+                                   $roleActive = max(0, (int) data_get($role, 'active', 0));
+                                   $rolePercentage =
+                                       $roleUsers > 0 ? min(100, max(0, round(($roleActive / $roleUsers) * 100))) : 0;
+                              @endphp
+
                               <div class="sad-role-item">
                                    <div class="sad-role-header">
                                         <div class="sad-role-identity">
                                              <span class="sad-role-icon">
-                                                  <i data-feather="{{ $role['icon'] }}"></i>
+                                                  <i data-feather="{{ $roleIcon }}"></i>
                                              </span>
 
                                              <span>
-                                                  <strong class="sad-role-name">{{ $role['name'] }}</strong>
-                                                  <span class="sad-role-meta">{{ $role['active'] }} akun aktif</span>
+                                                  <strong class="sad-role-name">{{ $roleName }}</strong>
+                                                  <span class="sad-role-meta">{{ $roleActive }} akun aktif</span>
                                              </span>
                                         </div>
 
                                         <span class="sad-role-count">
-                                             {{ $role['users'] }}
+                                             {{ $roleUsers }}
                                              <small>pengguna</small>
                                         </span>
                                    </div>
 
                                    <div class="sad-progress">
-                                        <div class="sad-progress-bar {{ $role['active'] === $role['users'] ? 'success' : 'info' }}"
-                                             style="width: {{ $role['users'] > 0 ? round(($role['active'] / $role['users']) * 100) : 0 }}%;">
+                                        <div class="sad-progress-bar {{ $roleUsers > 0 && $roleActive >= $roleUsers ? 'success' : 'info' }}"
+                                             style="width: {{ $rolePercentage }}%;">
                                         </div>
                                    </div>
                               </div>
@@ -2984,7 +3168,7 @@
                               <div>
                                    <h2 class="sad-card-title">Aktivitas Sistem Terbaru</h2>
                                    <p class="sad-card-subtitle">
-                                        Audit singkat perubahan data dan aktivitas penting dalam aplikasi.
+                                        Menampilkan maksimal 5 aktivitas sistem terbaru dan paling relevan.
                                    </p>
                               </div>
                          </div>
@@ -2993,16 +3177,24 @@
                     </header>
 
                     <div class="sad-activity-list" id="systemActivityList">
-                         @foreach ($systemActivities as $activity)
+                         @foreach ($systemActivities->take(5) as $activity)
+                              @php
+                                   $activityTheme = (string) data_get($activity, 'theme', 'blue');
+                                   $activityIcon = (string) data_get($activity, 'icon', 'activity');
+                                   $activityTitle = (string) data_get($activity, 'title', 'Aktivitas sistem');
+                                   $activityDescription = (string) data_get($activity, 'description', '-');
+                                   $activityTime = (string) data_get($activity, 'time', '-');
+                              @endphp
+
                               <div class="sad-activity-item" data-system-activity>
-                                   <span class="sad-activity-icon {{ $activity['theme'] }}">
-                                        <i data-feather="{{ $activity['icon'] }}"></i>
+                                   <span class="sad-activity-icon {{ $activityTheme }}">
+                                        <i data-feather="{{ $activityIcon }}"></i>
                                    </span>
 
                                    <div class="sad-activity-content">
-                                        <h4>{{ $activity['title'] }}</h4>
-                                        <p>{{ $activity['description'] }}</p>
-                                        <div class="sad-activity-time">{{ $activity['time'] }}</div>
+                                        <h4>{{ $activityTitle }}</h4>
+                                        <p>{{ $activityDescription }}</p>
+                                        <div class="sad-activity-time">{{ $activityTime }}</div>
                                    </div>
                               </div>
                          @endforeach
@@ -3027,14 +3219,21 @@
 
                     <div class="sad-quick-grid">
                          @foreach ($quickActions as $action)
-                              <a href="{{ $action['url'] }}" class="sad-quick-action">
+                              @php
+                                   $actionUrl = (string) data_get($action, 'url', '#');
+                                   $actionIcon = (string) data_get($action, 'icon', 'grid');
+                                   $actionLabel = (string) data_get($action, 'label', 'Menu');
+                                   $actionDescription = (string) data_get($action, 'description', '-');
+                              @endphp
+
+                              <a href="{{ $actionUrl }}" class="sad-quick-action">
                                    <span class="sad-quick-icon">
-                                        <i data-feather="{{ $action['icon'] }}"></i>
+                                        <i data-feather="{{ $actionIcon }}"></i>
                                    </span>
 
                                    <span>
-                                        <strong>{{ $action['label'] }}</strong>
-                                        <span>{{ $action['description'] }}</span>
+                                        <strong>{{ $actionLabel }}</strong>
+                                        <span>{{ $actionDescription }}</span>
                                    </span>
                               </a>
                          @endforeach

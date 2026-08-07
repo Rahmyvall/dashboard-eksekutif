@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PerformanceIndicatorController;
 use App\Http\Controllers\Api\PerformancePeriodController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
+use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\WorkScheduleController;
 use Illuminate\Support\Facades\Route;
@@ -1222,5 +1223,186 @@ Route::prefix('v1/performance-indicators')
             ]
         )
             ->whereNumber('indicator')
+            ->name('destroy');
+    });
+/*
+|--------------------------------------------------------------------------
+| Service Category API
+|--------------------------------------------------------------------------
+|
+| Database service_categories:
+| - id
+| - code
+| - name
+| - description
+| - status
+| - created_at
+| - updated_at
+| - deleted_at
+|
+| Base URL:
+| /api/v1/service-categories
+|
+*/
+
+Route::prefix('v1/service-categories')
+    ->name('api.v1.service-categories.')
+    ->group(function (): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | INDEX
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/',
+            [
+                ServiceCategoryController::class,
+                'index',
+            ]
+        )->name('index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | STORE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post(
+            '/',
+            [
+                ServiceCategoryController::class,
+                'store',
+            ]
+        )->name('store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | TRASHED
+        |--------------------------------------------------------------------------
+        |
+        | HARUS sebelum /{serviceCategory}
+        |
+        */
+
+        Route::get(
+            '/trashed',
+            [
+                ServiceCategoryController::class,
+                'trashed',
+            ]
+        )->name('trashed');
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESTORE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{id}/restore',
+            [
+                ServiceCategoryController::class,
+                'restore',
+            ]
+        )
+            ->whereNumber('id')
+            ->name('restore');
+
+        /*
+        |--------------------------------------------------------------------------
+        | FORCE DELETE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::delete(
+            '/{id}/force-delete',
+            [
+                ServiceCategoryController::class,
+                'forceDelete',
+            ]
+        )
+            ->whereNumber('id')
+            ->name('force-delete');
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOGGLE STATUS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{serviceCategory}/toggle-status',
+            [
+                ServiceCategoryController::class,
+                'toggleStatus',
+            ]
+        )
+            ->whereNumber('serviceCategory')
+            ->name('toggle-status');
+
+        /*
+        |--------------------------------------------------------------------------
+        | SHOW
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/{serviceCategory}',
+            [
+                ServiceCategoryController::class,
+                'show',
+            ]
+        )
+            ->whereNumber('serviceCategory')
+            ->name('show');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PUT UPDATE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::put(
+            '/{serviceCategory}',
+            [
+                ServiceCategoryController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('serviceCategory')
+            ->name('update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PATCH UPDATE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::patch(
+            '/{serviceCategory}',
+            [
+                ServiceCategoryController::class,
+                'update',
+            ]
+        )
+            ->whereNumber('serviceCategory')
+            ->name('patch');
+
+        /*
+        |--------------------------------------------------------------------------
+        | SOFT DELETE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::delete(
+            '/{serviceCategory}',
+            [
+                ServiceCategoryController::class,
+                'destroy',
+            ]
+        )
+            ->whereNumber('serviceCategory')
             ->name('destroy');
     });

@@ -10,12 +10,14 @@ use App\Http\Controllers\Admin\PerformanceIndicatorController;
 use App\Http\Controllers\Admin\PerformancePeriodController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WorkScheduleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Models\PerformanceIndicator;
 use App\Models\PerformancePeriod;
+use App\Models\ServiceCategory;
 use App\Models\WorkSchedule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -33,6 +35,7 @@ use Illuminate\Support\Facades\Route;
 Route::model('workSchedule', WorkSchedule::class);
 Route::model('performancePeriod', PerformancePeriod::class);
 Route::model('performanceIndicator', PerformanceIndicator::class);
+Route::model('serviceCategory', ServiceCategory::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -739,6 +742,100 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'super_admin')
                 ->name('dashboard');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Service Category Management
+            |--------------------------------------------------------------------------
+            |
+            | CRUD tabel service_categories, perubahan status, serta recycle bin.
+            | Route statis harus ditempatkan sebelum route dinamis {serviceCategory}.
+            |
+            */
+
+            Route::prefix('service-categories')
+                ->name('service-categories.')
+                ->controller(ServiceCategoryController::class)
+                ->group(function (): void {
+                    /*
+                    |----------------------------------------------------------
+                    | Daftar, tambah, dan simpan
+                    |----------------------------------------------------------
+                    */
+                    Route::get('/', 'index')
+                        ->name('index');
+
+                    Route::get('/create', 'create')
+                        ->name('create');
+
+                    Route::post('/', 'store')
+                        ->name('store');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Recycle bin
+                    |----------------------------------------------------------
+                    |
+                    | Route statis diletakkan sebelum /{serviceCategory}.
+                    |
+                    */
+                    Route::get('/trashed', 'trashed')
+                        ->name('trashed');
+
+                    Route::patch('/{id}/restore', 'restore')
+                        ->whereNumber('id')
+                        ->name('restore');
+
+                    Route::delete('/{id}/force-delete', 'forceDelete')
+                        ->whereNumber('id')
+                        ->name('force-delete');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Ubah status
+                    |----------------------------------------------------------
+                    */
+                    Route::patch(
+                        '/{serviceCategory}/toggle-status',
+                        'toggleStatus'
+                    )
+                        ->whereNumber('serviceCategory')
+                        ->name('toggle-status');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Edit, update, dan soft delete
+                    |----------------------------------------------------------
+                    */
+                    Route::get('/{serviceCategory}/edit', 'edit')
+                        ->whereNumber('serviceCategory')
+                        ->name('edit');
+
+                    Route::match(
+                        ['put', 'patch'],
+                        '/{serviceCategory}',
+                        'update'
+                    )
+                        ->whereNumber('serviceCategory')
+                        ->name('update');
+
+                    Route::delete('/{serviceCategory}', 'destroy')
+                        ->whereNumber('serviceCategory')
+                        ->name('destroy');
+
+                    /*
+                    |----------------------------------------------------------
+                    | Detail kategori layanan
+                    |----------------------------------------------------------
+                    |
+                    | Diletakkan paling bawah agar URL statis tidak dianggap
+                    | sebagai parameter model {serviceCategory}.
+                    |
+                    */
+                    Route::get('/{serviceCategory}', 'show')
+                        ->whereNumber('serviceCategory')
+                        ->name('show');
+                });
 
             /*
             |--------------------------------------------------------------------------

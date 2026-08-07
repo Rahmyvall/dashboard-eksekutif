@@ -1,0 +1,414 @@
+@extends('layouts.app')
+
+@section('title', 'Edit Kategori Layanan')
+
+@section('content')
+     <style>
+          :root {
+               --sc-primary: #6366f1;
+               --sc-primary-dark: #4f46e5;
+               --sc-secondary: #06b6d4;
+               --sc-danger: #ef4444;
+               --sc-text: #24324a;
+               --sc-muted: #718096;
+          }
+
+          .sc-page {
+               width: 100%;
+               min-height: calc(100vh - 70px);
+               padding: 30px 18px 44px;
+               background:
+                    radial-gradient(circle at 5% 5%, rgba(129, 140, 248, .18), transparent 24%),
+                    radial-gradient(circle at 96% 8%, rgba(34, 211, 238, .18), transparent 25%),
+                    linear-gradient(145deg, #fbfdff 0%, #f7f5ff 46%, #f0fbff 100%);
+          }
+
+          .sc-container {
+               width: 100%;
+               max-width: 100%;
+               margin: 0;
+          }
+
+          .sc-hero {
+               width: 100%;
+               display: flex;
+               gap: 22px;
+               align-items: center;
+               justify-content: space-between;
+               padding: 30px;
+               margin-bottom: 22px;
+               color: #fff;
+               border-radius: 26px;
+               background:
+                    radial-gradient(circle at 88% 16%, rgba(255, 255, 255, .34), transparent 23%),
+                    linear-gradient(120deg, #818cf8 0%, #8b5cf6 42%, #22d3ee 100%);
+               box-shadow: 0 22px 52px rgba(99, 102, 241, .21);
+          }
+
+          .sc-hero-main {
+               display: flex;
+               gap: 18px;
+               align-items: center;
+          }
+
+          .sc-hero-icon {
+               display: inline-flex;
+               flex: 0 0 62px;
+               width: 62px;
+               height: 62px;
+               align-items: center;
+               justify-content: center;
+               color: var(--sc-primary-dark);
+               font-size: 1.7rem;
+               border-radius: 19px;
+               background: rgba(255, 255, 255, .95);
+          }
+
+          .sc-hero h1 {
+               margin: 0;
+               font-size: clamp(1.65rem, 2.5vw, 2.25rem);
+               font-weight: 850;
+               letter-spacing: -.035em;
+          }
+
+          .sc-hero p {
+               margin: 7px 0 0;
+               color: rgba(255, 255, 255, .94);
+               line-height: 1.65;
+          }
+
+          .sc-card {
+               width: 100%;
+               max-width: 100%;
+               overflow: hidden;
+               border: 1px solid rgba(226, 232, 240, .9);
+               border-radius: 24px;
+               background: rgba(255, 255, 255, .96);
+               box-shadow: 0 18px 45px rgba(51, 65, 85, .09);
+          }
+
+          .sc-card-header {
+               width: 100%;
+               padding: 22px 25px;
+               border-bottom: 1px solid #eef2f7;
+               background: linear-gradient(90deg, #fff 0%, #faf8ff 48%, #f0fbff 100%);
+          }
+
+          .sc-card-title {
+               display: flex;
+               gap: 11px;
+               align-items: center;
+               margin: 0;
+               color: var(--sc-text);
+               font-size: 1.08rem;
+               font-weight: 830;
+          }
+
+          .sc-title-icon {
+               display: inline-flex;
+               width: 42px;
+               height: 42px;
+               align-items: center;
+               justify-content: center;
+               color: var(--sc-primary-dark);
+               border-radius: 13px;
+               background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+          }
+
+          .sc-card-body {
+               width: 100%;
+               padding: 26px;
+          }
+
+          .sc-card-body form {
+               width: 100%;
+          }
+
+          .sc-label {
+               color: #475569;
+               font-size: .86rem;
+               font-weight: 780;
+          }
+
+          .sc-required {
+               color: var(--sc-danger);
+          }
+
+          .sc-control {
+               width: 100%;
+               min-height: 48px;
+               color: var(--sc-text);
+               border: 1px solid #dbe3ef;
+               border-radius: 13px;
+               background-color: #fff;
+          }
+
+          textarea.sc-control {
+               min-height: 150px;
+               resize: vertical;
+          }
+
+          .sc-control:focus {
+               border-color: #818cf8;
+               box-shadow: 0 0 0 .22rem rgba(99, 102, 241, .13);
+          }
+
+          .sc-help {
+               margin-top: 6px;
+               color: var(--sc-muted);
+               font-size: .76rem;
+          }
+
+          .sc-note {
+               width: 100%;
+               padding: 15px 17px;
+               margin-top: 22px;
+               color: #075985;
+               font-size: .82rem;
+               line-height: 1.6;
+               border: 1px solid #bae6fd;
+               border-radius: 14px;
+               background: #f0f9ff;
+          }
+
+          .sc-actions {
+               width: 100%;
+               display: flex;
+               gap: 10px;
+               justify-content: flex-end;
+               padding-top: 23px;
+               margin-top: 24px;
+               border-top: 1px solid #eef2f7;
+          }
+
+          .sc-btn {
+               display: inline-flex;
+               min-height: 46px;
+               padding: 0 18px;
+               gap: 8px;
+               align-items: center;
+               justify-content: center;
+               font-size: .85rem;
+               font-weight: 800;
+               text-decoration: none;
+               border: 0;
+               border-radius: 13px;
+          }
+
+          .sc-btn-primary {
+               color: #fff;
+               background: linear-gradient(135deg, var(--sc-primary), #8b5cf6, var(--sc-secondary));
+          }
+
+          .sc-btn-secondary {
+               color: #64748b;
+               border: 1px solid #dbe3ef;
+               background: #fff;
+          }
+
+          .sc-alert {
+               width: 100%;
+               padding: 16px 18px;
+               margin-bottom: 18px;
+               border: 0;
+               border-radius: 16px;
+               box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+          }
+
+          @media (max-width: 767.98px) {
+               .sc-page {
+                    padding: 20px 12px 34px;
+               }
+
+               .sc-hero {
+                    align-items: flex-start;
+                    flex-direction: column;
+                    padding: 23px 20px;
+               }
+
+               .sc-card-body {
+                    padding: 21px 18px;
+               }
+
+               .sc-actions {
+                    flex-direction: column-reverse;
+               }
+
+               .sc-actions .sc-btn {
+                    width: 100%;
+               }
+          }
+     </style>
+
+     <div class="sc-page">
+          <div class="sc-container">
+
+               <div class="sc-hero">
+                    <div class="sc-hero-main">
+                         <div class="sc-hero-icon">
+                              <i class="bi bi-pencil-square"></i>
+                         </div>
+
+                         <div>
+                              <h1>Edit Kategori Layanan</h1>
+                              <p>Perbarui informasi kategori layanan yang tersimpan di sistem.</p>
+                         </div>
+                    </div>
+
+                    <a href="{{ route('super-admin.service-categories.index') }}" class="sc-btn sc-btn-secondary">
+                         <i class="bi bi-arrow-left"></i>
+                         Kembali
+                    </a>
+               </div>
+
+               @if ($errors->any())
+                    <div class="alert alert-danger sc-alert">
+                         <div class="fw-bold mb-2">
+                              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                              Data belum dapat diperbarui
+                         </div>
+
+                         <ul class="mb-0 ps-3">
+                              @foreach ($errors->all() as $error)
+                                   <li>{{ $error }}</li>
+                              @endforeach
+                         </ul>
+                    </div>
+               @endif
+
+               <div class="sc-card">
+                    <div class="sc-card-header">
+                         <h5 class="sc-card-title">
+                              <span class="sc-title-icon">
+                                   <i class="bi bi-ui-checks-grid"></i>
+                              </span>
+                              Form Edit Kategori Layanan
+                         </h5>
+                    </div>
+
+                    <div class="sc-card-body">
+
+                         <form action="{{ route('super-admin.service-categories.update', $serviceCategory->id) }}"
+                              method="POST">
+
+                              @csrf
+                              @method('PUT')
+
+                              <div class="row g-4">
+
+                                   {{-- CODE --}}
+                                   <div class="col-12 col-md-5">
+                                        <label for="code" class="form-label sc-label">
+                                             Kode Kategori
+                                             <span class="sc-required">*</span>
+                                        </label>
+
+                                        <input type="text" id="code" name="code"
+                                             class="form-control sc-control @error('code') is-invalid @enderror"
+                                             value="{{ old('code', $serviceCategory->code) }}" maxlength="30"
+                                             autocomplete="off" required autofocus>
+
+                                        @error('code')
+                                             <div class="invalid-feedback">
+                                                  {{ $message }}
+                                             </div>
+                                        @enderror
+
+                                        <div class="sc-help">
+                                             Maksimal 30 karakter dan harus unik.
+                                        </div>
+                                   </div>
+
+                                   {{-- NAME --}}
+                                   <div class="col-12 col-md-7">
+                                        <label for="name" class="form-label sc-label">
+                                             Nama Kategori
+                                             <span class="sc-required">*</span>
+                                        </label>
+
+                                        <input type="text" id="name" name="name"
+                                             class="form-control sc-control @error('name') is-invalid @enderror"
+                                             value="{{ old('name', $serviceCategory->name) }}" maxlength="150"
+                                             autocomplete="off" required>
+
+                                        @error('name')
+                                             <div class="invalid-feedback">
+                                                  {{ $message }}
+                                             </div>
+                                        @enderror
+                                   </div>
+
+                                   {{-- DESCRIPTION --}}
+                                   <div class="col-12">
+                                        <label for="description" class="form-label sc-label">
+                                             Deskripsi
+                                        </label>
+
+                                        <textarea id="description" name="description" class="form-control sc-control @error('description') is-invalid @enderror"
+                                             placeholder="Tuliskan deskripsi kategori layanan...">{{ old('description', $serviceCategory->description) }}</textarea>
+
+                                        @error('description')
+                                             <div class="invalid-feedback">
+                                                  {{ $message }}
+                                             </div>
+                                        @enderror
+                                   </div>
+
+                                   {{-- STATUS --}}
+                                   <div class="col-12 col-md-5">
+                                        <label for="status" class="form-label sc-label">
+                                             Status
+                                             <span class="sc-required">*</span>
+                                        </label>
+
+                                        <select id="status" name="status"
+                                             class="form-select sc-control @error('status') is-invalid @enderror" required>
+                                             <option value="">Pilih Status</option>
+
+                                             @foreach ($statuses as $value => $label)
+                                                  <option value="{{ $value }}" @selected(old('status', $serviceCategory->status) === (string) $value)>
+                                                       {{ $label }}
+                                                  </option>
+                                             @endforeach
+                                        </select>
+
+                                        @error('status')
+                                             <div class="invalid-feedback">
+                                                  {{ $message }}
+                                             </div>
+                                        @enderror
+                                   </div>
+
+                              </div>
+
+                              <div class="sc-note">
+                                   <i class="bi bi-info-circle-fill me-1"></i>
+
+                                   ID kategori:
+                                   <strong>#{{ $serviceCategory->id }}</strong>.
+
+                                   Kolom <strong>updated_at</strong> akan diperbarui otomatis
+                                   ketika perubahan disimpan.
+                              </div>
+
+                              <div class="sc-actions">
+
+                                   <a href="{{ route('super-admin.service-categories.show', $serviceCategory->id) }}"
+                                        class="sc-btn sc-btn-secondary">
+                                        <i class="bi bi-x-circle"></i>
+                                        Batal
+                                   </a>
+
+                                   <button type="submit" class="sc-btn sc-btn-primary">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        Simpan Perubahan
+                                   </button>
+
+                              </div>
+                         </form>
+
+                    </div>
+               </div>
+          </div>
+     </div>
+@endsection
