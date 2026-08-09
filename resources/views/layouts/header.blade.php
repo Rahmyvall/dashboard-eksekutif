@@ -35,6 +35,7 @@
 
      <!-- template css -->
      <link rel="stylesheet" href="{{ asset('backend/assets/css/cassie.css') }}">
+     <link rel="stylesheet" href="{{ asset('backend/assets/css/dashboard-ui.css') }}">
      <style>
           /* =====================================================
 ROOT VARIABLE

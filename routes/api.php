@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\ServiceController;
+
 
 use App\Http\Controllers\Api\WorkScheduleController;
 use Illuminate\Support\Facades\Route;
@@ -100,6 +102,19 @@ Route::prefix('roles')
             ->whereNumber('role')
             ->name('destroy');
     });
+
+/* Service API */
+Route::prefix('v1/services')->name('api.v1.services.')->group(function (): void {
+    Route::get('/', [ServiceController::class, 'index'])->name('index');
+    Route::post('/', [ServiceController::class, 'store'])->name('store');
+    Route::get('/trashed', [ServiceController::class, 'trashed'])->name('trashed');
+    Route::patch('/{id}/restore', [ServiceController::class, 'restore'])->whereNumber('id')->name('restore');
+    Route::delete('/{id}/force-delete', [ServiceController::class, 'forceDelete'])->whereNumber('id')->name('force-delete');
+    Route::patch('/{service}/toggle-status', [ServiceController::class, 'toggleStatus'])->whereNumber('service')->name('toggle-status');
+    Route::get('/{service}', [ServiceController::class, 'show'])->whereNumber('service')->name('show');
+    Route::match(['put', 'patch'], '/{service}', [ServiceController::class, 'update'])->whereNumber('service')->name('update');
+    Route::delete('/{service}', [ServiceController::class, 'destroy'])->whereNumber('service')->name('destroy');
+});
 
 /*
 |--------------------------------------------------------------------------

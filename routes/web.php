@@ -19,6 +19,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Models\PerformanceIndicator;
 use App\Models\PerformancePeriod;
+use App\Models\Service;
+
 use App\Models\ServiceCategory;
 use App\Models\WorkSchedule;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +39,8 @@ use Illuminate\Support\Facades\Route;
 Route::model('workSchedule', WorkSchedule::class);
 Route::model('performancePeriod', PerformancePeriod::class);
 Route::model('performanceIndicator', PerformanceIndicator::class);
+Route::model('service', Service::class);
+
 Route::model('serviceCategory', ServiceCategory::class);
 
 /*

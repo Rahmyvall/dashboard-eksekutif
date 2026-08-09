@@ -118,13 +118,21 @@ class ServiceController extends Controller
 
     public function toggleStatus(Service $service): RedirectResponse
     {
-        $service->update([
-            'status' => $service->status === Service::STATUS_ACTIVE
-                ? Service::STATUS_INACTIVE
-                : Service::STATUS_ACTIVE,
-        ]);
+$currentStatus = strtolower(trim((string) $service->getRawOriginal('status')));
+$newStatus     = $currentStatus === Service::STATUS_ACTIVE
+    ? Service::STATUS_INACTIVE
 
-        return back()->with('success', 'Status service berhasil diubah.');
+:Service::STATUS_ACTIVE;
+
+$service->status = $newStatus;
+$service->saveOrFail();
+
+
+return back()->with(
+    'success',
+    'Status service berhasil diubah menjadi ' . ($newStatus === Service::STATUS_ACTIVE ? 'aktif.' : 'tidak aktif.')
+);
+
     }
 
     private function validationRules(?Service $service = null): array

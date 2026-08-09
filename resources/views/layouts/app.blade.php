@@ -5,7 +5,7 @@
 
      <title>
           Dashboard Monitoring Produktivitas Karyawan Dan Transaksi Jasa |
-          @yield('page-title', 'Dashboard Eksekutif')
+          @yield('page-title', $__env->yieldContent('title', 'Dashboard Eksekutif'))
      </title>
 
 
