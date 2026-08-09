@@ -1,6 +1,6 @@
 <?php
 
-declare (strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
@@ -15,349 +15,135 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-
     /**
-     * Halaman Login
+     * Display the login form.
      */
-    public function create(): View | RedirectResponse
+    public function create(): View|RedirectResponse
     {
-
         if (Auth::check()) {
-
-            return redirect()
-                ->route('dashboard');
-
+            return redirect()->route('dashboard');
         }
 
         $roles = Role::query()
-
-            ->select([
-                'id',
-                'name',
-            ])
-
+            ->select(['id', 'name'])
             ->orderBy('id')
-
             ->get();
 
-        return view(
-            'auth.login',
-            compact('roles')
-        );
-
+        return view('auth.login', compact('roles'));
     }
 
     /**
-     * Proses Login
+     * Process the login request.
      */
-    public function store(
-        Request $request
-    ): RedirectResponse {
-
-        $request->merge([
-
-            'email' => strtolower(
-                trim((string) $request->email)
-            ),
-
-        ]);
-
+    public function store(Request $request): RedirectResponse
+    {
         $validated = $request->validate([
-
-            'email'    => [
-
-                'required',
-
-                'email',
-
-                'max:150',
-
-            ],
-
-            'password' => [
-
-                'required',
-
-                'string',
-
-            ],
-
-            'role_id'  => [
-
-                'required',
-
-                'exists:roles,id',
-
-            ],
-
-            'remember' => [
-
-                'nullable',
-
-                'boolean',
-
-            ],
-
+            'email' => ['required', 'email', 'max:150'],
+            'password' => ['required', 'string'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
+            'remember' => ['nullable', 'boolean'],
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Reset Session Role
-        |--------------------------------------------------------------------------
-        */
-
-        $request->session()->forget([
-
-            'active_role_id',
-
-            'active_role_name',
-
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cari User
-        |--------------------------------------------------------------------------
-        */
-
-        $user = User::query()
-
-            ->where(
-                'email',
-                $validated['email']
-            )
-
-            ->first();
+        $email = strtolower(trim($validated['email']));
+        $user = User::query()->where('email', $email)->first();
 
         if (! $user) {
-
             return back()
-
                 ->withInput()
-
-                ->withErrors([
-
-                    'email' =>
-                    'Email tidak ditemukan.',
-
-                ]);
-
+                ->withErrors(['email' => 'Email tidak ditemukan.']);
         }
 
-        /*
-        /*
-|--------------------------------------------------------------------------
-| Validasi Password
-|--------------------------------------------------------------------------
-*/
-
-        $storedPassword = $user->password;
-
-        if (
-
-            empty($storedPassword)
-
-            ||
-
-            ! Hash::needsRehash($storedPassword)
-
-            &&
-
-            ! Hash::check(
-
-                $validated['password'],
-
-                $storedPassword
-
-            )
-
-        ) {
-
+        if (empty($user->password)) {
             return back()
-
                 ->withInput()
-
-                ->withErrors([
-
-                    'email' =>
-                    'Password tidak sesuai.',
-
-                ]);
-
+                ->withErrors(['email' => 'Password belum tersedia.']);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Status User
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-
-            $user->status !== User::STATUS_ACTIVE
-
-        ) {
-
+        try {
+            $passwordValid = Hash::check($validated['password'], $user->password);
+        } catch (\InvalidArgumentException|\RuntimeException) {
             return back()
-
+                ->withInput()
                 ->withErrors([
-
-                    'email' =>
-                    'Akun tidak aktif.',
-
+                    'password' => 'Password akun belum menggunakan hash yang valid. Silakan reset password.',
                 ]);
-
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Login
-        |--------------------------------------------------------------------------
-        */
+        if (! $passwordValid) {
+            return back()
+                ->withInput()
+                ->withErrors(['password' => 'Password tidak sesuai.']);
+        }
 
-        Auth::guard('web')->login(
+        if (Hash::needsRehash($user->password)) {
+            $user->forceFill([
+                'password' => Hash::make($validated['password']),
+            ])->save();
+        }
 
-            $user,
+        if (! $user->isActive()) {
+            return back()
+                ->withInput()
+                ->withErrors(['email' => 'Akun tidak aktif atau telah dinonaktifkan.']);
+        }
 
-            $request->boolean('remember')
-
-        );
-
-        $request
-            ->session()
-            ->regenerate();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cek Role User
-        |--------------------------------------------------------------------------
-        */
-
-        $role = $user
-
-            ->roles()
-
-            ->where(
-
-                'roles.id',
-
-                $validated['role_id']
-
-            )
-
+        $role = $user->roles()
+            ->whereKey($validated['role_id'])
             ->first();
 
         if (! $role) {
-
-            Auth::guard('web')->logout();
-
             return back()
-
-                ->withErrors([
-
-                    'role_id' =>
-                    'Role tidak tersedia untuk akun ini.',
-
-                ]);
-
+                ->withInput()
+                ->withErrors(['role_id' => 'Hak akses yang dipilih tidak terhubung ke akun ini.']);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Simpan Role Aktif
-        |--------------------------------------------------------------------------
-        */
+        Auth::guard('web')->login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
 
         session([
-
-            'active_role_id'   => $role->id,
-
+            'active_role_id' => $role->id,
             'active_role_name' => $role->name,
-
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Update Login
-        |--------------------------------------------------------------------------
-        */
-
-        $user->update([
-
-            'last_login_at' => now(),
-
-            'last_login_ip' => $request->ip(),
-
-        ]);
+        $user->updateLoginInfo();
 
         return redirect()
-
             ->route('dashboard')
-
-            ->with(
-
-                'success',
-
-                'Login berhasil sebagai ' . $role->name
-
-            );
-
+            ->with('success', 'Login berhasil sebagai ' . $role->name);
     }
 
     /**
-     * Logout
+     * Log the user out.
      */
-    public function destroy(
-        Request $request
-    ): RedirectResponse {
-
+    public function destroy(Request $request): RedirectResponse
+    {
         Auth::guard('web')->logout();
 
         $request->session()->forget([
-
             'active_role_id',
-
             'active_role_name',
-
         ]);
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect()
-
             ->route('login')
-
-            ->with(
-
-                'success',
-
-                'Berhasil logout.'
-
-            );
-
+            ->with('success', 'Berhasil logout.');
     }
 
-    public function showLoginForm(): View | RedirectResponse
+    public function showLoginForm(): View|RedirectResponse
     {
         return $this->create();
     }
 
-    public function login(
-        Request $request
-    ): RedirectResponse {
-
+    public function login(Request $request): RedirectResponse
+    {
         return $this->store($request);
-
     }
 
-    public function logout(
-        Request $request
-    ): RedirectResponse {
-
+    public function logout(Request $request): RedirectResponse
+    {
         return $this->destroy($request);
-
     }
-
 }

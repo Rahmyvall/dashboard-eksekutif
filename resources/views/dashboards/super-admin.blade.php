@@ -72,6 +72,7 @@
           $performancePeriods = collect($performancePeriods ?? []);
           $performanceIndicators = collect($performanceIndicators ?? []);
           $serviceCategories = collect($serviceCategories ?? []);
+          $services = collect($services ?? []);
           $indicatorWeightChart = collect($indicatorWeightChart ?? []);
           $indicatorDirectionSummary = collect($indicatorDirectionSummary ?? []);
           $departmentSummary = collect($departmentSummary ?? []);
@@ -196,6 +197,24 @@
               $serviceCategorySummary ?? [],
           );
 
+            $serviceSummary = array_merge(
+                 [
+                      'total' => $services->count(),
+                      'active' => $services->where('status', 'active')->count(),
+                      'inactive' => $services->where('status', 'inactive')->count(),
+                      'active_percentage' => 0.0,
+                      'average_price' => 0.0,
+                 ],
+                 $serviceSummary ?? [],
+            );
+
+            $serviceTotal = max(0, (int) $serviceSummary['total']);
+            $serviceActive = max(0, (int) $serviceSummary['active']);
+            $serviceInactive = max(0, (int) $serviceSummary['inactive']);
+            $serviceSummary['active_percentage'] = $serviceTotal > 0
+                 ? round(($serviceActive / $serviceTotal) * 100, 1)
+                 : 0.0;
+
           $serviceCategoryTotal = max(0, (int) ($serviceCategorySummary['total'] ?? 0));
           $serviceCategoryActive = max(0, (int) ($serviceCategorySummary['active'] ?? 0));
           $serviceCategoryInactive = max(0, (int) ($serviceCategorySummary['inactive'] ?? 0));
@@ -284,6 +303,16 @@
                   'trend_type' => 'up',
                   'theme' => 'blue',
               ],
+                 [
+                      'label' => 'Service Aktif',
+                      'value' => $serviceActive,
+                      'suffix' => '',
+                      'icon' => 'briefcase',
+                      'description' => number_format($serviceTotal, 0, ',', '.') . ' service terdaftar dengan ' . number_format($serviceInactive, 0, ',', '.') . ' nonaktif',
+                      'trend' => number_format($serviceSummary['active_percentage'], 1, ',', '.') . '% aktif',
+                      'trend_type' => 'up',
+                      'theme' => 'green',
+                 ],
               [
                   'label' => 'Pengguna Terdaftar',
                   'value' => $totalUsers,
@@ -354,6 +383,12 @@
           );
 
           $quickActions = [
+                 [
+                      'label' => 'Service Layanan',
+                      'description' => 'Kode, harga, unit, durasi, dan status service',
+                      'icon' => 'briefcase',
+                      'url' => $servicesUrl ?? '#',
+                 ],
               [
                   'label' => 'Kategori Layanan',
                   'description' => 'Kode, nama, deskripsi, status, dan sampah data',
@@ -2427,6 +2462,41 @@
                    'exact' => 'crosshair',
                ];
           @endphp
+
+          <section class="sad-card sad-monitoring-card" style="margin-bottom: 24px;">
+               <header class="sad-card-header">
+                    <div class="sad-card-heading">
+                         <span class="sad-card-heading-icon"><i data-feather="briefcase"></i></span>
+                         <div>
+                              <h2 class="sad-card-title">Service Terbaru</h2>
+                              <p class="sad-card-subtitle">Data terbaru dari tabel <code>services</code> berdasarkan kode, kategori, harga, durasi, dan status.</p>
+                         </div>
+                    </div>
+                    @if (!empty($servicesUrl) && $servicesUrl !== '#')
+                         <a href="{{ $servicesUrl }}" class="sad-card-action">Kelola service <i data-feather="arrow-up-right"></i></a>
+                    @endif
+               </header>
+               <div class="sad-table-wrapper">
+                    <table class="sad-table">
+                         <thead><tr><th>Service</th><th>Kategori</th><th>Harga</th><th>Durasi</th><th>Status</th><th>Diperbarui</th></tr></thead>
+                         <tbody>
+                              @forelse ($services->take(5) as $service)
+                                   @php $serviceStatus = strtolower((string) data_get($service, 'status', 'inactive')); @endphp
+                                   <tr>
+                                        <td><span class="sad-unit-name">{{ data_get($service, 'name', 'Tanpa nama') }}</span><span class="sad-unit-code">{{ data_get($service, 'service_code', '-') }}</span></td>
+                                        <td>{{ data_get($service, 'category_name', 'Tanpa kategori') }}</td>
+                                        <td><span class="sad-leader">Rp {{ number_format((float) data_get($service, 'base_price', 0), 0, ',', '.') }}</span><span class="sad-updated">/ {{ data_get($service, 'unit', 'service') }}</span></td>
+                                        <td>{{ data_get($service, 'estimated_duration_minutes') ? data_get($service, 'estimated_duration_minutes') . ' menit' : '-' }}</td>
+                                        <td><span class="sad-badge {{ $serviceStatus === 'active' ? 'success' : 'danger' }}">{{ $serviceStatus === 'active' ? 'Aktif' : 'Tidak Aktif' }}</span></td>
+                                        <td>{{ optional(data_get($service, 'updated_at'))->format('d M Y') ?? '-' }}</td>
+                                   </tr>
+                              @empty
+                                   <tr><td colspan="6"><div class="sad-empty-state is-visible"><i data-feather="briefcase"></i><h4>Service belum tersedia</h4><p>Tambahkan service untuk menampilkannya di dashboard.</p></div></td></tr>
+                              @endforelse
+                         </tbody>
+                    </table>
+               </div>
+          </section>
 
           <section class="sad-main-grid">
                {{-- Grafik bobot indikator --}}

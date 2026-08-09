@@ -14,7 +14,8 @@ class EnsureUserIsActive
     ): Response {
         $user = $request->user();
 
-        if ($user === null || $user->status !== 'active') {
+if ($user === null || ! $user->isActive()) {
+
             Auth::logout();
 
             $request->session()->invalidate();

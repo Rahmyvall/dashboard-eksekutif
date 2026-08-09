@@ -1,448 +1,232 @@
 <?php
 
-declare (strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    use HasApiTokens;
-    use HasFactory;
-    use Notifiable;
-    use SoftDeletes;
-
-    /*
-    |--------------------------------------------------------------------------
-    | ROLE CONSTANT
-    |--------------------------------------------------------------------------
-    */
+    protected $guard_name = 'web';
+    protected $table = 'users';
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
-
     public const ROLE_DIREKTUR_UTAMA = 'direktur_utama';
-
     public const ROLE_HRD = 'hrd_manager';
-
     public const ROLE_MANAGER_DEPARTEMEN = 'manager_departemen';
-
     public const ROLE_KARYAWAN = 'karyawan';
-
     public const ROLE_ADMIN_PELAYANAN = 'admin_pelayanan';
-
     public const ROLE_ADMIN_OPERASIONAL = 'admin_operasional';
-
-    public const ROLE_KEUANGAN = 'finance_staff';
-
+    public const ROLE_FINANCE_STAFF = 'finance_staff';
     public const ROLE_AUDITOR = 'auditor_internal';
 
-    /*
-    |--------------------------------------------------------------------------
-    | STATUS
-    |--------------------------------------------------------------------------
-    */
-
     public const STATUS_ACTIVE = 'active';
-
     public const STATUS_INACTIVE = 'inactive';
-
     public const STATUS_SUSPENDED = 'suspended';
 
-    /*
-    |--------------------------------------------------------------------------
-    | Fillable
-    |--------------------------------------------------------------------------
-    */
-
     protected $fillable = [
-
         'name',
-
+        'username',
         'email',
-
         'password',
-
+        'phone',
+        'photo',
         'status',
-
+        'role_id',
+        'role',
+        'position_id',
+        'is_active',
         'last_login_at',
-
         'last_login_ip',
-
     ];
 
     protected $hidden = [
-
         'password',
-
         'remember_token',
-
     ];
-
-    protected $attributes = [
-
-        'status' => self::STATUS_ACTIVE,
-
-    ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cast
-    |--------------------------------------------------------------------------
-    */
 
     protected function casts(): array
     {
-
         return [
-
             'email_verified_at' => 'datetime',
-
-            'last_login_at'     => 'datetime',
-
-            // jangan pakai hashed jika insert password via SQL
-            // 'password' => 'hashed',
-
+            'last_login_at' => 'datetime',
+            'is_active' => 'boolean',
+            'password' => 'hashed',
         ];
-
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Email Mutator
-    |--------------------------------------------------------------------------
-    */
-
-    protected function email(): Attribute
-    {
-
-        return Attribute::make(
-
-            set: fn($value) =>
-            strtolower(trim($value))
-
-        );
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationship Role
-    |--------------------------------------------------------------------------
-    */
 
     public function roles(): BelongsToMany
     {
-
-        return $this->belongsToMany(
-
-            Role::class,
-
-            'role_user',
-
-            'user_id',
-
-            'role_id'
-
-        )
-
+        return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id')
             ->withTimestamps();
-
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Status Checking
-    |--------------------------------------------------------------------------
-    */
-
-    public function isActive(): bool
+    public function getRoleNames(): \Illuminate\Support\Collection
     {
-
-        return $this->status === self::STATUS_ACTIVE;
-
+        return $this->roles()->pluck('roles.name');
     }
 
-    public function isInactive(): bool
+    public function hasRole(string|array $roles): bool
     {
+        $aliases = [
+            'super_admin' => ['super_admin', 'super administrator', 'superadministrator'],
+            'direktur_utama' => ['direktur_utama', 'direktur utama', 'direkturutama', 'executive'],
+            'hrd_manager' => ['hrd_manager', 'hrd manager', 'hrdmanager', 'hr'],
+            'manager_departemen' => ['manager_departemen', 'manager departemen', 'managerdepartemen'],
+            'karyawan' => ['karyawan', 'pegawai', 'employee'],
+            'admin_pelayanan' => ['admin_pelayanan', 'admin pelayanan'],
+            'admin_operasional' => ['admin_operasional', 'admin operasional'],
+            'finance_staff' => ['finance_staff', 'finance staff', 'finance'],
+            'auditor_internal' => ['auditor_internal', 'auditor internal', 'auditor'],
+        ];
 
-        return $this->status === self::STATUS_INACTIVE;
-
-    }
-
-    public function isSuspended(): bool
-    {
-
-        return $this->status === self::STATUS_SUSPENDED;
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | ROLE CHECK
-    |--------------------------------------------------------------------------
-    */
-
-    public function hasRole(
-        string | array $roles
-    ): bool {
+        $normalizedRoles = collect((array) $roles)
+            ->map(fn(string $role): string => $this->normalizeRoleName($role))
+            ->flatMap(fn(string $role): array => $aliases[$role] ?? [$role])
+            ->map(fn(string $role): string => $this->normalizeRoleName($role))
+            ->unique()
+            ->values()
+            ->all();
 
         return $this->roles()
-
-            ->whereIn(
-
-                'roles.name',
-
-                (array) $roles
-
-            )
-
+            ->whereIn('roles.name', $normalizedRoles)
             ->exists();
-
     }
 
-    public function hasAnyRole(
-        string | array $roles
-    ): bool {
+    private function normalizeRoleName(string $role): string
+    {
+        return strtolower(str_replace(['-', ' '], '_', trim($role)));
+    }
 
-        return $this->roles()
-
-            ->whereIn(
-
-                'roles.name',
-
-                (array) $roles
-
-            )
-
-            ->exists();
-
+    public function hasAnyRole(string|array $roles): bool
+    {
+        return $this->hasRole($roles);
     }
 
     public function isSuperAdmin(): bool
     {
-
-        return $this->hasRole(
-            self::ROLE_SUPER_ADMIN
-        );
-
+        return $this->hasRole(self::ROLE_SUPER_ADMIN);
     }
 
     public function isDirekturUtama(): bool
     {
-
-        return $this->hasRole(
-            self::ROLE_DIREKTUR_UTAMA
-        );
-
+        return $this->hasRole(self::ROLE_DIREKTUR_UTAMA);
     }
 
     public function isHrd(): bool
     {
+        return $this->hasRole(self::ROLE_HRD);
+    }
 
-        return $this->hasRole(
-            self::ROLE_HRD
-        );
+    public function isManagerDepartemen(): bool
+    {
+        return $this->hasRole(self::ROLE_MANAGER_DEPARTEMEN);
+    }
 
+    public function isKaryawan(): bool
+    {
+        return $this->hasRole(self::ROLE_KARYAWAN);
+    }
+
+    public function isAdminPelayanan(): bool
+    {
+        return $this->hasRole(self::ROLE_ADMIN_PELAYANAN);
+    }
+
+    public function isAdminOperasional(): bool
+    {
+        return $this->hasRole(self::ROLE_ADMIN_OPERASIONAL);
+    }
+
+    public function isFinanceStaff(): bool
+    {
+        return $this->hasRole(self::ROLE_FINANCE_STAFF);
     }
 
     public function isAuditor(): bool
     {
-
-        return $this->hasRole(
-            self::ROLE_AUDITOR
-        );
-
+        return $this->hasRole(self::ROLE_AUDITOR);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Active Role Session
-    |--------------------------------------------------------------------------
-    */
 
     public function activeRole(): ?Role
     {
-
-        $roleId = session(
-            'active_role_id'
-        );
+        $roleId = session('active_role_id');
 
         if (! $roleId) {
-
             return null;
-
         }
 
-        return $this->roles()
-
-            ->where(
-
-                'roles.id',
-
-                $roleId
-
-            )
-
-            ->first();
-
+        return $this->roles()->whereKey($roleId)->first();
     }
 
     public function activeRoleName(): ?string
     {
-
-        return session(
-            'active_role_name'
-        );
-
+        return session('active_role_name');
     }
 
-    public function hasActiveRole(
-        string | array $roles
-    ): bool {
-
-        return in_array(
-
-            $this->activeRoleName(),
-
-            (array) $roles,
-
-            true
-
-        );
-
+    public function checkPassword(string $password): bool
+    {
+        return ! empty($this->password) && Hash::check($password, $this->password);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Permission
-    |--------------------------------------------------------------------------
-    */
-
-    public function hasPermission(
-        string $permission
-    ): bool {
-
-        return false;
-
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE
+            && $this->is_active !== false;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Dashboard Access
-    |--------------------------------------------------------------------------
-    */
+    public function isInactive(): bool
+    {
+        return $this->status === self::STATUS_INACTIVE;
+    }
+
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class, 'user_id');
+    }
 
     public function canAccessDashboard(): bool
     {
-
-        return $this->isActive()
-
-        &&
-
-        $this->roles()->exists();
-
+        return $this->isActive() && $this->roles()->exists();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Scope
-    |--------------------------------------------------------------------------
-    */
-
-    public function scopeActive(
-        Builder $query
-    ): Builder {
-
-        return $query->where(
-
-            'status',
-
-            self::STATUS_ACTIVE
-
-        );
-
-    }
-
-    public function scopeByRole(
-        Builder $query,
-        string | array $roles
-    ): Builder {
-
-        return $query->whereHas(
-
-            'roles',
-
-            function ($q) use ($roles) {
-
-                $q->whereIn(
-
-                    'roles.name',
-
-                    (array) $roles
-
-                );
-
-            }
-
-        );
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Login Update
-    |--------------------------------------------------------------------------
-    */
-
-    public function updateLoginInfo(): void
+    public function scopeActive(Builder $query): Builder
     {
+        return $query->where('status', self::STATUS_ACTIVE);
+    }
 
-        $this->update([
-
-            'last_login_at' => now(),
-
-            'last_login_ip' => request()->ip(),
-
-        ]);
-
+    public function scopeByRole(Builder $query, string|array $roles): Builder
+    {
+        return $query->whereHas('roles', function (Builder $query) use ($roles): void {
+            $query->whereIn('roles.name', (array) $roles);
+        });
     }
 
     public static function statuses(): array
     {
-
         return [
-
             self::STATUS_ACTIVE,
-
             self::STATUS_INACTIVE,
-
             self::STATUS_SUSPENDED,
-
         ];
-
     }
 
-    public function managedBranch()
+    public function markLogin(): void
     {
-        return $this->hasOne(
-            Branch::class,
-            'manager_id',
-            'id'
-        );
+        $this->update([
+            'last_login_at' => now(),
+            'last_login_ip' => request()->ip(),
+        ]);
     }
-
-    public function employee()
-    {
-        return $this->hasOne(Employee::class);
-    }
-
 }

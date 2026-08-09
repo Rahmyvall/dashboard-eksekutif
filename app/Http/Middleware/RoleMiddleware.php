@@ -1,60 +1,72 @@
 <?php
 
-declare (strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
-    /**
-     * Memastikan pengguna memiliki setidaknya satu role yang diizinkan.
-     *
-     * Mendukung:
-     * role:super_admin
-     * role:super_admin,direktur_utama
-     * role:super_admin|direktur_utama
-     */
+    private array $roleAliases = [
+        'super_admin' => ['super_admin', 'super administrator', 'superadministrator'],
+        'direktur_utama' => ['direktur_utama', 'direktur utama', 'direkturutama', 'executive'],
+        'hrd_manager' => ['hrd_manager', 'hrd manager', 'hrdmanager'],
+        'manager_departemen' => ['manager_departemen', 'manager departemen', 'managerdepartemen'],
+        'karyawan' => ['karyawan'],
+        'admin_pelayanan' => ['admin_pelayanan', 'admin pelayanan'],
+        'admin_operasional' => ['admin_operasional', 'admin operasional'],
+        'finance_staff' => ['finance_staff', 'finance staff'],
+        'auditor_internal' => ['auditor_internal', 'auditor internal'],
+    ];
+
     public function handle(
         Request $request,
         Closure $next,
         string ...$roles
     ): Response {
-        /** @var User|null $user */
         $user = $request->user();
 
-        abort_if(
-            $user === null,
-            401,
-            'Anda harus login terlebih dahulu.'
-        );
+        abort_if(! $user, 401, 'Anda harus login terlebih dahulu.');
 
         $allowedRoles = collect($roles)
-            ->flatMap(static function (string $role): array {
+            ->flatMap(function (string $role): array {
                 return preg_split('/[|,]/', $role) ?: [];
             })
-            ->map(static fn(string $role): string => trim($role))
-            ->filter(static fn(string $role): bool => $role !== '')
-            ->unique()
+            ->map(fn(string $role): string => $this->normalize($role))
+            ->filter()
             ->values()
-            ->all();
+            ->toArray();
 
-        abort_if(
-            $allowedRoles === [],
-            403,
-            'Role yang diizinkan belum dikonfigurasi.'
-        );
+        abort_if(empty($allowedRoles), 403, 'Role belum dikonfigurasi.');
 
-        abort_unless(
-            $user->hasAnyRole($allowedRoles),
-            403,
-            'Anda tidak memiliki akses ke halaman ini.'
-        );
+        if (in_array('all', $allowedRoles, true) || in_array('*', $allowedRoles, true)) {
+            return $next($request);
+        }
 
-        return $next($request);
+        $userRoles = $user->getRoleNames()
+            ->map(fn(string $role): string => $this->normalize($role))
+            ->toArray();
+
+        foreach ($allowedRoles as $allowedRole) {
+            $aliases = $this->roleAliases[$allowedRole] ?? [$allowedRole];
+            $normalizedAliases = array_map(
+                fn(string $alias): string => $this->normalize($alias),
+                $aliases
+            );
+
+            if (array_intersect($userRoles, $normalizedAliases) !== []) {
+                return $next($request);
+            }
+        }
+
+        abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+    }
+
+    private function normalize(string $role): string
+    {
+        return strtolower(str_replace(['-', ' '], '_', trim($role)));
     }
 }

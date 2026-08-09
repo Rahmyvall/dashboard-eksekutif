@@ -9,6 +9,8 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -19,7 +21,8 @@ class DashboardController extends Controller
 {
     public function index(): ViewContract
     {
-        $currentUser = auth()->user();
+$currentUser = Auth::user();
+
 
         $activeRoleName  = $this->resolveActiveRoleName($currentUser);
         $activeRoleLabel = Str::of($activeRoleName)
@@ -31,6 +34,8 @@ class DashboardController extends Controller
         $performancePeriods    = $this->getPerformancePeriods();
         $performanceIndicators = $this->getPerformanceIndicators();
         $serviceCategories     = $this->getServiceCategories();
+$services = $this->getServices();
+
 
         $branchSummary            = $this->buildBranchSummary();
         $performancePeriodSummary = $this->buildPerformancePeriodSummary();
@@ -41,6 +46,8 @@ class DashboardController extends Controller
         $indicatorDirectionSummary = $this->buildIndicatorDirectionSummary();
 
         $serviceCategorySummary = $this->buildServiceCategorySummary();
+$serviceSummary = $this->buildServiceSummary();
+
         $departmentSummary      = $this->buildDepartmentSummary();
         $roleSummary            = $this->buildRoleSummary();
 
@@ -51,6 +58,8 @@ class DashboardController extends Controller
         $performancePeriodsUrl    = $this->routeUrl('super-admin.performance-periods.index');
         $performanceIndicatorsUrl = $this->routeUrl('super-admin.performance-indicators.index');
         $serviceCategoriesUrl     = $this->routeUrl('super-admin.service-categories.index');
+$servicesUrl = $this->routeUrl('super-admin.services.index');
+
 
         $monitoringPriorities = $this->buildMonitoringPriorities(
             branchSummary: $branchSummary,
@@ -90,11 +99,15 @@ class DashboardController extends Controller
             'performancePeriodsUrl'     => $performancePeriodsUrl,
             'performanceIndicatorsUrl'  => $performanceIndicatorsUrl,
             'serviceCategoriesUrl'      => $serviceCategoriesUrl,
+'servicesUrl' => $servicesUrl,
+
 
             'positions'                 => $positions,
             'performancePeriods'        => $performancePeriods,
             'performanceIndicators'     => $performanceIndicators,
             'serviceCategories'         => $serviceCategories,
+'services' => $services,
+
 
             'branchSummary'             => $branchSummary,
             'branchAngle'               => $branchAngle,
@@ -108,6 +121,8 @@ class DashboardController extends Controller
             'indicatorAngle'            => $indicatorAngle,
 
             'serviceCategorySummary'    => $serviceCategorySummary,
+'serviceSummary' => $serviceSummary,
+
             'departmentSummary'         => $departmentSummary,
             'roleSummary'               => $roleSummary,
             'monitoringPriorities'      => $monitoringPriorities,
@@ -156,6 +171,31 @@ class DashboardController extends Controller
             onlyNotDeleted: true,
         );
     }
+
+    private function getServices(): Collection
+    {
+        $services = $this->getTableRows(
+        table: 'services',
+        preferredOrderColumns: ['updated_at', 'created_at', 'id'],
+        limit: 50,
+        dateColumns: ['created_at', 'updated_at', 'deleted_at'],
+        onlyNotDeleted: true,
+    );
+
+    if ($services->isEmpty() || ! Schema::hasTable('service_categories')) {
+        return $services;
+    }
+
+    $categoryNames = DB::table('service_categories')
+        ->whereIn('id', $services->pluck('service_category_id')->filter()->all())
+        ->pluck('name', 'id');
+
+    return $services->map(function (object $service) use ($categoryNames): object {
+        $service->category_name = $categoryNames[(int) ($service->service_category_id ?? 0)] ?? 'Tanpa kategori';
+
+        return $service;
+    });
+}
 
     private function buildBranchSummary(): array
     {
@@ -459,6 +499,34 @@ class DashboardController extends Controller
             'active_percentage' => $this->percentage($active, $total),
         ];
     }
+
+    private function buildServiceSummary(): array
+    {
+        if (! Schema::hasTable('services')) {
+            return [
+                'total'             => 0,
+                'active'            => 0,
+                'inactive'          => 0,
+                'active_percentage' => 0.0,
+                'average_price'     => 0.0,
+            ];
+        }
+
+        $total        = $this->countRows('services');
+    $active       = $this->countByStatus('services', 'active');
+    $inactive     = $this->countByStatus('services', 'inactive');
+    $averagePrice = (float) DB::table('services')
+        ->whereNull('deleted_at')
+        ->avg('base_price');
+
+    return [
+        'total'             => $total,
+        'active'            => $active,
+        'inactive'          => $inactive,
+        'active_percentage' => $this->percentage($active, $total),
+        'average_price'     => $averagePrice,
+    ];
+}
 
     private function buildDepartmentSummary(): Collection
     {
@@ -847,44 +915,87 @@ class DashboardController extends Controller
     private function resolveActiveRoleName(mixed $user): string
     {
         if ($user === null) {
-            return 'super_admin';
+
+return 'Super Administrator';
+
         }
 
         try {
+
+// Spatie Permission
+
             if (method_exists($user, 'getRoleNames')) {
+
                 $role = $user->getRoleNames()->first();
 
-                if (is_string($role) && $role !== '') {
-                    return $role;
+if (is_string($role) && trim($role) !== '') {
+
+    return trim($role);
+
                 }
             }
+
         } catch (Throwable) {
-            // Fallback ke kolom/relation lain.
+
         }
 
-        foreach (['active_role', 'role', 'role_name'] as $field) {
+// Jika menggunakan kolom role langsung
+foreach (
+    [
+        'active_role',
+        'role',
+        'role_name',
+    ] as $field
+) {
+
             $value = data_get($user, $field);
 
-            if (is_string($value) && trim($value) !== '') {
+if (
+    is_string($value)
+    && trim($value) !== ''
+) {
+
                 return trim($value);
+
             }
+
         }
+
+// Jika relation roles tersedia
 
         try {
+
             $roles = data_get($user, 'roles');
 
-            if ($roles instanceof Collection && $roles->isNotEmpty()) {
-                $roleName = data_get($roles->first(), 'name');
+if (
+    $roles instanceof Collection
+    && $roles->isNotEmpty()
+) {
 
-                if (is_string($roleName) && $roleName !== '') {
-                    return $roleName;
+
+
+$roleName = data_get(
+    $roles->first(),
+    'name'
+);
+
+if (
+    is_string($roleName)
+    && $roleName !== ''
+) {
+
+    return trim($roleName);
+
                 }
+
             }
+
         } catch (Throwable) {
-            // Gunakan default.
+
         }
 
-        return 'super_admin';
+return 'Super Administrator';
+
     }
 
     private function roleIcon(string $roleName): string
@@ -902,18 +1013,47 @@ class DashboardController extends Controller
 
     private function resolveDashboardView(): string
     {
-        foreach (
-            [
-                'dashboard.super-admin',
-                'dashboards.super-admin',
-                'super-admin',
-            ] as $viewName
-        ) {
-            if (View::exists($viewName)) {
-                return $viewName;
-            }
-        }
+$role = Str::lower(
+    $this->resolveActiveRoleName(Auth::user())
+);
 
-        return 'dashboard.super-admin';
-    }
+// normalisasi role
+$role = str_replace(
+    [' ', '-', '_'],
+    '',
+    $role
+);
+
+return match (true) {
+
+    Str::contains($role, 'superadministrator')
+    || Str::contains($role, 'superadmin')
+    || Str::contains($role, 'super')         => 'dashboards.super-admin',
+
+    Str::contains($role, 'direktur')         => 'dashboards.direktur-utama',
+
+    Str::contains($role, 'hrd')              => 'dashboards.hrd',
+
+    Str::contains($role, 'manager')          => 'dashboards.manager-departemen',
+
+    Str::contains($role, 'karyawan')         => 'dashboards.karyawan',
+
+    Str::contains($role, 'adminpelayanan')   => 'dashboards.admin-pelayanan',
+
+    Str::contains($role, 'adminoperasional') => 'dashboards.admin-operasional',
+
+    Str::contains($role, 'auditor')          => 'dashboards.auditor',
+
+    Str::contains($role, 'keuangan')         => 'dashboards.keuangan',
+
+    default
+                                             => 'dashboards.super-admin',
+};
+}
+
+
+
+
+
+
 }

@@ -41,45 +41,54 @@
          ->replaceMatches('/_+/', '_')
          ->toString();
 
-     $roleAliases = [
-         'superadmin' => 'super_admin',
-         'super_admin' => 'super_admin',
+    $roleAliases = [
 
-         'direktur' => 'direktur_utama',
-         'direktur_utama' => 'direktur_utama',
-         'executive' => 'direktur_utama',
+    // SUPER ADMIN
+    'superadmin' => 'super_admin',
+    'super_admin' => 'super_admin',
+    'super_administrator' => 'super_admin',
+    'super administrator' => 'super_admin',
+    'administrator' => 'super_admin',
 
-         'hrd' => 'hrd_manager',
-         'hr' => 'hrd_manager',
-         'human_resource' => 'hrd_manager',
-         'human_resources' => 'hrd_manager',
-         'hrd_manager' => 'hrd_manager',
+    // DIREKTUR
+    'direktur' => 'direktur_utama',
+    'direktur_utama' => 'direktur_utama',
+    'direktur utama' => 'direktur_utama',
+    'executive' => 'direktur_utama',
 
-         'manager' => 'manager_departemen',
-         'manager_department' => 'manager_departemen',
-         'manager_departemen' => 'manager_departemen',
+    // HRD
+    'hrd' => 'hrd_manager',
+    'hrd_manager' => 'hrd_manager',
+    'hrd manager' => 'hrd_manager',
 
-         'pegawai' => 'karyawan',
-         'employee' => 'karyawan',
-         'karyawan' => 'karyawan',
+    // MANAGER
+    'manager' => 'manager_departemen',
+    'manager_departemen' => 'manager_departemen',
+    'manager departemen' => 'manager_departemen',
 
-         'pelayanan' => 'admin_pelayanan',
-         'admin_service' => 'admin_pelayanan',
-         'admin_pelayanan' => 'admin_pelayanan',
+    // KARYAWAN
+    'karyawan' => 'karyawan',
+    'pegawai' => 'karyawan',
+    'employee' => 'karyawan',
 
-         'operasional' => 'admin_operasional',
-         'admin_operation' => 'admin_operasional',
-         'admin_operasional' => 'admin_operasional',
+    // PELAYANAN
+    'admin_pelayanan' => 'admin_pelayanan',
+    'admin pelayanan' => 'admin_pelayanan',
 
-         'keuangan' => 'finance_staff',
-         'financial' => 'finance_staff',
-         'finance' => 'finance_staff',
-         'finance_staff' => 'finance_staff',
+    // OPERASIONAL
+    'admin_operasional' => 'admin_operasional',
+    'admin operasional' => 'admin_operasional',
 
-         'audit' => 'auditor_internal',
-         'auditor' => 'auditor_internal',
-         'auditor_internal' => 'auditor_internal',
-     ];
+    // FINANCE
+    'finance' => 'finance_staff',
+    'finance_staff' => 'finance_staff',
+    'finance staff' => 'finance_staff',
+
+    // AUDITOR
+    'auditor' => 'auditor_internal',
+    'auditor_internal' => 'auditor_internal',
+    'auditor internal' => 'auditor_internal',
+];
 
      $activeRole = $roleAliases[$normalizedRole] ?? $normalizedRole;
 
@@ -346,9 +355,8 @@
          'auditor_internal',
      ]);
 
-     $canAccessServiceProcess = $hasRole([
-         'super_admin',
-         'direktur_utama',
+      $canAccessServiceProcess = $hasRole([
+           'super_admin',
          'manager_departemen',
          'karyawan',
          'admin_pelayanan',
@@ -357,26 +365,23 @@
          'auditor_internal',
      ]);
 
-     $canAccessHrOperations = $hasRole([
-         'super_admin',
-         'direktur_utama',
+      $canAccessHrOperations = $hasRole([
+           'super_admin',
          'hrd_manager',
          'manager_departemen',
          'karyawan',
          'auditor_internal',
      ]);
 
-     $canAccessFinance = $hasRole([
-         'super_admin',
-         'direktur_utama',
+      $canAccessFinance = $hasRole([
+           'super_admin',
          'admin_operasional',
          'finance_staff',
          'auditor_internal',
      ]);
 
-     $canAccessPerformance = $hasRole([
-         'super_admin',
-         'direktur_utama',
+      $canAccessPerformance = $hasRole([
+           'super_admin',
          'hrd_manager',
          'manager_departemen',
          'karyawan',
@@ -384,17 +389,15 @@
          'auditor_internal',
      ]);
 
-     $canAccessCustomerService = $hasRole([
-         'super_admin',
-         'direktur_utama',
+      $canAccessCustomerService = $hasRole([
+           'super_admin',
          'admin_pelayanan',
          'admin_operasional',
          'auditor_internal',
      ]);
 
-     $canAccessReports = $hasRole([
-         'super_admin',
-         'direktur_utama',
+      $canAccessReports = $hasRole([
+           'super_admin',
          'hrd_manager',
          'manager_departemen',
          'admin_pelayanan',
@@ -603,7 +606,7 @@
                                         class="nav-sub-link {{ $routeActive('employment.*', 'employments.*', 'super-admin.employment.*', 'super-admin.employments.*')
                                             ? 'active'
                                             : '' }}">
-                                        Employment
+                                        Data Employment
                                    </a>
                               @endif
 
@@ -614,7 +617,7 @@
                                    </a>
                               @endif
 
-                              @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isAuditor)
+                              @if ($isSuperAdmin || $isPelayanan || $isOperasional || $isAuditor)
                                    <a href="{{ $menuUrl('serviceCategories') }}"
                                         class="nav-sub-link {{ $routeActive('service-categories.*', 'super-admin.service-categories.*') ? 'active' : '' }}">
                                         Kategori Layanan

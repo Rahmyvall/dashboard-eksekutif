@@ -9,7 +9,8 @@ use App\Http\Controllers\Api\PerformancePeriodController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
 use App\Http\Controllers\Api\ServiceCategoryController;
-use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\CustomerController;
+
 use App\Http\Controllers\Api\WorkScheduleController;
 use Illuminate\Support\Facades\Route;
 

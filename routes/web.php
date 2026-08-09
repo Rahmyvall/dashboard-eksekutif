@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\PerformanceIndicatorController;
 use App\Http\Controllers\Admin\PerformancePeriodController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\ServiceController;
+
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WorkScheduleController;
@@ -90,24 +92,10 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/dashboard', function (): RedirectResponse {
-        $user = Auth::user();
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->name('dashboard');
 
-        abort_if($user === null, 401, 'Anda harus login terlebih dahulu.');
 
-        return match (true) {
-            $user->hasRole('super_admin')        => redirect()->route('super-admin.dashboard'),
-            $user->hasRole('direktur_utama')     => redirect()->route('direktur-utama.dashboard'),
-            $user->hasRole('hrd_manager')        => redirect()->route('hrd-manager.dashboard'),
-            $user->hasRole('manager_departemen') => redirect()->route('manager-departemen.dashboard'),
-            $user->hasRole('karyawan')           => redirect()->route('karyawan.dashboard'),
-            $user->hasRole('admin_pelayanan')    => redirect()->route('admin-pelayanan.dashboard'),
-            $user->hasRole('admin_operasional')  => redirect()->route('admin-operasional.dashboard'),
-            $user->hasRole('finance_staff')      => redirect()->route('finance-staff.dashboard'),
-            $user->hasRole('auditor_internal')   => redirect()->route('auditor-internal.dashboard'),
-            default                              => abort(403, 'Role belum memiliki akses dashboard.'),
-        };
-    })->name('dashboard');
 
     /*
     |--------------------------------------------------------------------------
@@ -836,6 +824,36 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
                         ->whereNumber('serviceCategory')
                         ->name('show');
                 });
+
+/*
+            |--------------------------------------------------------------------------
+            | Service Management
+            |--------------------------------------------------------------------------
+            */
+
+Route::prefix('services')
+    ->name('services.')
+    ->controller(ServiceController::class)
+    ->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::patch('/{service}/toggle-status', 'toggleStatus')
+            ->whereNumber('service')
+            ->name('toggle-status');
+        Route::get('/{service}/edit', 'edit')
+            ->whereNumber('service')
+            ->name('edit');
+        Route::match(['put', 'patch'], '/{service}', 'update')
+            ->whereNumber('service')
+            ->name('update');
+        Route::delete('/{service}', 'destroy')
+            ->whereNumber('service')
+            ->name('destroy');
+        Route::get('/{service}', 'show')
+            ->whereNumber('service')
+            ->name('show');
+    });
 
             /*
             |--------------------------------------------------------------------------
