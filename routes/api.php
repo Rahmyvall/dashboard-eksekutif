@@ -10,7 +10,11 @@ use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\InvoiceApiController;
+
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\PaymentApiController;
+
 
 
 use App\Http\Controllers\Api\WorkScheduleController;
@@ -1421,4 +1425,109 @@ Route::prefix('v1/service-categories')
         )
             ->whereNumber('serviceCategory')
             ->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Invoice API
+|--------------------------------------------------------------------------
+|
+| Base URL : /api/v1/invoices
+|
+| Endpoints:
+| GET    /api/v1/invoices                        → index  (list + filter)
+| POST   /api/v1/invoices                        → store  (buat invoice)
+| GET    /api/v1/invoices/{id}                   → show   (detail)
+| PUT    /api/v1/invoices/{id}                   → update (ubah data)
+| PATCH  /api/v1/invoices/{id}/payment-status    → ubah status bayar
+| DELETE /api/v1/invoices/{id}                   → destroy
+|
+| Query filter index:
+| - search          : invoice_number / order_number
+| - payment_status  : unpaid | partial | paid
+| - from_date       : YYYY-MM-DD
+| - to_date         : YYYY-MM-DD
+| - per_page        : 1-100 (default 15)
+| - sort_by         : id | invoice_number | invoice_date | due_date | total_amount | payment_status | created_at
+| - sort_direction  : asc | desc
+|
+*/
+
+Route::prefix('v1/invoices')
+    ->name('api.v1.invoices.')
+    ->group(function (): void {
+
+        Route::get('/', [InvoiceApiController::class, 'index'])->name('index');
+        Route::post('/', [InvoiceApiController::class, 'store'])->name('store');
+
+        Route::patch(
+            '/{invoice}/payment-status',
+            [InvoiceApiController::class, 'updatePaymentStatus']
+        )->whereNumber('invoice')->name('payment-status');
+
+        Route::get('/{invoice}', [InvoiceApiController::class, 'show'])
+            ->whereNumber('invoice')->name('show');
+        Route::put('/{invoice}', [InvoiceApiController::class, 'update'])
+            ->whereNumber('invoice')->name('update');
+        Route::patch('/{invoice}', [InvoiceApiController::class, 'update'])
+            ->whereNumber('invoice')->name('patch');
+        Route::delete('/{invoice}', [InvoiceApiController::class, 'destroy'])
+            ->whereNumber('invoice')->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Payment API
+|--------------------------------------------------------------------------
+|
+| Base URL : /api/v1/payments
+|
+| Endpoints:
+| GET    /api/v1/payments                    → index   (list + filter)
+| POST   /api/v1/payments                    → store   (catat pembayaran)
+| GET    /api/v1/payments/{id}               → show    (detail)
+| PUT    /api/v1/payments/{id}               → update  (ubah data)
+| PATCH  /api/v1/payments/{id}/confirm       → konfirmasi pembayaran
+| PATCH  /api/v1/payments/{id}/cancel        → batalkan pembayaran
+| GET    /api/v1/payments/summary/{invoice}  → ringkasan per invoice
+| DELETE /api/v1/payments/{id}               → destroy
+|
+| Query filter index:
+| - search           : payment_number / reference_number / order_number
+| - status           : pending | confirmed | cancelled | refunded
+| - payment_method   : cash | transfer | qris | debit | credit | other
+| - invoice_id       : integer
+| - service_order_id : integer
+| - from_date        : YYYY-MM-DD
+| - to_date          : YYYY-MM-DD
+| - per_page         : 1-100 (default 15)
+| - sort_by          : id | payment_number | payment_date | amount | status | payment_method | created_at
+| - sort_direction   : asc | desc
+|
+*/
+
+Route::prefix('v1/payments')
+    ->name('api.v1.payments.')
+    ->group(function (): void {
+
+        // Route statis harus diletakkan sebelum route dengan parameter
+        Route::get('/summary/{invoiceId}', [PaymentApiController::class, 'summary'])
+            ->whereNumber('invoiceId')->name('summary');
+
+        Route::get('/', [PaymentApiController::class, 'index'])->name('index');
+        Route::post('/', [PaymentApiController::class, 'store'])->name('store');
+
+        Route::patch('/{payment}/confirm', [PaymentApiController::class, 'confirm'])
+            ->whereNumber('payment')->name('confirm');
+        Route::patch('/{payment}/cancel', [PaymentApiController::class, 'cancel'])
+            ->whereNumber('payment')->name('cancel');
+
+        Route::get('/{payment}', [PaymentApiController::class, 'show'])
+            ->whereNumber('payment')->name('show');
+        Route::put('/{payment}', [PaymentApiController::class, 'update'])
+            ->whereNumber('payment')->name('update');
+        Route::patch('/{payment}', [PaymentApiController::class, 'update'])
+            ->whereNumber('payment')->name('patch');
+        Route::delete('/{payment}', [PaymentApiController::class, 'destroy'])
+            ->whereNumber('payment')->name('destroy');
     });

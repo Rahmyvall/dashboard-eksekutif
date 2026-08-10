@@ -1040,14 +1040,6 @@
                          <span>Notifikasi</span>
                     </a>
                </li>
-
-               <li class="nav-item">
-                    <a href="{{ $menuUrl('profile') }}"
-                         class="nav-link {{ $routeActive('profile.*') ? 'active' : '' }}">
-                         <i data-feather="user"></i>
-                         <span>Profil Saya</span>
-                    </a>
-               </li>
           </ul>
      </div>
 </div>

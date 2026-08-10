@@ -10,8 +10,8 @@
      </div><!-- header-left -->
 
      <div class="header-right">
-
           <a href="" class="header-help-link"><i data-feather="help-circle"></i></a>
+
           <div class="dropdown dropdown-notification">
                <!-- Theme Toggle -->
                <a href="javascript:void(0);" class="header-help-link" id="themeToggle" data-theme-toggle
@@ -20,7 +20,7 @@
                     <i data-feather="moon" id="themeIcon"></i>
 
                </a>
-               <a href="" class="dropdown-link new" data-toggle="dropdown"><i data-feather="bell"></i></a>
+               <a href="javascript:void(0);" class="dropdown-link new" data-toggle="dropdown"><i data-feather="bell"></i></a>
                <div class="dropdown-menu dropdown-menu-right">
                     <div class="dropdown-menu-header">
                          <h6>Notifications</h6>
@@ -74,7 +74,7 @@
 
           </div>
           <div class="dropdown dropdown-loggeduser">
-               <a href="#" class="dropdown-link" data-toggle="dropdown">
+               <a href="javascript:void(0);" class="dropdown-link" data-toggle="dropdown">
 
                     <div class="avatar avatar-sm">
 

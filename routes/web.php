@@ -6,11 +6,17 @@ use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\InvoiceController;
+
 use App\Http\Controllers\Admin\PerformanceIndicatorController;
 use App\Http\Controllers\Admin\PerformancePeriodController;
+use App\Http\Controllers\Admin\PaymentController;
+
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\Admin\ServiceOrderController;
+
 
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\UserController;
@@ -720,6 +726,74 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                 });
         });
 
+/*
+    |--------------------------------------------------------------------------
+    | Shared Service Finance
+    |--------------------------------------------------------------------------
+    |
+    | Invoice dan payment dapat digunakan oleh finance staff serta role yang
+    | memiliki akses monitoring layanan. Route super-admin di bawah tetap
+    | dipertahankan sebagai URL kompatibilitas menu lama.
+    */
+
+Route::middleware(
+    'role:super_admin|direktur_utama|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
+)->group(function (): void {
+    Route::prefix('invoices')
+        ->name('invoices.')
+        ->controller(InvoiceController::class)
+        ->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::patch('/{invoice}/refresh-status', 'refreshPaymentStatus')
+                ->whereNumber('invoice')
+                ->name('refresh-status');
+            Route::get('/{invoice}/edit', 'edit')
+                ->whereNumber('invoice')
+                ->name('edit');
+            Route::match(['put', 'patch'], '/{invoice}', 'update')
+                ->whereNumber('invoice')
+                ->name('update');
+            Route::delete('/{invoice}', 'destroy')
+                ->whereNumber('invoice')
+                ->name('destroy');
+            Route::get('/{invoice}', 'show')
+                ->whereNumber('invoice')
+                ->name('show');
+        });
+
+    Route::prefix('payments')
+        ->name('payments.')
+        ->controller(PaymentController::class)
+        ->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::post('/{payment}/capture-proof', 'captureProof')
+                ->whereNumber('payment')
+                ->name('capture-proof');
+            Route::get('/{payment}/print', 'print')
+                ->whereNumber('payment')
+                ->name('print');
+            Route::patch('/{payment}/status', 'updateStatus')
+                ->whereNumber('payment')
+                ->name('status');
+            Route::get('/{payment}/edit', 'edit')
+                ->whereNumber('payment')
+                ->name('edit');
+            Route::match(['put', 'patch'], '/{payment}', 'update')
+                ->whereNumber('payment')
+                ->name('update');
+            Route::delete('/{payment}', 'destroy')
+                ->whereNumber('payment')
+                ->name('destroy');
+            Route::get('/{payment}', 'show')
+                ->whereNumber('payment')
+                ->name('show');
+        });
+});
+
     /*
     |--------------------------------------------------------------------------
     | Super Admin
@@ -856,6 +930,84 @@ Route::prefix('services')
             ->name('destroy');
         Route::get('/{service}', 'show')
             ->whereNumber('service')
+            ->name('show');
+    });
+
+Route::prefix('service-orders')
+    ->name('service-orders.')
+    ->controller(ServiceOrderController::class)
+    ->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::patch('/{serviceOrder}/status', 'updateStatus')
+            ->whereNumber('serviceOrder')
+            ->name('status');
+        Route::get('/{serviceOrder}/edit', 'edit')
+            ->whereNumber('serviceOrder')
+            ->name('edit');
+        Route::match(['put', 'patch'], '/{serviceOrder}', 'update')
+            ->whereNumber('serviceOrder')
+            ->name('update');
+        Route::delete('/{serviceOrder}', 'destroy')
+            ->whereNumber('serviceOrder')
+            ->name('destroy');
+        Route::get('/{serviceOrder}', 'show')
+            ->whereNumber('serviceOrder')
+            ->name('show');
+    });
+
+Route::prefix('invoices')
+    ->name('invoices.')
+    ->controller(InvoiceController::class)
+    ->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::patch('/{invoice}/refresh-status', 'refreshPaymentStatus')
+            ->whereNumber('invoice')
+            ->name('refresh-status');
+        Route::get('/{invoice}/edit', 'edit')
+            ->whereNumber('invoice')
+            ->name('edit');
+        Route::match(['put', 'patch'], '/{invoice}', 'update')
+            ->whereNumber('invoice')
+            ->name('update');
+        Route::delete('/{invoice}', 'destroy')
+            ->whereNumber('invoice')
+            ->name('destroy');
+        Route::get('/{invoice}', 'show')
+            ->whereNumber('invoice')
+            ->name('show');
+    });
+
+Route::prefix('payments')
+    ->name('payments.')
+    ->controller(PaymentController::class)
+    ->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::post('/{payment}/capture-proof', 'captureProof')
+            ->whereNumber('payment')
+            ->name('capture-proof');
+        Route::get('/{payment}/print', 'print')
+            ->whereNumber('payment')
+            ->name('print');
+        Route::patch('/{payment}/status', 'updateStatus')
+            ->whereNumber('payment')
+            ->name('status');
+        Route::get('/{payment}/edit', 'edit')
+            ->whereNumber('payment')
+            ->name('edit');
+        Route::match(['put', 'patch'], '/{payment}', 'update')
+            ->whereNumber('payment')
+            ->name('update');
+        Route::delete('/{payment}', 'destroy')
+            ->whereNumber('payment')
+            ->name('destroy');
+        Route::get('/{payment}', 'show')
+            ->whereNumber('payment')
             ->name('show');
     });
 

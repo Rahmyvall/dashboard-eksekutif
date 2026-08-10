@@ -228,5 +228,6 @@ class User extends Authenticatable
             'last_login_at' => now(),
             'last_login_ip' => request()->ip(),
         ]);
-    }
+}
+
 }
