@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Branch Management')
+@section('title', 'Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa')
 
 @section('content')
      <style>
@@ -151,6 +151,41 @@
                color: #4b6870 !important;
                font-size: .93rem;
                line-height: 1.65;
+          }
+
+          .bp-hero-meta {
+               display: grid;
+               grid-template-columns: repeat(3, minmax(0, 1fr));
+               gap: 10px;
+               margin-top: 16px;
+               max-width: 760px;
+          }
+
+          .bp-hero-meta-item {
+               display: flex;
+               align-items: center;
+               justify-content: space-between;
+               gap: 10px;
+               padding: 10px 11px;
+               border: 1px solid rgba(15, 118, 110, .18);
+               border-radius: 12px;
+               background: rgba(255, 255, 255, .72);
+               backdrop-filter: blur(8px);
+          }
+
+          .bp-hero-meta-label {
+               color: #54737a;
+               font-size: .68rem;
+               font-weight: 750;
+               letter-spacing: .04em;
+               text-transform: uppercase;
+          }
+
+          .bp-hero-meta-value {
+               color: #0f766e;
+               font-size: .95rem;
+               font-weight: 850;
+               letter-spacing: -.02em;
           }
 
           .bp-hero-actions {
@@ -413,7 +448,7 @@
           }
 
           .bp-section-title i,
-          .bp-input-wrap > i {
+          .bp-input-wrap>i {
                color: var(--bp-primary);
           }
 
@@ -457,7 +492,7 @@
                position: relative;
           }
 
-          .bp-input-wrap > i {
+          .bp-input-wrap>i {
                position: absolute;
                top: 50%;
                left: 14px;
@@ -1194,6 +1229,10 @@
                     width: 100%;
                }
 
+               .bp-hero-meta {
+                    grid-template-columns: 1fr;
+               }
+
                .bp-hero-actions {
                     display: grid;
                     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1252,6 +1291,7 @@
           }
 
           @media (max-width: 479.98px) {
+
                .bp-stats,
                .bp-hero-actions,
                .bp-mobile-grid,
@@ -1266,6 +1306,7 @@
           }
 
           @media (prefers-reduced-motion: reduce) {
+
                .branches-page *,
                .branches-page *::before,
                .branches-page *::after {
@@ -1329,6 +1370,7 @@
           $hasTrashRoute = $canManageTrash && \Illuminate\Support\Facades\Route::has('branches.trash');
 
           $filterIsActive = request()->filled('search') || request()->filled('status');
+          $pendingApprovalCount = (int) ($stats['pending_approvals'] ?? 0);
      @endphp
 
      <div class="branches-page">
@@ -1368,13 +1410,32 @@
                               <div>
                                    <div class="bp-eyebrow">
                                         <i class="bi bi-grid-fill"></i>
-                                        Data Operasional
+                                        Dashboard Monitoring
                                    </div>
-                                   <h1>Branch Management</h1>
+                                   <h1>Produktivitas Karyawan dan Transaksi Jasa</h1>
                                    <p>
-                                        Pantau dan kelola identitas cabang, kepala cabang, informasi kontak, status operasional,
-                                        serta alur persetujuan berjenjang secara rapi, cepat, dan terkontrol.
+                                        Pantau performa cabang, ritme persetujuan operasional, serta kesinambungan aktivitas
+                                        layanan untuk mendukung produktivitas karyawan dan kualitas transaksi jasa secara
+                                        real-time.
                                    </p>
+
+                                   <div class="bp-hero-meta">
+                                        <div class="bp-hero-meta-item">
+                                             <span class="bp-hero-meta-label">Total Cabang</span>
+                                             <span
+                                                  class="bp-hero-meta-value">{{ number_format($stats['total_branches'] ?? 0) }}</span>
+                                        </div>
+                                        <div class="bp-hero-meta-item">
+                                             <span class="bp-hero-meta-label">Cabang Aktif</span>
+                                             <span
+                                                  class="bp-hero-meta-value">{{ number_format($stats['active_branches'] ?? 0) }}</span>
+                                        </div>
+                                        <div class="bp-hero-meta-item">
+                                             <span class="bp-hero-meta-label">Menunggu Persetujuan</span>
+                                             <span
+                                                  class="bp-hero-meta-value">{{ number_format($pendingApprovalCount) }}</span>
+                                        </div>
+                                   </div>
                               </div>
                          </div>
 
@@ -1454,7 +1515,8 @@
                                    <i class="bi bi-funnel-fill"></i>
                                    Filter Data
                               </h2>
-                              <p class="bp-section-copy">Temukan data berdasarkan kode, nama, email, atau status operasional.</p>
+                              <p class="bp-section-copy">Temukan data berdasarkan kode, nama, email, atau status operasional.
+                              </p>
                          </div>
 
                          @if ($filterIsActive)
@@ -1511,7 +1573,8 @@
                                    <i class="bi bi-list-ul"></i>
                                    Daftar Cabang
                               </h2>
-                              <p class="bp-section-copy">Ringkasan cabang perusahaan beserta status dan proses persetujuannya.</p>
+                              <p class="bp-section-copy">Ringkasan cabang perusahaan beserta status dan proses
+                                   persetujuannya.</p>
                          </div>
                          <span class="bp-chip">
                               <i class="bi bi-database-fill"></i>
@@ -1561,7 +1624,7 @@
                                                   $canApproveCurrentStep =
                                                       $approvalStatus === 'pending' &&
                                                       ($isSuperAdmin || $roleMatchesCurrentStep) &&
-                                                                   ($currentUser?->can('branch.approve', $branch) ?? false) &&
+                                                      ($currentUser?->can('branch.approve', $branch) ?? false) &&
                                                       !$isRequestSubmitter &&
                                                       !$isPreviousApprover &&
                                                       $hasApproveRoute &&
@@ -1572,9 +1635,9 @@
                                                       ($isSuperAdmin || $roleMatchesCurrentStep);
 
                                                   // Ketika masih pending, data dikunci dari edit/hapus.
-                                                              $canModifyThisBranch =
-                                                                   ($currentUser?->can('branch.manage', $branch) ?? false) &&
-                                                                   $approvalStatus !== 'pending';
+                                                  $canModifyThisBranch =
+                                                      ($currentUser?->can('branch.manage', $branch) ?? false) &&
+                                                      $approvalStatus !== 'pending';
                                              @endphp
                                              <tr>
                                                   <td class="text-center">
@@ -1757,7 +1820,7 @@
                                         $canApproveCurrentStep =
                                             $approvalStatus === 'pending' &&
                                             ($isSuperAdmin || $roleMatchesCurrentStep) &&
-                                                       ($currentUser?->can('branch.approve', $branch) ?? false) &&
+                                            ($currentUser?->can('branch.approve', $branch) ?? false) &&
                                             !$isRequestSubmitter &&
                                             !$isPreviousApprover &&
                                             $hasApproveRoute &&
@@ -1766,9 +1829,9 @@
                                         $waitingForMyApproval =
                                             $approvalStatus === 'pending' && ($isSuperAdmin || $roleMatchesCurrentStep);
 
-                                                  $canModifyThisBranch =
-                                                       ($currentUser?->can('branch.manage', $branch) ?? false) &&
-                                                       $approvalStatus !== 'pending';
+                                        $canModifyThisBranch =
+                                            ($currentUser?->can('branch.manage', $branch) ?? false) &&
+                                            $approvalStatus !== 'pending';
                                    @endphp
                                    <article class="bp-mobile-card">
                                         <div class="bp-mobile-top">

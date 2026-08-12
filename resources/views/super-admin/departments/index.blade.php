@@ -1,36 +1,37 @@
 @extends('layouts.app')
 
-@section('title', 'Department Management')
+@section('title', 'Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa')
 
 @section('content')
      <style>
           :root {
-               --dept-primary: #6366f1;
-               --dept-primary-dark: #4f46e5;
-               --dept-secondary: #06b6d4;
-               --dept-purple: #8b5cf6;
-               --dept-pink: #ec4899;
-               --dept-success: #10b981;
-               --dept-warning: #f59e0b;
-               --dept-danger: #ef4444;
-               --dept-text: #24324a;
-               --dept-muted: #718096;
-               --dept-border: #e7eaf3;
+               --dept-primary: #0f766e;
+               --dept-primary-dark: #115e59;
+               --dept-secondary: #0ea5e9;
+               --dept-accent: #2563eb;
+               --dept-success: #15803d;
+               --dept-warning: #b45309;
+               --dept-danger: #be123c;
+               --dept-text: #0f172a;
+               --dept-muted: #64748b;
+               --dept-border: #dbe4e8;
                --dept-white: #ffffff;
-               --dept-soft-blue: #eef7ff;
-               --dept-soft-purple: #f3f0ff;
+               --dept-soft-blue: #eff6ff;
+               --dept-soft-teal: #ecfeff;
                --dept-soft-green: #ecfdf5;
-               --dept-soft-orange: #fff7e8;
+               --dept-soft-orange: #fffbeb;
           }
 
           .department-page {
                min-height: calc(100vh - 70px);
                padding: 30px 18px 44px;
+               color: var(--dept-text);
+               font-family: 'Plus Jakarta Sans', 'Manrope', 'Segoe UI', sans-serif;
                background:
-                    radial-gradient(circle at 5% 5%, rgba(129, 140, 248, .20), transparent 24%),
-                    radial-gradient(circle at 96% 8%, rgba(34, 211, 238, .20), transparent 25%),
-                    radial-gradient(circle at 88% 94%, rgba(244, 114, 182, .14), transparent 22%),
-                    linear-gradient(145deg, #fbfdff 0%, #f7f5ff 46%, #f0fbff 100%);
+                    radial-gradient(circle at 7% 2%, rgba(45, 212, 191, .15), transparent 24%),
+                    radial-gradient(circle at 96% 8%, rgba(56, 189, 248, .18), transparent 25%),
+                    radial-gradient(circle at 88% 94%, rgba(148, 163, 184, .16), transparent 22%),
+                    linear-gradient(145deg, #f7fffd 0%, #f4fbfc 48%, #f2f8fb 100%);
           }
 
           .department-container {
@@ -44,13 +45,14 @@
                overflow: hidden;
                padding: 34px;
                margin-bottom: 22px;
-               color: #ffffff;
-               border: 1px solid rgba(255, 255, 255, .7);
+               color: #173c42;
+               border: 1px solid #b9e8df;
                border-radius: 28px;
                background:
-                    radial-gradient(circle at 88% 16%, rgba(255, 255, 255, .34), transparent 23%),
-                    linear-gradient(120deg, #818cf8 0%, #8b5cf6 42%, #22d3ee 100%);
-               box-shadow: 0 22px 52px rgba(99, 102, 241, .21);
+                    radial-gradient(circle at 90% 12%, rgba(255, 255, 255, .82), transparent 24%),
+                    radial-gradient(circle at 72% 112%, rgba(45, 212, 191, .20), transparent 38%),
+                    linear-gradient(135deg, #fbfffe 0%, #effcf9 38%, #e1f8f3 72%, #d7f4ef 100%);
+               box-shadow: 0 18px 46px rgba(15, 118, 110, .12);
           }
 
           .department-hero::before {
@@ -60,7 +62,7 @@
                width: 215px;
                height: 215px;
                content: '';
-               border: 35px solid rgba(255, 255, 255, .12);
+               border: 1px solid rgba(15, 118, 110, .10);
                border-radius: 50%;
           }
 
@@ -72,7 +74,7 @@
                height: 180px;
                content: '';
                border-radius: 45px;
-               background: rgba(255, 255, 255, .12);
+               background: rgba(20, 184, 166, .11);
                transform: rotate(28deg);
           }
 
@@ -96,29 +98,78 @@
                flex: 0 0 64px;
                width: 64px;
                height: 64px;
-               color: var(--dept-primary-dark);
+               color: #ffffff;
                font-size: 1.75rem;
                align-items: center;
                justify-content: center;
-               border: 1px solid rgba(255, 255, 255, .8);
+               border: 1px solid rgba(15, 118, 110, .12);
                border-radius: 20px;
-               background: rgba(255, 255, 255, .94);
-               box-shadow: 0 14px 28px rgba(76, 29, 149, .16);
+               background: linear-gradient(135deg, #14b8a6, #0f8f83);
+               box-shadow: 0 10px 24px rgba(15, 118, 110, .20);
+          }
+
+          .hero-eyebrow {
+               display: inline-flex;
+               align-items: center;
+               gap: 7px;
+               margin-bottom: 7px;
+               color: #0f766e;
+               font-size: .72rem;
+               font-weight: 800;
+               letter-spacing: .13em;
+               text-transform: uppercase;
           }
 
           .department-hero h1 {
                margin: 0;
-               font-size: clamp(1.7rem, 2.5vw, 2.4rem);
+               color: #12383e;
+               font-size: clamp(1.7rem, 2.7vw, 2.4rem);
                font-weight: 850;
                letter-spacing: -.035em;
+               line-height: 1.12;
           }
 
           .department-hero p {
                max-width: 760px;
                margin: 8px 0 0;
-               color: rgba(255, 255, 255, .94);
+               color: #4b6870;
                font-size: .97rem;
                line-height: 1.7;
+          }
+
+          .hero-meta {
+               display: grid;
+               grid-template-columns: repeat(3, minmax(0, 1fr));
+               gap: 10px;
+               margin-top: 16px;
+               max-width: 760px;
+          }
+
+          .hero-meta-item {
+               display: flex;
+               align-items: center;
+               justify-content: space-between;
+               gap: 10px;
+               padding: 10px 11px;
+               border: 1px solid rgba(15, 118, 110, .18);
+               border-radius: 12px;
+               background: rgba(255, 255, 255, .72);
+               backdrop-filter: blur(8px);
+          }
+
+          .hero-meta-label {
+               color: #54737a;
+               font-size: .68rem;
+               font-weight: 750;
+               letter-spacing: .04em;
+               text-transform: uppercase;
+          }
+
+          .hero-meta-value {
+               color: #0f766e;
+               font-size: .95rem;
+               font-weight: 850;
+               letter-spacing: -.02em;
           }
 
           .hero-actions {
@@ -134,35 +185,35 @@
                gap: 9px;
                align-items: center;
                justify-content: center;
-               color: #4338ca;
+               color: #ffffff;
                font-size: .88rem;
                font-weight: 800;
                text-decoration: none;
                white-space: nowrap;
-               border: 1px solid rgba(255, 255, 255, .8);
+               border: 1px solid #0f8f83;
                border-radius: 14px;
-               background: rgba(255, 255, 255, .95);
-               box-shadow: 0 12px 24px rgba(76, 29, 149, .16);
+               background: linear-gradient(135deg, #14b8a6, #0f8f83);
+               box-shadow: 0 10px 22px rgba(15, 118, 110, .20);
                transition: .22s ease;
           }
 
           .btn-hero:hover {
-               color: #312e81;
-               background: #ffffff;
+               color: #ffffff;
+               background: linear-gradient(135deg, #0f9488, #0f766e);
                transform: translateY(-2px);
-               box-shadow: 0 16px 30px rgba(76, 29, 149, .22);
+               box-shadow: 0 14px 26px rgba(15, 118, 110, .24);
           }
 
           .btn-hero-soft {
-               color: #ffffff;
-               border-color: rgba(255, 255, 255, .38);
-               background: rgba(255, 255, 255, .16);
+               color: #0f766e;
+               border-color: #8ddfd3;
+               background: rgba(255, 255, 255, .84);
                backdrop-filter: blur(10px);
           }
 
           .btn-hero-soft:hover {
-               color: #ffffff;
-               background: rgba(255, 255, 255, .24);
+               color: #0f5f57;
+               background: rgba(255, 255, 255, .98);
           }
 
           /* ALERT */
@@ -319,7 +370,7 @@
                place-items: center;
                color: var(--dept-primary-dark);
                border-radius: 11px;
-               background: var(--dept-soft-purple);
+               background: var(--dept-soft-teal);
           }
 
           .filter-control {
@@ -333,8 +384,8 @@
           }
 
           .filter-control:focus {
-               border-color: #818cf8;
-               box-shadow: 0 0 0 .22rem rgba(99, 102, 241, .11);
+               border-color: #2dd4bf;
+               box-shadow: 0 0 0 .22rem rgba(45, 212, 191, .17);
           }
 
           .search-shell {
@@ -345,7 +396,7 @@
                position: absolute;
                top: 50%;
                left: 15px;
-               color: #818cf8;
+               color: #0f766e;
                transform: translateY(-50%);
           }
 
@@ -377,14 +428,14 @@
           .btn-filter {
                color: #ffffff;
                border: 0;
-               background: linear-gradient(135deg, var(--dept-primary), var(--dept-purple), var(--dept-secondary));
-               box-shadow: 0 10px 21px rgba(99, 102, 241, .22);
+               background: linear-gradient(135deg, var(--dept-primary), #0f8f83, var(--dept-secondary));
+               box-shadow: 0 10px 21px rgba(15, 118, 110, .22);
           }
 
           .btn-filter:hover {
                color: #ffffff;
                transform: translateY(-2px);
-               box-shadow: 0 14px 25px rgba(99, 102, 241, .28);
+               box-shadow: 0 14px 25px rgba(15, 118, 110, .28);
           }
 
           .btn-reset {
@@ -754,8 +805,8 @@
           .pagination-wrapper .page-item.active .page-link {
                color: #ffffff;
                border-color: var(--dept-primary);
-               background: linear-gradient(135deg, var(--dept-primary), var(--dept-purple));
-               box-shadow: 0 7px 15px rgba(99, 102, 241, .25);
+               background: linear-gradient(135deg, var(--dept-primary), #0f8f83);
+               box-shadow: 0 7px 15px rgba(15, 118, 110, .25);
           }
 
           @media (max-width: 991.98px) {
@@ -775,6 +826,10 @@
 
                .hero-actions {
                     width: 100%;
+               }
+
+               .hero-meta {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
                }
 
                .btn-hero {
@@ -811,6 +866,11 @@
 
                .department-hero p {
                     font-size: .87rem;
+               }
+
+               .hero-meta {
+                    grid-template-columns: 1fr;
+                    max-width: 100%;
                }
 
                .hero-actions,
@@ -897,18 +957,38 @@
                               </div>
 
                               <div>
-                                   <h1>Department Management</h1>
+                                   <span class="hero-eyebrow">
+                                        <i class="bi bi-activity"></i>
+                                        Dashboard Monitoring
+                                   </span>
+                                   <h1>Produktivitas Karyawan dan Transaksi Jasa</h1>
                                    <p>
-                                        Kelola kode, nama, deskripsi, dan status department melalui tampilan
-                                        yang ringkas, cerah, serta mudah digunakan.
+                                        Monitor performa tiap departemen, jaga kualitas layanan, dan percepat
+                                        pengambilan keputusan operasional lewat tampilan ringkas yang modern.
                                    </p>
+
+                                   <div class="hero-meta">
+                                        <div class="hero-meta-item">
+                                             <span class="hero-meta-label">Total Department</span>
+                                             <span class="hero-meta-value">{{ $departments->total() }}</span>
+                                        </div>
+                                        <div class="hero-meta-item">
+                                             <span class="hero-meta-label">Aktif di Halaman</span>
+                                             <span class="hero-meta-value">{{ $activeOnPage }}</span>
+                                        </div>
+                                        <div class="hero-meta-item">
+                                             <span class="hero-meta-label">Tidak Aktif</span>
+                                             <span class="hero-meta-value">{{ $inactiveOnPage }}</span>
+                                        </div>
+                                   </div>
                               </div>
                          </div>
 
                          <div class="hero-actions">
                               @if ($canManageDepartments)
                                    @if (Route::has('super-admin.departments.trash'))
-                                        <a href="{{ route('super-admin.departments.trash') }}" class="btn-hero btn-hero-soft">
+                                        <a href="{{ route('super-admin.departments.trash') }}"
+                                             class="btn-hero btn-hero-soft">
                                              <i class="bi bi-trash3-fill"></i>
                                              Data Terhapus
                                         </a>

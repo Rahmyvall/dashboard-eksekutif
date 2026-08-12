@@ -41,56 +41,79 @@
          ->replaceMatches('/_+/', '_')
          ->toString();
 
-    $roleAliases = [
+     $roleAliases = [
+         // SUPER ADMIN
+         'superadmin' => 'super_admin',
+         'super_admin' => 'super_admin',
+         'super_administrator' => 'super_admin',
+         'super administrator' => 'super_admin',
+         'administrator' => 'super_admin',
 
-    // SUPER ADMIN
-    'superadmin' => 'super_admin',
-    'super_admin' => 'super_admin',
-    'super_administrator' => 'super_admin',
-    'super administrator' => 'super_admin',
-    'administrator' => 'super_admin',
+         // DIREKTUR
+         'direktur' => 'direktur_utama',
+         'direktur_utama' => 'direktur_utama',
+         'direkturutama' => 'direktur_utama',
+         'direktur utama' => 'direktur_utama',
+         'executive' => 'direktur_utama',
 
-    // DIREKTUR
-    'direktur' => 'direktur_utama',
-    'direktur_utama' => 'direktur_utama',
-    'direktur utama' => 'direktur_utama',
-    'executive' => 'direktur_utama',
+         // HRD
+         'hrd' => 'hrd_manager',
+         'hrd_manager' => 'hrd_manager',
+         'hrd manager' => 'hrd_manager',
 
-    // HRD
-    'hrd' => 'hrd_manager',
-    'hrd_manager' => 'hrd_manager',
-    'hrd manager' => 'hrd_manager',
+         // MANAGER
+         'manager' => 'manager_departemen',
+         'manager_departemen' => 'manager_departemen',
+         'manager departemen' => 'manager_departemen',
 
-    // MANAGER
-    'manager' => 'manager_departemen',
-    'manager_departemen' => 'manager_departemen',
-    'manager departemen' => 'manager_departemen',
+         // KARYAWAN
+         'karyawan' => 'karyawan',
+         'pegawai' => 'karyawan',
+         'employee' => 'karyawan',
 
-    // KARYAWAN
-    'karyawan' => 'karyawan',
-    'pegawai' => 'karyawan',
-    'employee' => 'karyawan',
+         // PELAYANAN
+         'admin_pelayanan' => 'admin_pelayanan',
+         'admin pelayanan' => 'admin_pelayanan',
 
-    // PELAYANAN
-    'admin_pelayanan' => 'admin_pelayanan',
-    'admin pelayanan' => 'admin_pelayanan',
+         // OPERASIONAL
+         'admin_operasional' => 'admin_operasional',
+         'admin operasional' => 'admin_operasional',
 
-    // OPERASIONAL
-    'admin_operasional' => 'admin_operasional',
-    'admin operasional' => 'admin_operasional',
+         // FINANCE
+         'finance' => 'finance_staff',
+         'finance_staff' => 'finance_staff',
+         'finance staff' => 'finance_staff',
 
-    // FINANCE
-    'finance' => 'finance_staff',
-    'finance_staff' => 'finance_staff',
-    'finance staff' => 'finance_staff',
-
-    // AUDITOR
-    'auditor' => 'auditor_internal',
-    'auditor_internal' => 'auditor_internal',
-    'auditor internal' => 'auditor_internal',
-];
+         // AUDITOR
+         'auditor' => 'auditor_internal',
+         'auditor_internal' => 'auditor_internal',
+         'auditor internal' => 'auditor_internal',
+     ];
 
      $activeRole = $roleAliases[$normalizedRole] ?? $normalizedRole;
+
+     // Fallback ketika role aktif tidak tersimpan konsisten di session.
+     if (
+         !in_array(
+             $activeRole,
+             [
+                 'super_admin',
+                 'direktur_utama',
+                 'hrd_manager',
+                 'manager_departemen',
+                 'karyawan',
+                 'admin_pelayanan',
+                 'admin_operasional',
+                 'finance_staff',
+                 'auditor_internal',
+             ],
+             true,
+         )
+     ) {
+         if (request()->routeIs('direktur-utama.*')) {
+             $activeRole = 'direktur_utama';
+         }
+     }
 
      /*
     |--------------------------------------------------------------------------
@@ -100,6 +123,14 @@
      $hasRole = static function (array $roles) use ($user, $activeRole, $roleAliases): bool {
          if (in_array($activeRole, $roles, true)) {
              return true;
+         }
+
+         if ($user && method_exists($user, 'hasRole')) {
+             foreach ($roles as $role) {
+                 if ($user->hasRole($role)) {
+                     return true;
+                 }
+             }
          }
 
          if (!$user || !method_exists($user, 'getRoleNames')) {
@@ -144,11 +175,47 @@
      $isDirektur = $hasRole(['direktur_utama']);
      $isHrd = $hasRole(['hrd_manager']);
      $isManager = $hasRole(['manager_departemen']);
+     $isManage = $isManager;
      $isKaryawan = $hasRole(['karyawan']);
      $isPelayanan = $hasRole(['admin_pelayanan']);
      $isOperasional = $hasRole(['admin_operasional']);
      $isKeuangan = $hasRole(['finance_staff']);
      $isAuditor = $hasRole(['auditor_internal']);
+
+     // Guard tambahan agar role direktur tetap terbaca saat session active role tidak sinkron.
+     $roleHints = collect([
+         (string) $rawActiveRole,
+         (string) $spatieRole,
+         (string) data_get($user, 'role_name', ''),
+         (string) data_get($user, 'role', ''),
+     ]);
+
+     if ($user && method_exists($user, 'activeRoleName')) {
+         $roleHints->push((string) ($user->activeRoleName() ?? ''));
+     }
+
+     if ($user && method_exists($user, 'activeRole')) {
+         $roleHints->push((string) data_get($user->activeRole(), 'name', ''));
+     }
+
+     if ($user && method_exists($user, 'getRoleNames')) {
+         $roleHints = $roleHints->merge($user->getRoleNames()->all());
+     }
+
+     $roleHintText = $roleHints
+         ->filter(static fn($value): bool => filled($value))
+         ->map(
+             static fn($value): string => \Illuminate\Support\Str::of((string) $value)
+                 ->lower()
+                 ->replace(['-', '_'], ' ')
+                 ->toString(),
+         )
+         ->implode(' ');
+
+     $isDirekturByHint = \Illuminate\Support\Str::contains($roleHintText, ['direktur', 'executive']);
+     $isDirekturRoute = request()->routeIs('direktur-utama.*') || request()->is('direktur-utama/*');
+
+     $isDirektur = $isDirektur || $isDirekturByHint || $isDirekturRoute;
 
      /*
     |--------------------------------------------------------------------------
@@ -232,12 +299,20 @@
          'serviceOrdersCreate' => ['service-orders.create', 'super-admin.service-orders.create'],
          'serviceOrderItems' => ['service-order-items.index', 'super-admin.service-order-items.index'],
          'branchApprovalLogs' => [
+             'branch-approval-log.index',
              'branch-approval-logs.index',
              'super-admin.branch-approval-logs.index',
+             'branches.index',
+             'super-admin.branches.index',
              'service-orders.approvals.index',
          ],
          'workSchedules' => ['super-admin.work-schedules.index', 'work-schedules.index'],
-         'employeeSchedules' => ['employee-schedules.index', 'super-admin.employee-schedules.index'],
+         'employeeSchedules' => [
+             'super-admin.employee-schedules.index',
+             'employee-schedules.index',
+             'super-admin.work-schedules.index',
+             'work-schedules.index',
+         ],
          'employeeSchedulesMine' => [
              'employee-schedules.mine',
              'work-schedules.mine',
@@ -344,69 +419,55 @@
     | HAK AKSES MENU
     |--------------------------------------------------------------------------
     */
-     $canAccessMasterData = $hasRole([
-         'super_admin',
-         'direktur_utama',
-         'hrd_manager',
-         'manager_departemen',
-         'admin_pelayanan',
-         'admin_operasional',
-         'finance_staff',
-         'auditor_internal',
-     ]);
+     $canAccessMasterData =
+         $isSuperAdmin ||
+         $isDirektur ||
+         $isHrd ||
+         $isManager ||
+         $isPelayanan ||
+         $isOperasional ||
+         $isKeuangan ||
+         $isAuditor;
 
-      $canAccessServiceProcess = $hasRole([
-           'super_admin',
-         'manager_departemen',
-         'karyawan',
-         'admin_pelayanan',
-         'admin_operasional',
-         'finance_staff',
-         'auditor_internal',
-     ]);
+     $canAccessServiceProcess =
+         $isSuperAdmin ||
+         $isDirektur ||
+         $isManager ||
+         $isKaryawan ||
+         $isPelayanan ||
+         $isOperasional ||
+         $isKeuangan ||
+         $isAuditor;
 
-      $canAccessHrOperations = $hasRole([
-           'super_admin',
-         'hrd_manager',
-         'manager_departemen',
-         'karyawan',
-         'auditor_internal',
-     ]);
+     $canAccessHrOperations = $isSuperAdmin || $isHrd || $isManager || $isKaryawan || $isAuditor;
 
-      $canAccessFinance = $hasRole([
-           'super_admin',
-         'admin_operasional',
-         'finance_staff',
-         'auditor_internal',
-     ]);
+     $canAccessFinance = $isSuperAdmin || $isDirektur || $isOperasional || $isKeuangan || $isAuditor;
 
-      $canAccessPerformance = $hasRole([
-           'super_admin',
-         'hrd_manager',
-         'manager_departemen',
-         'karyawan',
-         'admin_operasional',
-         'auditor_internal',
-     ]);
+     $canAccessPerformance =
+         $isSuperAdmin || $isDirektur || $isHrd || $isManager || $isKaryawan || $isOperasional || $isAuditor;
 
-      $canAccessCustomerService = $hasRole([
-           'super_admin',
-         'admin_pelayanan',
-         'admin_operasional',
-         'auditor_internal',
-     ]);
+     $canAccessCustomerService = $isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isAuditor;
 
-      $canAccessReports = $hasRole([
-           'super_admin',
-         'hrd_manager',
-         'manager_departemen',
-         'admin_pelayanan',
-         'admin_operasional',
-         'finance_staff',
-         'auditor_internal',
-     ]);
+     $canAccessReports =
+         $isSuperAdmin ||
+         $isDirektur ||
+         $isHrd ||
+         $isManager ||
+         $isPelayanan ||
+         $isOperasional ||
+         $isKeuangan ||
+         $isAuditor;
 
-     $canAccessSystem = $hasRole(['super_admin', 'hrd_manager', 'auditor_internal']);
+     $canAccessSystem = $isSuperAdmin || $isHrd || $isAuditor;
+
+     if ($isDirekturRoute || $isDirekturByHint) {
+         $canAccessMasterData = true;
+         $canAccessServiceProcess = true;
+         $canAccessFinance = true;
+         $canAccessPerformance = true;
+         $canAccessCustomerService = true;
+         $canAccessReports = true;
+     }
 
      /*
     |--------------------------------------------------------------------------
@@ -674,14 +735,14 @@
                                         </a>
                                    @endif
 
-                                   @if ($isSuperAdmin || $isDirektur || $isManager || $isOperasional || $isAuditor)
+                                   @if ($isSuperAdmin || $isDirektur || $isManage || $isOperasional || $isAuditor)
                                         <a href="{{ $menuUrl('branchApprovalLogs') }}"
-                                             class="nav-sub-link {{ $routeActive('branch-approval-logs.*', 'super-admin.branch-approval-logs.*', 'service-orders.approvals.*') ? 'active' : '' }}">
+                                             class="nav-sub-link {{ $routeActive('service-orders.approvals.*', 'branches.approve', 'branches.reject') ? 'active' : '' }}">
                                              3. Persetujuan Cabang
                                         </a>
                                    @endif
 
-                                   @if ($isSuperAdmin || $isManager || $isOperasional || $isAuditor)
+                                   @if ($isSuperAdmin || $isManage || $isOperasional || $isAuditor)
                                         <a href="{{ $menuUrl('workSchedules') }}"
                                              class="nav-sub-link {{ $routeActive('work-schedules.*', 'super-admin.work-schedules.*') ? 'active' : '' }}">
                                              4. Jadwal Kerja
@@ -693,7 +754,7 @@
                                         </a>
                                    @endif
 
-                                   @if ($isSuperAdmin || $isManager || $isOperasional || $isAuditor)
+                                   @if ($isSuperAdmin || $isManage || $isOperasional || $isAuditor)
                                         <a href="{{ $menuUrl('employeeActivities') }}"
                                              class="nav-sub-link {{ $routeActive('employee-activities.*', 'super-admin.employee-activities.*') ? 'active' : '' }}">
                                              6. Aktivitas Pekerjaan

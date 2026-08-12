@@ -1366,6 +1366,11 @@
                stroke: #0ea5a4;
           }
 
+          .sad-line-hit-area {
+               fill: transparent;
+               cursor: pointer;
+          }
+
           .sad-line-legend {
                display: flex;
                flex-wrap: wrap;
@@ -2343,10 +2348,10 @@
           }
 
           /* ======================================================================
-                                           HERO BRIGHTNESS PATCH
-                                           Mempertahankan struktur template yang ada dan hanya memperbaiki
-                                           warna hero agar lebih terang, kontras, dan mudah dibaca.
-                                           ====================================================================== */
+                                                HERO BRIGHTNESS PATCH
+                                                Mempertahankan struktur template yang ada dan hanya memperbaiki
+                                                warna hero agar lebih terang, kontras, dan mudah dibaca.
+                                                ====================================================================== */
           .sad-dashboard .sad-hero {
                border-color: rgba(255, 255, 255, 0.34);
                background:
@@ -2773,6 +2778,13 @@
                                              $pointX =
                                                  (float) ($lineInvoicePoints[$index]['x'] ??
                                                      $paddingLeft + $index * $xStep);
+
+                                             $hitWidth = $lineCount > 1 ? $xStep : $plotWidth;
+                                             $hitXRaw = $lineCount > 1 ? $pointX - $xStep / 2 : $paddingLeft;
+                                             $hitX = max($paddingLeft, $hitXRaw);
+                                             $hitEnd = min($svgWidth - $paddingRight, $hitX + $hitWidth);
+                                             $hitFinalWidth = max(8, $hitEnd - $hitX);
+
                                              $invoicePoint = $lineInvoicePoints[$index] ?? [
                                                  'x' => $pointX,
                                                  'y' => $paddingTop + $plotHeight,
@@ -2783,8 +2795,18 @@
                                              ];
                                         @endphp
 
-                                        <text class="sad-line-axis-label" x="{{ $pointX }}" y="{{ $svgHeight - 16 }}"
-                                             text-anchor="middle">{{ $label }}</text>
+                                        <rect class="sad-line-hit-area" x="{{ $hitX }}" y="{{ $paddingTop }}"
+                                             width="{{ $hitFinalWidth }}" height="{{ $plotHeight }}" data-line-hit
+                                             data-month="{{ $label }}"
+                                             data-invoice-amount="{{ (float) ($lineInvoiceTotals[$index] ?? 0) }}"
+                                             data-payment-amount="{{ (float) ($linePaymentTotals[$index] ?? 0) }}"
+                                             data-invoice-count="{{ (int) ($lineInvoiceCounts[$index] ?? 0) }}"
+                                             data-payment-count="{{ (int) ($linePaymentCounts[$index] ?? 0) }}">
+                                             <title>Klik untuk melihat ringkasan {{ $label }}</title>
+                                        </rect>
+
+                                        <text class="sad-line-axis-label" x="{{ $pointX }}"
+                                             y="{{ $svgHeight - 16 }}" text-anchor="middle">{{ $label }}</text>
 
                                         <circle class="sad-line-point-invoice" cx="{{ $invoicePoint['x'] }}"
                                              cy="{{ $invoicePoint['y'] }}" r="4" data-line-point
@@ -3864,6 +3886,8 @@
                     const lineChartPayment = document.getElementById('lineChartClickPayment');
                     const lineChartTotal = document.getElementById('lineChartClickTotal');
                     const lineChartPoints = Array.from(document.querySelectorAll('[data-line-point]'));
+                    const lineChartHitAreas = Array.from(document.querySelectorAll('[data-line-hit]'));
+                    const lineChartClickableNodes = lineChartPoints.concat(lineChartHitAreas);
 
                     function formatCurrency(value) {
                          return new Intl.NumberFormat('id-ID').format(Math.max(0, Number(value) || 0));
@@ -3890,7 +3914,7 @@
                          lineChartTotal.textContent = 'Total Gabungan: Rp ' + formatCurrency(totalAmount);
                     }
 
-                    if (lineChartResult && lineChartPoints.length > 0) {
+                    if (lineChartResult && lineChartClickableNodes.length > 0) {
                          renderLineResult(
                               lineChartResult.dataset.defaultTitle || 'Total Keseluruhan (Semua Bulan)',
                               lineChartResult.dataset.defaultInvoice || 0,
@@ -3899,19 +3923,23 @@
                               lineChartResult.dataset.defaultPaymentCount || 0
                          );
 
-                         lineChartPoints.forEach(function(point) {
-                              point.addEventListener('click', function() {
+                         lineChartClickableNodes.forEach(function(node) {
+                              node.addEventListener('click', function() {
                                    lineChartPoints.forEach(function(item) {
                                         item.classList.remove('is-active');
                                    });
 
-                                   point.classList.add('is-active');
+                                   const month = node.dataset.month || '-';
+                                   lineChartPoints.forEach(function(item) {
+                                        if ((item.dataset.month || '-') === month) {
+                                             item.classList.add('is-active');
+                                        }
+                                   });
 
-                                   const month = point.dataset.month || '-';
-                                   const invoiceAmount = point.dataset.invoiceAmount || 0;
-                                   const paymentAmount = point.dataset.paymentAmount || 0;
-                                   const invoiceCount = point.dataset.invoiceCount || 0;
-                                   const paymentCount = point.dataset.paymentCount || 0;
+                                   const invoiceAmount = node.dataset.invoiceAmount || 0;
+                                   const paymentAmount = node.dataset.paymentAmount || 0;
+                                   const invoiceCount = node.dataset.invoiceCount || 0;
+                                   const paymentCount = node.dataset.paymentCount || 0;
 
                                    renderLineResult(
                                         'Ringkasan Bulan ' + month,

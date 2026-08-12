@@ -21,7 +21,7 @@ class DashboardController extends Controller
 {
     public function index(): ViewContract
     {
-$currentUser = Auth::user();
+        $currentUser = Auth::user();
 
 
         $activeRoleName  = $this->resolveActiveRoleName($currentUser);
@@ -29,6 +29,16 @@ $currentUser = Auth::user();
             ->replace('_', ' ')
             ->upper()
             ->toString();
+
+        $dashboardView = $this->resolveDashboardView();
+
+        if ($dashboardView === 'dashboards.admin-operasional') {
+            return view($dashboardView, [
+                'activeRoleName' => $activeRoleName,
+                'activeRoleLabel' => $activeRoleLabel,
+                ...$this->buildAdminOperasionalDashboardPayload($currentUser),
+            ]);
+        }
 
         $positions             = $this->getPositions();
         $performancePeriods    = $this->getPerformancePeriods();
@@ -91,7 +101,7 @@ $servicesUrl = $this->routeUrl('super-admin.services.index');
             max(0, (float) ($indicatorSummary['active_percentage'] ?? 0) * 3.6)
         );
 
-        return view($this->resolveDashboardView(), [
+        return view($dashboardView, [
             'activeRoleName'            => $activeRoleName,
             'activeRoleLabel'           => $activeRoleLabel,
 
@@ -141,6 +151,335 @@ $servicesUrl = $this->routeUrl('super-admin.services.index');
             preferredOrderColumns: ['updated_at', 'created_at', 'id'],
             limit: 50,
         );
+    }
+
+    private function buildAdminOperasionalDashboardPayload(mixed $currentUser): array
+    {
+        $activeJobs = $this->countByStatus('employee_activities', 'submitted');
+        $completedToday = $this->countTodayByStatus('employee_activities', 'activity_date', 'verified');
+        $delayedJobs = $this->countByStatus('employee_activities', 'rejected');
+
+        $totalBase = max(1, $activeJobs + $completedToday + $delayedJobs);
+        $utilizationPercent = max(0, min(100, (int) round((($activeJobs + $completedToday) / $totalBase) * 100)));
+
+        return [
+            'statistics' => [
+                [
+                    'label' => 'Pekerjaan Aktif',
+                    'value' => $activeJobs,
+                    'suffix' => '',
+                    'icon' => 'activity',
+                    'description' => 'Monitoring pekerjaan operasional saat ini',
+                    'trend' => '+0%',
+                    'trend_type' => 'up',
+                    'theme' => 'orange',
+                ],
+                [
+                    'label' => 'Selesai Hari Ini',
+                    'value' => $completedToday,
+                    'suffix' => '',
+                    'icon' => 'check-circle',
+                    'description' => 'Pekerjaan yang tervalidasi hari ini',
+                    'trend' => '+0%',
+                    'trend_type' => 'up',
+                    'theme' => 'green',
+                ],
+                [
+                    'label' => 'Pekerjaan Tertunda',
+                    'value' => $delayedJobs,
+                    'suffix' => '',
+                    'icon' => 'clock',
+                    'description' => 'Perlu tindak lanjut prioritas',
+                    'trend' => '+0',
+                    'trend_type' => 'down',
+                    'theme' => 'red',
+                ],
+                [
+                    'label' => 'Utilisasi Sumber Daya',
+                    'value' => $utilizationPercent,
+                    'suffix' => '%',
+                    'icon' => 'cpu',
+                    'description' => 'Estimasi berbasis aktivitas operasional',
+                    'trend' => '+0%',
+                    'trend_type' => 'up',
+                    'theme' => 'blue',
+                ],
+            ],
+            'weeklyPerformance' => $this->buildAdminOperasionalWeeklyPerformance(),
+            'operationalPriorities' => $this->buildAdminOperasionalPriorities($activeJobs, $completedToday, $delayedJobs),
+            'operationalSchedules' => $this->buildAdminOperasionalSchedules(),
+            'teamWorkloads' => $this->buildAdminOperasionalTeamWorkloads(),
+            'operationalActivities' => $this->buildAdminOperasionalActivities(),
+            'currentUserName' => (string) (data_get($currentUser, 'name') ?? 'Admin Operasional'),
+        ];
+    }
+
+    private function buildAdminOperasionalWeeklyPerformance(): array
+    {
+        $days = collect(range(6, 0))->map(static function (int $offset): array {
+            $date = now()->subDays($offset);
+
+            return [
+                'date' => $date->toDateString(),
+                'day' => $date->translatedFormat('D'),
+                'full_day' => $date->translatedFormat('l'),
+                'scheduled' => 0,
+                'completed' => 0,
+            ];
+        })->values();
+
+        if (! Schema::hasTable('employee_activities') || ! Schema::hasColumn('employee_activities', 'activity_date')) {
+            return $days->map(static function (array $item): array {
+                unset($item['date']);
+
+                return $item;
+            })->all();
+        }
+
+        $startDate = now()->subDays(6)->toDateString();
+
+        $rows = DB::table('employee_activities')
+            ->select('activity_date')
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN status = 'verified' THEN 1 ELSE 0 END) as completed")
+            ->whereDate('activity_date', '>=', $startDate)
+            ->groupBy('activity_date')
+            ->get();
+
+        $mapped = $rows->keyBy(static fn(object $row): string => (string) data_get($row, 'activity_date'));
+
+        return $days->map(static function (array $item) use ($mapped): array {
+            $row = $mapped->get($item['date']);
+            $item['scheduled'] = (int) (data_get($row, 'total') ?? 0);
+            $item['completed'] = (int) (data_get($row, 'completed') ?? 0);
+            unset($item['date']);
+
+            return $item;
+        })->all();
+    }
+
+    private function buildAdminOperasionalPriorities(int $activeJobs, int $completedToday, int $delayedJobs): array
+    {
+        return [
+            [
+                'title' => 'Pekerjaan tertunda',
+                'description' => $delayedJobs > 0
+                    ? $delayedJobs . ' pekerjaan perlu tindak lanjut segera.'
+                    : 'Tidak ada pekerjaan tertunda untuk saat ini.',
+                'icon' => 'clock',
+                'status' => $delayedJobs > 0 ? 'Mendesak' : 'Aman',
+                'status_class' => $delayedJobs > 0 ? 'danger' : 'success',
+                'action' => 'Tinjau pekerjaan',
+            ],
+            [
+                'title' => 'Pekerjaan aktif',
+                'description' => $activeJobs . ' pekerjaan sedang dalam antrean operasional.',
+                'icon' => 'activity',
+                'status' => $activeJobs >= 10 ? 'Perhatian' : 'Normal',
+                'status_class' => $activeJobs >= 10 ? 'warning' : 'info',
+                'action' => 'Atur distribusi',
+            ],
+            [
+                'title' => 'Pekerjaan selesai hari ini',
+                'description' => $completedToday . ' pekerjaan sudah tervalidasi hari ini.',
+                'icon' => 'check-circle',
+                'status' => $completedToday > 0 ? 'Terjadwal' : 'Menunggu',
+                'status_class' => $completedToday > 0 ? 'info' : 'neutral',
+                'action' => 'Lihat rekap',
+            ],
+            [
+                'title' => 'Sinkronisasi tim',
+                'description' => 'Pastikan koordinasi lintas tim untuk menjaga ketepatan target harian.',
+                'icon' => 'users',
+                'status' => 'Menunggu',
+                'status_class' => 'neutral',
+                'action' => 'Buka koordinasi',
+            ],
+        ];
+    }
+
+    private function buildAdminOperasionalSchedules(): array
+    {
+        if (! Schema::hasTable('employee_activities')) {
+            return [];
+        }
+
+        $query = DB::table('employee_activities');
+
+        if (Schema::hasTable('employees')) {
+            $query->leftJoin('employees', 'employees.id', '=', 'employee_activities.employee_id');
+        }
+
+        if (Schema::hasTable('service_orders')) {
+            $query->leftJoin('service_orders', 'service_orders.id', '=', 'employee_activities.service_order_id');
+        }
+
+        $rows = $query
+            ->select([
+                'employee_activities.id',
+                'employee_activities.activity_name',
+                'employee_activities.status',
+                'employee_activities.activity_date',
+                'employee_activities.start_time',
+                'employee_activities.end_time',
+                'employee_activities.duration_minutes',
+                'employees.full_name as employee_name',
+                'service_orders.order_number as order_number',
+            ])
+            ->orderByDesc('employee_activities.activity_date')
+            ->orderByDesc('employee_activities.id')
+            ->limit(6)
+            ->get();
+
+        return $rows->map(static function (object $row): array {
+            $status = match ((string) data_get($row, 'status')) {
+                'verified' => 'Selesai',
+                'rejected' => 'Tertunda',
+                default => 'Terjadwal',
+            };
+
+            $progress = match ($status) {
+                'Selesai' => 100,
+                'Tertunda' => 10,
+                default => 45,
+            };
+
+            $timeRange = '-';
+            $startTime = data_get($row, 'start_time');
+            $endTime = data_get($row, 'end_time');
+
+            if ($startTime !== null || $endTime !== null) {
+                $timeRange = substr((string) ($startTime ?? '--:--'), 0, 5) . ' - ' . substr((string) ($endTime ?? '--:--'), 0, 5);
+            }
+
+            return [
+                'code' => 'OPR-' . str_pad((string) data_get($row, 'id'), 4, '0', STR_PAD_LEFT),
+                'task' => (string) (data_get($row, 'activity_name') ?? 'Aktivitas operasional'),
+                'category' => 'Operasional',
+                'team' => 'Tim Operasional',
+                'leader' => (string) (data_get($row, 'employee_name') ?? 'Belum ditentukan'),
+                'time' => $timeRange,
+                'location' => (string) (data_get($row, 'order_number') ?? '-'),
+                'progress' => $progress,
+                'status' => $status,
+                'priority' => $status === 'Tertunda' ? 'Mendesak' : 'Normal',
+            ];
+        })->all();
+    }
+
+    private function buildAdminOperasionalTeamWorkloads(): array
+    {
+        if (! Schema::hasTable('employee_activities') || ! Schema::hasTable('employees')) {
+            return [];
+        }
+
+        $rows = DB::table('employee_activities')
+            ->join('employees', 'employees.id', '=', 'employee_activities.employee_id')
+            ->select([
+                'employees.full_name as name',
+            ])
+            ->selectRaw('COUNT(employee_activities.id) as active_jobs')
+            ->groupBy('employees.full_name')
+            ->orderByDesc('active_jobs')
+            ->limit(4)
+            ->get();
+
+        return $rows->map(static function (object $row): array {
+            $activeJobs = (int) (data_get($row, 'active_jobs') ?? 0);
+            $load = max(10, min(100, $activeJobs * 18));
+
+            return [
+                'name' => (string) (data_get($row, 'name') ?? 'Tim Operasional'),
+                'members' => 1,
+                'active_jobs' => $activeJobs,
+                'load' => $load,
+                'status' => $load >= 90 ? 'Tinggi' : 'Normal',
+            ];
+        })->all();
+    }
+
+    private function buildAdminOperasionalActivities(): array
+    {
+        if (! Schema::hasTable('employee_activities')) {
+            return [];
+        }
+
+        $rows = DB::table('employee_activities')
+            ->select([
+                'activity_name',
+                'status',
+                'updated_at',
+            ])
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
+
+        return $rows->map(static function (object $row): array {
+            $status = (string) (data_get($row, 'status') ?? 'submitted');
+
+            $theme = match ($status) {
+                'verified' => 'green',
+                'rejected' => 'red',
+                default => 'blue',
+            };
+
+            $icon = match ($status) {
+                'verified' => 'check-circle',
+                'rejected' => 'alert-triangle',
+                default => 'calendar',
+            };
+
+            $title = match ($status) {
+                'verified' => 'Pekerjaan berhasil diselesaikan',
+                'rejected' => 'Pekerjaan perlu tindak lanjut',
+                default => 'Pekerjaan dijadwalkan/diubah',
+            };
+
+            $updatedAt = data_get($row, 'updated_at');
+            $timeLabel = 'Baru saja';
+
+            if ($updatedAt !== null) {
+                try {
+                    $timeLabel = Carbon::parse((string) $updatedAt)->diffForHumans();
+                } catch (Throwable) {
+                    $timeLabel = 'Baru saja';
+                }
+            }
+
+            return [
+                'title' => $title,
+                'description' => (string) (data_get($row, 'activity_name') ?? 'Aktivitas operasional diperbarui.'),
+                'time' => $timeLabel,
+                'icon' => $icon,
+                'theme' => $theme,
+            ];
+        })->all();
+    }
+
+    private function countTodayByStatus(string $table, string $dateColumn, string $status): int
+    {
+        if (
+            ! Schema::hasTable($table)
+            || ! Schema::hasColumn($table, $dateColumn)
+            || ! Schema::hasColumn($table, 'status')
+        ) {
+            return 0;
+        }
+
+        try {
+            $query = DB::table($table)
+                ->where('status', $status)
+                ->whereDate($dateColumn, now()->toDateString());
+
+            if (Schema::hasColumn($table, 'deleted_at')) {
+                $query->whereNull('deleted_at');
+            }
+
+            return $query->count();
+        } catch (Throwable) {
+            return 0;
+        }
     }
 
     private function getPerformancePeriods(): Collection

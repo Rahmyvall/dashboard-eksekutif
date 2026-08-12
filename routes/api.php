@@ -4,6 +4,7 @@ declare (strict_types = 1);
 
 use App\Http\Controllers\Api\BranchApiController;
 use App\Http\Controllers\Api\DepartmentApiController;
+use App\Http\Controllers\Api\EmployeeActivityController;
 use App\Http\Controllers\Api\PerformanceIndicatorController;
 use App\Http\Controllers\Api\PerformancePeriodController;
 use App\Http\Controllers\Api\PositionController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\InvoiceApiController;
 
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\PaymentApiController;
+use App\Http\Controllers\Api\LookupController;
 
 
 
@@ -1530,4 +1532,54 @@ Route::prefix('v1/payments')
             ->whereNumber('payment')->name('patch');
         Route::delete('/{payment}', [PaymentApiController::class, 'destroy'])
             ->whereNumber('payment')->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Employee Activity API
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/employee-activities')
+    ->name('api.v1.employee-activities.')
+    ->group(function (): void {
+        Route::get('/', [EmployeeActivityController::class, 'index'])->name('index');
+        Route::post('/', [EmployeeActivityController::class, 'store'])->name('store');
+
+        Route::patch('/{employeeActivity}/verify', [EmployeeActivityController::class, 'verify'])
+            ->whereNumber('employeeActivity')->name('verify');
+
+        Route::patch('/{employeeActivity}/cancel-verification', [EmployeeActivityController::class, 'cancelVerification'])
+            ->whereNumber('employeeActivity')->name('cancel-verification');
+
+        Route::get('/{employeeActivity}', [EmployeeActivityController::class, 'show'])
+            ->whereNumber('employeeActivity')->name('show');
+
+        Route::put('/{employeeActivity}', [EmployeeActivityController::class, 'update'])
+            ->whereNumber('employeeActivity')->name('update');
+
+        Route::patch('/{employeeActivity}', [EmployeeActivityController::class, 'update'])
+            ->whereNumber('employeeActivity')->name('patch');
+
+        Route::delete('/{employeeActivity}', [EmployeeActivityController::class, 'destroy'])
+            ->whereNumber('employeeActivity')->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Lookup API
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/lookups')
+    ->name('api.v1.lookups.')
+    ->group(function (): void {
+        Route::get('/employee-activities', [LookupController::class, 'employeeActivityFilters'])
+            ->name('employee-activities');
+        Route::get('/employees', [LookupController::class, 'employees'])
+            ->name('employees');
+        Route::get('/service-orders', [LookupController::class, 'serviceOrders'])
+            ->name('service-orders');
+        Route::get('/employee-activity-statuses', [LookupController::class, 'employeeActivityStatuses'])
+            ->name('employee-activity-statuses');
     });

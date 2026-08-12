@@ -32,6 +32,17 @@
 
           $activeOnPage = $currentCollection->where('status', 'active')->count();
 
+          $inactiveOnPage = $currentPageCount - $activeOnPage;
+
+          $overnightOnPage = $currentCollection
+              ->filter(
+                  static fn($workSchedule) => !blank(data_get($workSchedule, 'start_time')) &&
+                      !blank(data_get($workSchedule, 'end_time')) &&
+                      substr((string) data_get($workSchedule, 'end_time'), 0, 5) <=
+                          substr((string) data_get($workSchedule, 'start_time'), 0, 5),
+              )
+              ->count();
+
           $averageWorkingHours = $currentCollection->isNotEmpty()
               ? round((float) $currentCollection->avg('working_hours'), 2)
               : 0;
@@ -139,8 +150,8 @@
           }
 
           /* ================================================================
-                          HERO
-                       ================================================================= */
+                                    HERO
+                                 ================================================================= */
 
           .schedule-hero {
                position: relative;
@@ -184,8 +195,34 @@
                z-index: 2;
                display: flex;
                gap: 24px;
-               align-items: center;
+               align-items: stretch;
                justify-content: space-between;
+          }
+
+          .schedule-hero-copy {
+               min-width: 0;
+          }
+
+          .schedule-hero-kicker {
+               display: inline-flex;
+               padding: 7px 12px;
+               margin-bottom: 14px;
+               gap: 7px;
+               align-items: center;
+               color: #ffffff;
+               font-size: .72rem;
+               font-weight: 850;
+               letter-spacing: .08em;
+               text-transform: uppercase;
+               border: 1px solid rgba(255, 255, 255, .32);
+               border-radius: 999px;
+               background: rgba(255, 255, 255, .12);
+               backdrop-filter: blur(10px);
+          }
+
+          .schedule-hero-kicker svg {
+               width: 14px;
+               height: 14px;
           }
 
           .schedule-hero-title-wrap {
@@ -229,16 +266,105 @@
                line-height: 1.72;
           }
 
+          .schedule-hero-insights {
+               display: grid;
+               grid-template-columns: repeat(3, minmax(0, 1fr));
+               gap: 12px;
+               margin-top: 22px;
+          }
+
+          .schedule-hero-insight {
+               min-width: 0;
+               padding: 14px 15px;
+               border: 1px solid rgba(255, 255, 255, .18);
+               border-radius: 17px;
+               background: rgba(9, 14, 46, .16);
+               box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
+               backdrop-filter: blur(10px);
+          }
+
+          .schedule-hero-insight-label {
+               display: block;
+               margin-bottom: 6px;
+               color: rgba(255, 255, 255, .72);
+               font-size: .69rem;
+               font-weight: 800;
+               letter-spacing: .07em;
+               text-transform: uppercase;
+          }
+
+          .schedule-hero-insight-value {
+               display: block;
+               color: #ffffff;
+               font-size: 1.28rem;
+               font-weight: 850;
+               letter-spacing: -.03em;
+               line-height: 1.1;
+          }
+
+          .schedule-hero-insight-note {
+               display: block;
+               margin-top: 5px;
+               color: rgba(255, 255, 255, .78);
+               font-size: .75rem;
+          }
+
           .schedule-hero-actions {
                display: flex;
                flex: 0 0 auto;
+               flex-direction: column;
                gap: 10px;
+               align-items: stretch;
+               justify-content: space-between;
+               width: 260px;
+          }
+
+          .schedule-hero-panel {
+               min-width: 240px;
+               padding: 18px;
+               border: 1px solid rgba(255, 255, 255, .18);
+               border-radius: 22px;
+               background: rgba(12, 18, 48, .20);
+               box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+               backdrop-filter: blur(12px);
+          }
+
+          .schedule-hero-panel-title {
+               margin: 0 0 12px;
+               color: #ffffff;
+               font-size: .93rem;
+               font-weight: 820;
+          }
+
+          .schedule-hero-panel-list {
+               display: grid;
+               gap: 10px;
+               margin-bottom: 16px;
+          }
+
+          .schedule-hero-panel-item {
+               display: flex;
                align-items: center;
+               justify-content: space-between;
+               gap: 12px;
+               padding: 10px 12px;
+               color: rgba(255, 255, 255, .9);
+               font-size: .78rem;
+               font-weight: 700;
+               border-radius: 14px;
+               background: rgba(255, 255, 255, .10);
+          }
+
+          .schedule-hero-panel-item strong {
+               color: #ffffff;
+               font-size: .9rem;
+               font-weight: 850;
           }
 
           .schedule-hero-button {
                display: inline-flex;
                min-height: 48px;
+               width: 100%;
                padding: 11px 18px;
                gap: 9px;
                align-items: center;
@@ -281,8 +407,8 @@
           }
 
           /* ================================================================
-                          ALERT
-                       ================================================================= */
+                                    ALERT
+                                 ================================================================= */
 
           .schedule-alert {
                display: flex;
@@ -330,8 +456,8 @@
           }
 
           /* ================================================================
-                          STATISTICS
-                       ================================================================= */
+                                    STATISTICS
+                                 ================================================================= */
 
           .schedule-stats-row {
                margin-bottom: 22px;
@@ -435,8 +561,8 @@
           }
 
           /* ================================================================
-                          FILTER
-                       ================================================================= */
+                                    FILTER
+                                 ================================================================= */
 
           .schedule-filter-card {
                padding: 22px;
@@ -446,6 +572,18 @@
                background: rgba(255, 255, 255, .94);
                box-shadow: 0 15px 38px rgba(51, 65, 85, .075);
                backdrop-filter: blur(12px);
+               position: relative;
+               overflow: hidden;
+          }
+
+          .schedule-filter-card::before {
+               position: absolute;
+               top: 0;
+               right: 0;
+               left: 0;
+               height: 4px;
+               content: '';
+               background: linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4);
           }
 
           .schedule-filter-heading {
@@ -522,12 +660,14 @@
                height: 100%;
                gap: 10px;
                align-items: flex-end;
+               justify-content: stretch;
           }
 
           .schedule-button-filter,
           .schedule-button-reset {
                display: inline-flex;
                min-height: 47px;
+               flex: 1 1 0;
                padding: 0 18px;
                gap: 8px;
                align-items: center;
@@ -610,8 +750,8 @@
           }
 
           /* ================================================================
-                          TABLE CARD
-                       ================================================================= */
+                                    TABLE CARD
+                                 ================================================================= */
 
           .schedule-card {
                overflow: hidden;
@@ -620,6 +760,17 @@
                background: rgba(255, 255, 255, .96);
                box-shadow: 0 18px 45px rgba(51, 65, 85, .09);
                backdrop-filter: blur(10px);
+               position: relative;
+          }
+
+          .schedule-card::before {
+               position: absolute;
+               top: 0;
+               right: 0;
+               left: 0;
+               height: 1px;
+               content: '';
+               background: linear-gradient(90deg, rgba(99, 102, 241, .26), rgba(6, 182, 212, .18), rgba(236, 72, 153, .12));
           }
 
           .schedule-card-header {
@@ -685,7 +836,14 @@
           }
 
           .schedule-card-body {
-               padding: 10px 18px 20px;
+               padding: 14px 18px 20px;
+          }
+
+          .schedule-table-shell {
+               overflow: hidden;
+               border: 1px solid #edf2f7;
+               border-radius: 20px;
+               background: linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(248, 251, 255, .95));
           }
 
           .schedule-table {
@@ -721,6 +879,10 @@
 
           .schedule-table tbody tr:hover {
                background: linear-gradient(90deg, #fbfdff, #faf8ff);
+          }
+
+          .schedule-table tbody tr:nth-child(even):not(:hover) {
+               background: rgba(248, 250, 252, .58);
           }
 
           .schedule-row-number {
@@ -779,6 +941,7 @@
                border: 1px solid #ddd6fe;
                border-radius: 8px;
                background: #f5f3ff;
+               box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45);
           }
 
           .schedule-department {
@@ -904,20 +1067,27 @@
 
           .schedule-actions {
                display: flex;
-               min-width: 130px;
+               min-width: 172px;
                gap: 7px;
                align-items: center;
                justify-content: flex-end;
+               flex-wrap: nowrap;
+          }
+
+          .schedule-actions .d-inline {
+               display: inline-flex !important;
           }
 
           .schedule-action-button {
                display: inline-flex;
-               width: 37px;
-               height: 37px;
+               flex: 0 0 38px;
+               width: 38px;
+               height: 38px;
                padding: 0;
                align-items: center;
                justify-content: center;
                text-decoration: none;
+               border: 0;
                border-radius: 11px;
                transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
           }
@@ -1008,8 +1178,8 @@
           }
 
           /* ================================================================
-                          PAGINATION
-                       ================================================================= */
+                                    PAGINATION
+                                 ================================================================= */
 
           .schedule-pagination-wrap {
                display: flex;
@@ -1017,7 +1187,7 @@
                gap: 16px;
                align-items: center;
                justify-content: space-between;
-               padding: 18px 7px 0;
+               padding: 18px 8px 2px;
                border-top: 1px solid #eef2f7;
           }
 
@@ -1069,21 +1239,25 @@
           }
 
           /* ================================================================
-                          RESPONSIVE
-                       ================================================================= */
+                                    RESPONSIVE
+                                 ================================================================= */
 
           @media (max-width: 1199.98px) {
                .schedule-hero-content {
                     align-items: flex-start;
+                    flex-direction: column;
                }
 
                .schedule-hero-actions {
-                    flex-direction: column;
-                    align-items: stretch;
+                    width: 100%;
                }
 
                .schedule-hero-button {
                     width: 100%;
+               }
+
+               .schedule-hero-insights {
+                    grid-template-columns: 1fr;
                }
           }
 
@@ -1103,7 +1277,12 @@
 
                .schedule-hero-actions {
                     width: 100%;
-                    flex-direction: row;
+                    grid-template-columns: 1fr;
+               }
+
+               .schedule-hero-panel {
+                    width: 100%;
+                    min-width: 0;
                }
 
                .schedule-card-header {
@@ -1139,6 +1318,10 @@
                     flex-direction: column;
                }
 
+               .schedule-hero-panel-item {
+                    padding: 9px 10px;
+               }
+
                .schedule-filter-card {
                     padding: 18px;
                }
@@ -1159,6 +1342,10 @@
                .schedule-pagination-wrap {
                     justify-content: center;
                     text-align: center;
+               }
+
+               .schedule-hero-insight {
+                    padding: 12px 13px;
                }
           }
 
@@ -1182,16 +1369,20 @@
                .schedule-result-badge {
                     margin-left: 0;
                }
+
+               .schedule-hero-panel-list {
+                    margin-bottom: 12px;
+               }
           }
 
           /*
-                    |--------------------------------------------------------------------------
-                    | Penyesuaian komponen Work Schedule
-                    |--------------------------------------------------------------------------
-                    | Hanya menambahkan gaya untuk data khusus jadwal kerja.
-                    | Struktur warna, kartu, hero, filter, tabel, dan responsivitas tetap
-                    | mengikuti template sumber.
-                    */
+                              |--------------------------------------------------------------------------
+                              | Penyesuaian komponen Work Schedule
+                              |--------------------------------------------------------------------------
+                              | Hanya menambahkan gaya untuk data khusus jadwal kerja.
+                              | Struktur warna, kartu, hero, filter, tabel, dan responsivitas tetap
+                              | mengikuti template sumber.
+                              */
 
           .schedule-time-range {
                display: flex;
@@ -1318,8 +1509,8 @@
           }
 
           /* ================================================================
-                          PRINT SELURUH TABEL
-                       ================================================================= */
+                                    PRINT SELURUH TABEL
+                                 ================================================================= */
 
           .schedule-print-only {
                display: none;
@@ -1352,7 +1543,10 @@
 
           .schedule-page.is-print-mode .schedule-no-print,
           .schedule-page.is-print-mode .schedule-card-header,
-          .schedule-page.is-print-mode .schedule-pagination-wrap {
+          .schedule-page.is-print-mode .schedule-pagination-wrap,
+          .schedule-page.is-print-mode .schedule-stats-row,
+          .schedule-page.is-print-mode .schedule-filter-card,
+          .schedule-page.is-print-mode .schedule-hero {
                display: none !important;
           }
 
@@ -1413,7 +1607,10 @@
                .schedule-card-header,
                .schedule-pagination-wrap,
                .schedule-no-print,
-               .schedule-no-print-column {
+               .schedule-no-print-column,
+               .schedule-stats-row,
+               .schedule-filter-card,
+               .schedule-hero {
                     display: none !important;
                }
 
@@ -1494,6 +1691,16 @@
                     box-shadow: none !important;
                }
 
+               .schedule-table-shell {
+                    border: 0 !important;
+                    border-radius: 0 !important;
+                    background: #ffffff !important;
+               }
+
+               .schedule-print-header {
+                    margin-bottom: 10px !important;
+               }
+
                .schedule-time-range {
                     gap: 3px !important;
                }
@@ -1535,13 +1742,41 @@
                                    <i data-feather="calendar"></i>
                               </div>
 
-                              <div>
+                              <div class="schedule-hero-copy">
+                                   <span class="schedule-hero-kicker">
+                                        <i data-feather="activity"></i>
+                                        Work Schedule Control
+                                   </span>
+
                                    <h1>Manajemen Jadwal Kerja</h1>
 
                                    <p>
                                         Kelola nama jadwal, jam masuk, jam pulang, toleransi keterlambatan,
                                         durasi kerja, dan status jadwal karyawan.
                                    </p>
+
+                                   <div class="schedule-hero-insights">
+                                        <div class="schedule-hero-insight">
+                                             <span class="schedule-hero-insight-label">Total Jadwal</span>
+                                             <span
+                                                  class="schedule-hero-insight-value">{{ number_format($filteredTotal) }}</span>
+                                             <span class="schedule-hero-insight-note">Tersedia sesuai filter aktif</span>
+                                        </div>
+                                        <div class="schedule-hero-insight">
+                                             <span class="schedule-hero-insight-label">Shift Aktif</span>
+                                             <span
+                                                  class="schedule-hero-insight-value">{{ number_format($activeOnPage) }}</span>
+                                             <span class="schedule-hero-insight-note">{{ number_format($inactiveOnPage) }}
+                                                  nonaktif di halaman ini</span>
+                                        </div>
+                                        <div class="schedule-hero-insight">
+                                             <span class="schedule-hero-insight-label">Lintas Hari</span>
+                                             <span
+                                                  class="schedule-hero-insight-value">{{ number_format($overnightOnPage) }}</span>
+                                             <span class="schedule-hero-insight-note">Shift berakhir di hari
+                                                  berikutnya</span>
+                                        </div>
+                                   </div>
                               </div>
                          </div>
 
@@ -1549,6 +1784,27 @@
                              $routeHas('super-admin.work-schedules.print') ||
                                  ($canManageWorkSchedules && $routeHas('super-admin.work-schedules.create')))
                               <div class="schedule-hero-actions">
+                                   <div class="schedule-hero-panel">
+                                        <h2 class="schedule-hero-panel-title">Ringkasan Operasional</h2>
+                                        <div class="schedule-hero-panel-list">
+                                             <div class="schedule-hero-panel-item">
+                                                  <span>Rata-rata durasi</span>
+                                                  <strong>{{ number_format($averageWorkingHours, 2) }} jam</strong>
+                                             </div>
+                                             <div class="schedule-hero-panel-item">
+                                                  <span>Data halaman ini</span>
+                                                  <strong>{{ number_format($currentPageCount) }}</strong>
+                                             </div>
+                                        </div>
+
+                                        @if ($hasActiveFilters)
+                                             <div class="schedule-hero-panel-item">
+                                                  <span>Mode tampilan</span>
+                                                  <strong>Dengan filter</strong>
+                                             </div>
+                                        @endif
+                                   </div>
+
                                    @if ($routeHas('super-admin.work-schedules.print'))
                                         <a href="{{ route('super-admin.work-schedules.print', request()->only(['search', 'status'])) }}"
                                              class="schedule-hero-button is-soft" target="_blank" rel="noopener"
@@ -1834,242 +2090,245 @@
                               </div>
                          @endif
 
-                         <div class="table-responsive">
-                              <table class="table schedule-table">
-                                   <thead>
-                                        <tr>
-                                             <th style="width: 68px;">No.</th>
-                                             <th>Nama Jadwal</th>
-                                             <th>Rentang Jam</th>
-                                             <th>Toleransi</th>
-                                             <th>Durasi Kerja</th>
-                                             <th>Status</th>
-                                             <th>Diperbarui</th>
-                                             @unless ($printMode)
-                                                  <th class="text-end schedule-no-print-column">Aksi</th>
-                                             @endunless
-                                        </tr>
-                                   </thead>
-
-                                   <tbody>
-                                        @forelse ($workSchedules as $workSchedule)
-                                             @php
-                                                  $initials = \Illuminate\Support\Str::of($workSchedule->name)
-                                                      ->explode(' ')
-                                                      ->filter()
-                                                      ->take(2)
-                                                      ->map(
-                                                          static fn($word) => \Illuminate\Support\Str::upper(
-                                                              \Illuminate\Support\Str::substr($word, 0, 1),
-                                                          ),
-                                                      )
-                                                      ->implode('');
-
-                                                  $initials = $initials !== '' ? $initials : 'JK';
-
-                                                  $isActive = $workSchedule->status === 'active';
-
-                                                  $overnight = $isOvernightShift(
-                                                      $workSchedule->start_time,
-                                                      $workSchedule->end_time,
-                                                  );
-                                             @endphp
-
+                         <div class="schedule-table-shell">
+                              <div class="table-responsive">
+                                   <table class="table schedule-table">
+                                        <thead>
                                              <tr>
-                                                  <td>
-                                                       <span class="schedule-row-number">
-                                                            {{ method_exists($workSchedules, 'firstItem')
-                                                                ? ($workSchedules->firstItem() ?? 1) + $loop->index
-                                                                : $loop->iteration }}
-                                                       </span>
-                                                  </td>
-
-                                                  <td>
-                                                       <div class="schedule-name-cell">
-                                                            <span class="schedule-avatar" aria-hidden="true">
-                                                                 {{ $initials }}
-                                                            </span>
-
-                                                            <div>
-                                                                 <div class="schedule-name">
-                                                                      {{ $workSchedule->name }}
-                                                                 </div>
-
-                                                                 <span class="schedule-code">
-                                                                      ID #{{ $workSchedule->getKey() }}
-                                                                 </span>
-                                                            </div>
-                                                       </div>
-                                                  </td>
-
-                                                  <td>
-                                                       <div>
-                                                            <div class="schedule-time-range">
-                                                                 <span class="schedule-time-box">
-                                                                      <i data-feather="log-in"></i>
-                                                                      {{ $formatTime($workSchedule->start_time) }}
-                                                                 </span>
-
-                                                                 <span class="schedule-time-arrow" aria-hidden="true">
-                                                                      <i data-feather="arrow-right"></i>
-                                                                 </span>
-
-                                                                 <span class="schedule-time-box">
-                                                                      <i data-feather="log-out"></i>
-                                                                      {{ $formatTime($workSchedule->end_time) }}
-                                                                 </span>
-                                                            </div>
-
-                                                            <span
-                                                                 class="schedule-shift-note {{ $overnight ? 'is-overnight' : '' }}">
-                                                                 <i data-feather="{{ $overnight ? 'moon' : 'sun' }}"></i>
-
-                                                                 {{ $overnight ? 'Shift lintas hari' : 'Shift hari yang sama' }}
-                                                            </span>
-                                                       </div>
-                                                  </td>
-
-                                                  <td>
-                                                       <span class="schedule-metric is-tolerance">
-                                                            <i data-feather="alert-circle"></i>
-
-                                                            {{ number_format((int) $workSchedule->late_tolerance_minutes) }}
-                                                            menit
-                                                       </span>
-                                                  </td>
-
-                                                  <td>
-                                                       <span class="schedule-metric is-duration">
-                                                            <i data-feather="clock"></i>
-
-                                                            {{ number_format((float) $workSchedule->working_hours, 2) }}
-                                                            jam
-                                                       </span>
-                                                  </td>
-
-                                                  <td>
-                                                       <span
-                                                            class="schedule-status {{ $isActive ? 'is-active' : 'is-inactive' }}">
-                                                            <span class="schedule-status-dot"></span>
-
-                                                            {{ $statusLabel($workSchedule->status) }}
-                                                       </span>
-                                                  </td>
-
-                                                  <td>
-                                                       <div class="schedule-date">
-                                                            <strong>
-                                                                 {{ $workSchedule->updated_at?->format('d M Y') ?? '—' }}
-                                                            </strong>
-
-                                                            <span>
-                                                                 {{ $workSchedule->updated_at?->format('H:i') ?? '—' }}
-                                                                 WIB
-                                                            </span>
-                                                       </div>
-                                                  </td>
-
+                                                  <th style="width: 68px;">No.</th>
+                                                  <th>Nama Jadwal</th>
+                                                  <th>Rentang Jam</th>
+                                                  <th>Toleransi</th>
+                                                  <th>Durasi Kerja</th>
+                                                  <th>Status</th>
+                                                  <th>Diperbarui</th>
                                                   @unless ($printMode)
-                                                       <td class="schedule-no-print-column">
-                                                            <div class="schedule-actions">
-                                                                 @if ($routeHas('super-admin.work-schedules.show'))
-                                                                      <a href="{{ route('super-admin.work-schedules.show', $workSchedule) }}"
-                                                                           class="schedule-action-button schedule-action-show"
-                                                                           title="Lihat detail {{ $workSchedule->name }}"
-                                                                           aria-label="Lihat detail {{ $workSchedule->name }}">
-                                                                           <i data-feather="eye"></i>
-                                                                      </a>
-                                                                 @endif
-
-                                                                 @if ($canManageWorkSchedules && $routeHas('super-admin.work-schedules.toggle-status'))
-                                                                      <form method="POST"
-                                                                           action="{{ route('super-admin.work-schedules.toggle-status', $workSchedule) }}"
-                                                                           class="d-inline"
-                                                                           onsubmit="return confirm('Yakin ingin mengubah status jadwal {{ addslashes($workSchedule->name) }}?');">
-                                                                           @csrf
-                                                                           @method('PATCH')
-
-                                                                           <button type="submit"
-                                                                                class="schedule-action-button schedule-action-status {{ $isActive ? 'is-inactive-action' : '' }}"
-                                                                                title="{{ $isActive ? 'Nonaktifkan' : 'Aktifkan' }} {{ $workSchedule->name }}"
-                                                                                aria-label="{{ $isActive ? 'Nonaktifkan' : 'Aktifkan' }} {{ $workSchedule->name }}">
-                                                                                <i
-                                                                                     data-feather="{{ $isActive ? 'pause-circle' : 'play-circle' }}"></i>
-                                                                           </button>
-                                                                      </form>
-                                                                 @endif
-
-                                                                 @if ($canManageWorkSchedules && $routeHas('super-admin.work-schedules.edit'))
-                                                                      <a href="{{ route('super-admin.work-schedules.edit', $workSchedule) }}"
-                                                                           class="schedule-action-button schedule-action-edit"
-                                                                           title="Edit {{ $workSchedule->name }}"
-                                                                           aria-label="Edit {{ $workSchedule->name }}">
-                                                                           <i data-feather="edit-3"></i>
-                                                                      </a>
-                                                                 @endif
-
-                                                                 @if ($canManageWorkSchedules && $routeHas('super-admin.work-schedules.destroy'))
-                                                                      <form method="POST"
-                                                                           action="{{ route('super-admin.work-schedules.destroy', $workSchedule) }}"
-                                                                           class="d-inline"
-                                                                           onsubmit="return confirm('Yakin ingin menghapus jadwal {{ addslashes($workSchedule->name) }} secara permanen?');">
-                                                                           @csrf
-                                                                           @method('DELETE')
-
-                                                                           <button type="submit"
-                                                                                class="schedule-action-button schedule-action-delete"
-                                                                                title="Hapus {{ $workSchedule->name }}"
-                                                                                aria-label="Hapus {{ $workSchedule->name }}">
-                                                                                <i data-feather="trash-2"></i>
-                                                                           </button>
-                                                                      </form>
-                                                                 @endif
-                                                            </div>
-                                                       </td>
+                                                       <th class="text-end schedule-no-print-column">Aksi</th>
                                                   @endunless
                                              </tr>
-                                        @empty
-                                             <tr>
-                                                  <td colspan="{{ $printMode ? 7 : 8 }}" class="schedule-empty-state">
-                                                       <span class="schedule-empty-icon">
-                                                            <i
-                                                                 data-feather="{{ $hasActiveFilters ? 'search' : 'calendar' }}"></i>
-                                                       </span>
+                                        </thead>
+                                        <tbody>
+                                             @forelse ($workSchedules as $workSchedule)
+                                                  @php
+                                                       $initials = \Illuminate\Support\Str::of($workSchedule->name)
+                                                           ->explode(' ')
+                                                           ->filter()
+                                                           ->take(2)
+                                                           ->map(
+                                                               static fn($word) => \Illuminate\Support\Str::upper(
+                                                                   \Illuminate\Support\Str::substr($word, 0, 1),
+                                                               ),
+                                                           )
+                                                           ->implode('');
 
-                                                       <h3 class="schedule-empty-title">
-                                                            {{ $hasActiveFilters ? 'Jadwal kerja tidak ditemukan' : 'Data jadwal kerja belum tersedia' }}
-                                                       </h3>
+                                                       $initials = $initials !== '' ? $initials : 'JK';
 
-                                                       <p class="schedule-empty-description">
-                                                            @if ($hasActiveFilters)
-                                                                 Tidak ada data yang cocok dengan filter saat ini.
-                                                                 Ubah kata kunci atau reset filter untuk melihat data
-                                                                 lainnya.
-                                                            @else
-                                                                 Belum ada jadwal kerja yang tercatat.
-                                                                 Super Admin dapat menambahkan jadwal baru melalui
-                                                                 tombol Tambah Jadwal.
+                                                       $isActive = $workSchedule->status === 'active';
+
+                                                       $overnight = $isOvernightShift(
+                                                           $workSchedule->start_time,
+                                                           $workSchedule->end_time,
+                                                       );
+                                                  @endphp
+
+                                                  <tr>
+                                                       <td>
+                                                            <span class="schedule-row-number">
+                                                                 {{ method_exists($workSchedules, 'firstItem')
+                                                                     ? ($workSchedules->firstItem() ?? 1) + $loop->index
+                                                                     : $loop->iteration }}
+                                                            </span>
+                                                       </td>
+
+                                                       <td>
+                                                            <div class="schedule-name-cell">
+                                                                 <span class="schedule-avatar" aria-hidden="true">
+                                                                      {{ $initials }}
+                                                                 </span>
+
+                                                                 <div>
+                                                                      <div class="schedule-name">
+                                                                           {{ $workSchedule->name }}
+                                                                      </div>
+
+                                                                      <span class="schedule-code">
+                                                                           ID #{{ $workSchedule->getKey() }}
+                                                                      </span>
+                                                                 </div>
+                                                            </div>
+                                                       </td>
+
+                                                       <td>
+                                                            <div>
+                                                                 <div class="schedule-time-range">
+                                                                      <span class="schedule-time-box">
+                                                                           <i data-feather="log-in"></i>
+                                                                           {{ $formatTime($workSchedule->start_time) }}
+                                                                      </span>
+
+                                                                      <span class="schedule-time-arrow" aria-hidden="true">
+                                                                           <i data-feather="arrow-right"></i>
+                                                                      </span>
+
+                                                                      <span class="schedule-time-box">
+                                                                           <i data-feather="log-out"></i>
+                                                                           {{ $formatTime($workSchedule->end_time) }}
+                                                                      </span>
+                                                                 </div>
+
+                                                                 <span
+                                                                      class="schedule-shift-note {{ $overnight ? 'is-overnight' : '' }}">
+                                                                      <i
+                                                                           data-feather="{{ $overnight ? 'moon' : 'sun' }}"></i>
+
+                                                                      {{ $overnight ? 'Shift lintas hari' : 'Shift hari yang sama' }}
+                                                                 </span>
+                                                            </div>
+                                                       </td>
+
+                                                       <td>
+                                                            <span class="schedule-metric is-tolerance">
+                                                                 <i data-feather="alert-circle"></i>
+
+                                                                 {{ number_format((int) $workSchedule->late_tolerance_minutes) }}
+                                                                 menit
+                                                            </span>
+                                                       </td>
+
+                                                       <td>
+                                                            <span class="schedule-metric is-duration">
+                                                                 <i data-feather="clock"></i>
+
+                                                                 {{ number_format((float) $workSchedule->working_hours, 2) }}
+                                                                 jam
+                                                            </span>
+                                                       </td>
+
+                                                       <td>
+                                                            <span
+                                                                 class="schedule-status {{ $isActive ? 'is-active' : 'is-inactive' }}">
+                                                                 <span class="schedule-status-dot"></span>
+
+                                                                 {{ $statusLabel($workSchedule->status) }}
+                                                            </span>
+                                                       </td>
+
+                                                       <td>
+                                                            <div class="schedule-date">
+                                                                 <strong>
+                                                                      {{ $workSchedule->updated_at?->format('d M Y') ?? '—' }}
+                                                                 </strong>
+
+                                                                 <span>
+                                                                      {{ $workSchedule->updated_at?->format('H:i') ?? '—' }}
+                                                                      WIB
+                                                                 </span>
+                                                            </div>
+                                                       </td>
+
+                                                       @unless ($printMode)
+                                                            <td class="schedule-no-print-column">
+                                                                 <div class="schedule-actions">
+                                                                      @if ($routeHas('super-admin.work-schedules.show'))
+                                                                           <a href="{{ route('super-admin.work-schedules.show', $workSchedule) }}"
+                                                                                class="schedule-action-button schedule-action-show"
+                                                                                title="Lihat detail {{ $workSchedule->name }}"
+                                                                                aria-label="Lihat detail {{ $workSchedule->name }}">
+                                                                                <i data-feather="eye"></i>
+                                                                           </a>
+                                                                      @endif
+
+                                                                      @if ($canManageWorkSchedules && $routeHas('super-admin.work-schedules.toggle-status'))
+                                                                           <form method="POST"
+                                                                                action="{{ route('super-admin.work-schedules.toggle-status', $workSchedule) }}"
+                                                                                class="d-inline"
+                                                                                onsubmit="return confirm('Yakin ingin mengubah status jadwal {{ addslashes($workSchedule->name) }}?');">
+                                                                                @csrf
+                                                                                @method('PATCH')
+
+                                                                                <button type="submit"
+                                                                                     class="schedule-action-button schedule-action-status {{ $isActive ? 'is-inactive-action' : '' }}"
+                                                                                     title="{{ $isActive ? 'Nonaktifkan' : 'Aktifkan' }} {{ $workSchedule->name }}"
+                                                                                     aria-label="{{ $isActive ? 'Nonaktifkan' : 'Aktifkan' }} {{ $workSchedule->name }}">
+                                                                                     <i
+                                                                                          data-feather="{{ $isActive ? 'pause-circle' : 'play-circle' }}"></i>
+                                                                                </button>
+                                                                           </form>
+                                                                      @endif
+
+                                                                      @if ($canManageWorkSchedules && $routeHas('super-admin.work-schedules.edit'))
+                                                                           <a href="{{ route('super-admin.work-schedules.edit', $workSchedule) }}"
+                                                                                class="schedule-action-button schedule-action-edit"
+                                                                                title="Edit {{ $workSchedule->name }}"
+                                                                                aria-label="Edit {{ $workSchedule->name }}">
+                                                                                <i data-feather="edit-3"></i>
+                                                                           </a>
+                                                                      @endif
+
+                                                                      @if ($canManageWorkSchedules && $routeHas('super-admin.work-schedules.destroy'))
+                                                                           <form method="POST"
+                                                                                action="{{ route('super-admin.work-schedules.destroy', $workSchedule) }}"
+                                                                                class="d-inline"
+                                                                                onsubmit="return confirm('Yakin ingin menghapus jadwal {{ addslashes($workSchedule->name) }} secara permanen?');">
+                                                                                @csrf
+                                                                                @method('DELETE')
+
+                                                                                <button type="submit"
+                                                                                     class="schedule-action-button schedule-action-delete"
+                                                                                     title="Hapus {{ $workSchedule->name }}"
+                                                                                     aria-label="Hapus {{ $workSchedule->name }}">
+                                                                                     <i data-feather="trash-2"></i>
+                                                                                </button>
+                                                                           </form>
+                                                                      @endif
+                                                                 </div>
+                                                            </td>
+                                                       @endunless
+                                                  </tr>
+                                             @empty
+                                                  <tr>
+                                                       <td colspan="{{ $printMode ? 7 : 8 }}"
+                                                            class="schedule-empty-state">
+                                                            <span class="schedule-empty-icon">
+                                                                 <i
+                                                                      data-feather="{{ $hasActiveFilters ? 'search' : 'calendar' }}"></i>
+                                                            </span>
+
+                                                            <h3 class="schedule-empty-title">
+                                                                 {{ $hasActiveFilters ? 'Jadwal kerja tidak ditemukan' : 'Data jadwal kerja belum tersedia' }}
+                                                            </h3>
+
+                                                            <p class="schedule-empty-description">
+                                                                 @if ($hasActiveFilters)
+                                                                      Tidak ada data yang cocok dengan filter saat ini.
+                                                                      Ubah kata kunci atau reset filter untuk melihat data
+                                                                      lainnya.
+                                                                 @else
+                                                                      Belum ada jadwal kerja yang tercatat.
+                                                                      Super Admin dapat menambahkan jadwal baru melalui
+                                                                      tombol Tambah Jadwal.
+                                                                 @endif
+                                                            </p>
+
+                                                            @if (!$printMode && $hasActiveFilters)
+                                                                 <a href="{{ route('super-admin.work-schedules.index') }}"
+                                                                      class="schedule-button-reset mt-3">
+                                                                      <i data-feather="rotate-ccw"></i>
+                                                                      <span>Reset Filter</span>
+                                                                 </a>
+                                                            @elseif (!$printMode && $canManageWorkSchedules && $routeHas('super-admin.work-schedules.create'))
+                                                                 <a href="{{ route('super-admin.work-schedules.create') }}"
+                                                                      class="schedule-button-filter mt-3">
+                                                                      <i data-feather="plus"></i>
+                                                                      <span>Tambah Jadwal Pertama</span>
+                                                                 </a>
                                                             @endif
-                                                       </p>
-
-                                                       @if (!$printMode && $hasActiveFilters)
-                                                            <a href="{{ route('super-admin.work-schedules.index') }}"
-                                                                 class="schedule-button-reset mt-3">
-                                                                 <i data-feather="rotate-ccw"></i>
-                                                                 <span>Reset Filter</span>
-                                                            </a>
-                                                       @elseif (!$printMode && $canManageWorkSchedules && $routeHas('super-admin.work-schedules.create'))
-                                                            <a href="{{ route('super-admin.work-schedules.create') }}"
-                                                                 class="schedule-button-filter mt-3">
-                                                                 <i data-feather="plus"></i>
-                                                                 <span>Tambah Jadwal Pertama</span>
-                                                            </a>
-                                                       @endif
-                                                  </td>
-                                             </tr>
-                                        @endforelse
-                                   </tbody>
-                              </table>
+                                                       </td>
+                                                  </tr>
+                                             @endforelse
+                                        </tbody>
+                                   </table>
+                              </div>
                          </div>
 
                          @unless ($printMode)

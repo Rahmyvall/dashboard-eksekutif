@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\EmployeeActivityController;
 use App\Http\Controllers\Admin\InvoiceController;
 
 use App\Http\Controllers\Admin\PerformanceIndicatorController;
@@ -1066,94 +1067,6 @@ Route::prefix('payments')
 
             /*
             |--------------------------------------------------------------------------
-            | Work Schedule Management
-            |--------------------------------------------------------------------------
-            */
-
-            Route::prefix('work-schedules')
-                ->name('work-schedules.')
-                ->group(function (): void {
-                    /*
-                    |----------------------------------------------------------
-                    | Route statis
-                    |----------------------------------------------------------
-                    */
-                    Route::get(
-                        '/',
-                        [WorkScheduleController::class, 'index']
-                    )->name('index');
-
-                    Route::get(
-                        '/print',
-                        [WorkScheduleController::class, 'printAll']
-                    )->name('print');
-
-                    Route::get(
-                        '/create',
-                        [WorkScheduleController::class, 'create']
-                    )->name('create');
-
-                    Route::post(
-                        '/',
-                        [WorkScheduleController::class, 'store']
-                    )->name('store');
-
-                    /*
-                    |----------------------------------------------------------
-                    | Route dengan aksi khusus
-                    |----------------------------------------------------------
-                    |
-                    | Harus diletakkan sebelum route /{workSchedule}.
-                    |
-                    */
-                    Route::patch(
-                        '/{workSchedule}/toggle-status',
-                        [WorkScheduleController::class, 'toggleStatus']
-                    )
-                        ->whereNumber('workSchedule')
-                        ->name('toggle-status');
-
-                    Route::get(
-                        '/{workSchedule}/edit',
-                        [WorkScheduleController::class, 'edit']
-                    )
-                        ->whereNumber('workSchedule')
-                        ->name('edit');
-
-                    Route::match(
-                        ['put', 'patch'],
-                        '/{workSchedule}',
-                        [WorkScheduleController::class, 'update']
-                    )
-                        ->whereNumber('workSchedule')
-                        ->name('update');
-
-                    Route::delete(
-                        '/{workSchedule}',
-                        [WorkScheduleController::class, 'destroy']
-                    )
-                        ->whereNumber('workSchedule')
-                        ->name('destroy');
-
-                    /*
-                    |----------------------------------------------------------
-                    | Detail jadwal kerja
-                    |----------------------------------------------------------
-                    |
-                    | Diletakkan paling bawah agar create, edit, dan
-                    | toggle-status tidak dibaca sebagai parameter model.
-                    |
-                    */
-                    Route::get(
-                        '/{workSchedule}',
-                        [WorkScheduleController::class, 'show']
-                    )
-                        ->whereNumber('workSchedule')
-                        ->name('show');
-                });
-
-            /*
-            |--------------------------------------------------------------------------
             | Performance Period Management
             |--------------------------------------------------------------------------
             |
@@ -1311,6 +1224,101 @@ Route::prefix('payments')
 ->name('users.forceDelete');
 
 
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shared Work Schedules & Employee Activities
+    |--------------------------------------------------------------------------
+    |
+    | Akses lintas role operasional:
+    | - super_admin
+    | - direktur_utama
+    | - manager_departemen
+    | - admin_operasional
+    | - auditor_internal
+    |
+    */
+
+    Route::prefix('super-admin')
+        ->name('super-admin.')
+        ->middleware('role:super_admin|direktur_utama|manager_departemen|admin_operasional|auditor_internal')
+        ->group(function (): void {
+            Route::prefix('work-schedules')
+                ->name('work-schedules.')
+                ->group(function (): void {
+                    Route::get('/', [WorkScheduleController::class, 'index'])
+                        ->name('index');
+
+                    Route::get('/print', [WorkScheduleController::class, 'printAll'])
+                        ->name('print');
+
+                    Route::get('/create', [WorkScheduleController::class, 'create'])
+                        ->name('create');
+
+                    Route::post('/', [WorkScheduleController::class, 'store'])
+                        ->name('store');
+
+                    Route::patch('/{workSchedule}/toggle-status', [WorkScheduleController::class, 'toggleStatus'])
+                        ->whereNumber('workSchedule')
+                        ->name('toggle-status');
+
+                    Route::get('/{workSchedule}/edit', [WorkScheduleController::class, 'edit'])
+                        ->whereNumber('workSchedule')
+                        ->name('edit');
+
+                    Route::match(['put', 'patch'], '/{workSchedule}', [WorkScheduleController::class, 'update'])
+                        ->whereNumber('workSchedule')
+                        ->name('update');
+
+                    Route::delete('/{workSchedule}', [WorkScheduleController::class, 'destroy'])
+                        ->whereNumber('workSchedule')
+                        ->name('destroy');
+
+                    Route::get('/{workSchedule}', [WorkScheduleController::class, 'show'])
+                        ->whereNumber('workSchedule')
+                        ->name('show');
+                });
+
+            Route::prefix('employee-activities')
+                ->name('employee-activities.')
+                ->group(function (): void {
+                    Route::get('/', [EmployeeActivityController::class, 'index'])
+                        ->name('index');
+
+                    Route::get('/print', [EmployeeActivityController::class, 'printAll'])
+                        ->name('print');
+
+                    Route::get('/create', [EmployeeActivityController::class, 'create'])
+                        ->name('create');
+
+                    Route::post('/', [EmployeeActivityController::class, 'store'])
+                        ->name('store');
+
+                    Route::patch('/{employeeActivity}/verify', [EmployeeActivityController::class, 'verify'])
+                        ->whereNumber('employeeActivity')
+                        ->name('verify');
+
+                    Route::patch('/{employeeActivity}/cancel-verification', [EmployeeActivityController::class, 'cancelVerification'])
+                        ->whereNumber('employeeActivity')
+                        ->name('cancel-verification');
+
+                    Route::get('/{employeeActivity}/edit', [EmployeeActivityController::class, 'edit'])
+                        ->whereNumber('employeeActivity')
+                        ->name('edit');
+
+                    Route::match(['put', 'patch'], '/{employeeActivity}', [EmployeeActivityController::class, 'update'])
+                        ->whereNumber('employeeActivity')
+                        ->name('update');
+
+                    Route::delete('/{employeeActivity}', [EmployeeActivityController::class, 'destroy'])
+                        ->whereNumber('employeeActivity')
+                        ->name('destroy');
+
+                    Route::get('/{employeeActivity}', [EmployeeActivityController::class, 'show'])
+                        ->whereNumber('employeeActivity')
+                        ->name('show');
+                });
         });
 
     /*
