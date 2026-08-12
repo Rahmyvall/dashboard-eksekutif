@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +16,8 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+use Notifiable;
+
 
     protected $guard_name = 'web';
     protected $table = 'users';
@@ -228,6 +229,10 @@ class User extends Authenticatable
             'last_login_at' => now(),
             'last_login_ip' => request()->ip(),
         ]);
-}
+    }
 
+    public function updateLoginInfo(): void
+    {
+        $this->markLogin();
+    }
 }

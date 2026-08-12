@@ -1,7 +1,5 @@
 <?php
 
-declare (strict_types = 1);
-
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DepartmentController;
@@ -132,36 +130,41 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
         ->group(function (): void {
             /*
             |------------------------------------------------------------------
-            | Index — empat role
+ | Index â€”empatrole
+
             |------------------------------------------------------------------
             */
 
             Route::middleware(
-                'role:super_admin|direktur_utama|admin_operasional|auditor_internal'
+                'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
             )->group(function (): void {
                 Route::get('/', [BranchController::class, 'index'])
+                    ->middleware('can:branch.viewAny')
                     ->name('index');
             });
 
             /*
             |------------------------------------------------------------------
-            | Create dan Store — Super Admin + Admin Operasional
+ | Create danStoreâ€”khususSuperAdmin;
+
             |------------------------------------------------------------------
             */
 
-            Route::middleware(
-                'role:super_admin|admin_operasional'
-            )->group(function (): void {
+Route::middleware('role:super_admin')->group(function (): void {
+
                 Route::get('/create', [BranchController::class, 'create'])
+                    ->middleware('can:branch.create')
                     ->name('create');
 
                 Route::post('/', [BranchController::class, 'store'])
+                    ->middleware('can:branch.create')
                     ->name('store');
             });
 
             /*
             |------------------------------------------------------------------
-            | Recycle Bin — Super Admin
+ | Recycle Binâ€”SuperAdmin
+
             |------------------------------------------------------------------
             |
             | Route statis diletakkan sebelum /{branch} agar kata "trash"
@@ -170,76 +173,87 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
             Route::middleware('role:super_admin')->group(function (): void {
                 Route::get('/trash', [BranchController::class, 'trash'])
+                    ->middleware('can:branch.trash')
                     ->name('trash');
 
                 Route::post('/{id}/restore', [BranchController::class, 'restore'])
+                    ->middleware('can:branch.trash')
                     ->whereNumber('id')
                     ->name('restore');
 
                 Route::delete('/{id}/force-delete', [BranchController::class, 'forceDelete'])
+                    ->middleware('can:branch.trash')
                     ->whereNumber('id')
                     ->name('force-delete');
             });
 
             /*
             |------------------------------------------------------------------
-            | Approval dan Penolakan — Role sesuai tahap persetujuan
+ | Approval danPenolakanâ€”Rolesesuaitahappersetujuan
+
             |------------------------------------------------------------------
             |
-            | Direktur Utama memproses tahap pertama.
-            | Auditor Internal memproses tahap terakhir.
-            | Super Admin dapat memproses tahap approval yang sedang aktif.
+ | Approval danpenolakandibatasiuntukrolenon - operasional .
+
             |
             | Route ini harus berada sebelum route /{branch} agar struktur
             | URL tetap jelas dan mudah dipelihara.
             */
 
             Route::middleware(
-                'role:super_admin|direktur_utama|auditor_internal'
+'role:super_admin'
+
             )->group(function (): void {
                 Route::patch('/{branch}/approve', [BranchController::class, 'approve'])
+                    ->middleware('can:branch.approve,branch')
                     ->whereNumber('branch')
                     ->name('approve');
 
                 Route::patch('/{branch}/reject', [BranchController::class, 'reject'])
+                    ->middleware('can:branch.approve,branch')
                     ->whereNumber('branch')
                     ->name('reject');
             });
 
             /*
             |------------------------------------------------------------------
-            | Edit, Update, Delete — Super Admin + Admin Operasional
+ | Edit, Update, Delete â€”khususSuperAdmin;
+
             |------------------------------------------------------------------
             */
 
-            Route::middleware(
-                'role:super_admin|admin_operasional'
-            )->group(function (): void {
+Route::middleware('role:super_admin')->group(function (): void {
+
                 Route::get('/{branch}/edit', [BranchController::class, 'edit'])
+                    ->middleware('can:branch.manage,branch')
                     ->whereNumber('branch')
                     ->name('edit');
 
                 Route::match(['put', 'patch'], '/{branch}', [BranchController::class, 'update'])
+                    ->middleware('can:branch.manage,branch')
                     ->whereNumber('branch')
                     ->name('update');
 
                 Route::delete('/{branch}', [BranchController::class, 'destroy'])
+                    ->middleware('can:branch.manage,branch')
                     ->whereNumber('branch')
                     ->name('destroy');
             });
 
             /*
             |------------------------------------------------------------------
-            | Show — empat role
+ | Show â€”aksesbacalintasrole;
+
             |------------------------------------------------------------------
             |
             | Harus berada paling bawah agar tidak menangkap URL create/trash.
             */
 
             Route::middleware(
-                'role:super_admin|direktur_utama|admin_operasional|auditor_internal'
+                'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
             )->group(function (): void {
                 Route::get('/{branch}', [BranchController::class, 'show'])
+                    ->middleware('can:branch.view,branch')
                     ->whereNumber('branch')
                     ->name('show');
             });
@@ -271,7 +285,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->group(function (): void {
                     /*
                     |----------------------------------------------------------
-                    | Create dan Store — khusus Super Admin
+ | Create danStoreâ€”khususSuperAdmin
+
                     |----------------------------------------------------------
                     */
 
@@ -286,7 +301,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
                     /*
                     |----------------------------------------------------------
-                    | Edit, Update, dan Delete — khusus Super Admin
+ | Edit, Update, dan Deleteâ€”khususSuperAdmin
+
                     |----------------------------------------------------------
                     */
 
@@ -311,13 +327,15 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
                     /*
                     |----------------------------------------------------------
-                    | Index dan Show — lima role
+ | Index danShowâ€”aksesbacalintasrole;
+
                     |----------------------------------------------------------
                     */
 
                     Route::middleware(
-                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|auditor_internal'
-                    )->group(function (): void {
+                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
+)->group(function (): void {
+
                         Route::get('/', 'index')
                             ->name('index');
 
@@ -329,7 +347,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
             /*
             |--------------------------------------------------------------
-            | Recycle Bin Department — khusus Super Admin
+ | Recycle BinDepartmentâ€”khususSuperAdmin
+
             |--------------------------------------------------------------
             |
             | URL dan nama route lama dipertahankan agar Blade tetap bekerja.
@@ -386,7 +405,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->group(function (): void {
                     /*
                     |----------------------------------------------------------
-                    | Create dan Store — khusus Super Admin
+ | Create danStoreâ€”khususSuperAdmin
+
                     |----------------------------------------------------------
                     */
 
@@ -401,7 +421,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
                     /*
                     |----------------------------------------------------------
-                    | Edit, Update, dan Delete — khusus Super Admin
+ | Edit, Update, dan Deleteâ€”khususSuperAdmin
+
                     |----------------------------------------------------------
                     */
 
@@ -426,13 +447,15 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
                     /*
                     |----------------------------------------------------------
-                    | Index dan Show — lima role
+ | Index danShowâ€”aksesbacalintasrole;
+
                     |----------------------------------------------------------
                     */
 
                     Route::middleware(
-                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|auditor_internal'
-                    )->group(function (): void {
+                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
+)->group(function (): void {
+
                         Route::get('/', 'index')
                             ->name('index');
 
@@ -448,7 +471,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
             /*
             |--------------------------------------------------------------
-            | Recycle Bin Position — khusus Super Admin
+ | Recycle BinPositionâ€”khususSuperAdmin
+
             |--------------------------------------------------------------
             */
 
@@ -507,11 +531,12 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->group(function (): void {
                     /*
                     |----------------------------------------------------------
-                    | Create dan Store — Super Admin + HRD Manager
+ | Create danStoreâ€”khususSuperAdmin;
+
                     |----------------------------------------------------------
                     */
 
-                    Route::middleware('role:super_admin|hrd_manager')
+                    Route::middleware('role:super_admin')
                         ->group(function (): void {
                             Route::get('/create', 'create')
                                 ->name('create');
@@ -522,7 +547,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
                     /*
                     |----------------------------------------------------------
-                    | Recycle Bin — khusus Super Admin
+ | Recycle Binâ€”khususSuperAdmin
+
                     |----------------------------------------------------------
                     |
                     | Route statis wajib berada sebelum /{employee}.
@@ -549,7 +575,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                     |----------------------------------------------------------
                     */
 
-                    Route::middleware('role:super_admin|hrd_manager')
+                    Route::middleware('role:super_admin')
                         ->group(function (): void {
                             Route::get('/{employee}/edit', 'edit')
                                 ->whereNumber('employee')
@@ -575,8 +601,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                     */
 
                     Route::middleware(
-                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|admin_operasional|auditor_internal'
-                    )->group(function (): void {
+                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
+)->group(function (): void {
+
                         Route::get('/', 'index')
                             ->name('index');
 
@@ -602,7 +629,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
             Route::get('/employment', [EmployeeController::class, 'index'])
                 ->middleware(
-                    'role:super_admin|direktur_utama|hrd_manager|manager_departemen|admin_operasional|auditor_internal'
+                    'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
+
                 )
                 ->name('employment.index');
         });
@@ -639,13 +667,15 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->group(function (): void {
                     /*
                     |----------------------------------------------------------
-                    | Create dan Store
+ | Create danStoreâ€”khususSuperAdmin;
+
                     |----------------------------------------------------------
                     */
 
                     Route::middleware(
-                        'role:super_admin|admin_pelayanan|admin_operasional'
-                    )->group(function (): void {
+                        'role:super_admin'
+)->group(function (): void {
+
                         Route::get('/create', 'create')
                             ->name('create');
 
@@ -655,7 +685,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
                     /*
                     |----------------------------------------------------------
-                    | Recycle Bin — khusus Super Admin
+ | Recycle Binâ€”khususSuperAdmin
+
                     |----------------------------------------------------------
                     |
                     | Route statis diletakkan sebelum /{customer} agar kata
@@ -684,8 +715,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                     */
 
                     Route::middleware(
-                        'role:super_admin|admin_pelayanan|admin_operasional'
-                    )->group(function (): void {
+                        'role:super_admin'
+)->group(function (): void {
+
                         Route::get('/{customer}/edit', 'edit')
                             ->whereNumber('customer')
                             ->name('edit');
@@ -710,8 +742,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                     */
 
                     Route::middleware(
-                        'role:super_admin|direktur_utama|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
-                    )->group(function (): void {
+                        'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
+)->group(function (): void {
+
                         Route::get('/', 'index')
                             ->name('index');
 
@@ -737,30 +770,38 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     */
 
 Route::middleware(
-    'role:super_admin|direktur_utama|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
+    'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
 )->group(function (): void {
+
     Route::prefix('invoices')
         ->name('invoices.')
         ->controller(InvoiceController::class)
         ->group(function (): void {
             Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::patch('/{invoice}/refresh-status', 'refreshPaymentStatus')
-                ->whereNumber('invoice')
-                ->name('refresh-status');
-            Route::get('/{invoice}/edit', 'edit')
-                ->whereNumber('invoice')
-                ->name('edit');
-            Route::match(['put', 'patch'], '/{invoice}', 'update')
-                ->whereNumber('invoice')
-                ->name('update');
-            Route::delete('/{invoice}', 'destroy')
-                ->whereNumber('invoice')
-                ->name('destroy');
-            Route::get('/{invoice}', 'show')
-                ->whereNumber('invoice')
-                ->name('show');
+Route::get('/{invoice}', 'show')
+    ->whereNumber('invoice')
+    ->name('show');
+
+Route::middleware('role:super_admin')->group(function (): void {
+
+Route::get('/create', 'create')->name('create');
+Route::post('/', 'store')->name('store');
+Route::patch('/{invoice}/refresh-status', 'refreshPaymentStatus')
+    ->whereNumber('invoice')
+    ->name('refresh-status');
+Route::get('/{invoice}/edit', 'edit')
+    ->whereNumber('invoice')
+    ->name('edit');
+Route::match(['put', 'patch'], '/{invoice}', 'update')
+    ->whereNumber('invoice')
+    ->name('update');
+Route::delete('/{invoice}', 'destroy')
+    ->whereNumber('invoice')
+    ->name('destroy');
+
+
+});
+
         });
 
     Route::prefix('payments')
@@ -768,29 +809,38 @@ Route::middleware(
         ->controller(PaymentController::class)
         ->group(function (): void {
             Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::post('/{payment}/capture-proof', 'captureProof')
-                ->whereNumber('payment')
-                ->name('capture-proof');
-            Route::get('/{payment}/print', 'print')
-                ->whereNumber('payment')
-                ->name('print');
-            Route::patch('/{payment}/status', 'updateStatus')
-                ->whereNumber('payment')
-                ->name('status');
-            Route::get('/{payment}/edit', 'edit')
-                ->whereNumber('payment')
-                ->name('edit');
-            Route::match(['put', 'patch'], '/{payment}', 'update')
-                ->whereNumber('payment')
-                ->name('update');
-            Route::delete('/{payment}', 'destroy')
-                ->whereNumber('payment')
-                ->name('destroy');
-            Route::get('/{payment}', 'show')
-                ->whereNumber('payment')
-                ->name('show');
+Route::get('/{payment}/print', 'print')
+    ->whereNumber('payment')
+    ->name('print');
+Route::get('/{payment}', 'show')
+    ->whereNumber('payment')
+    ->name('show');
+
+Route::middleware('role:super_admin')->group(function (): void {
+
+Route::get('/create', 'create')->name('create');
+Route::post('/', 'store')->name('store');
+Route::post('/{payment}/capture-proof', 'captureProof')
+    ->whereNumber('payment')
+    ->name('capture-proof');
+
+
+Route::patch('/{payment}/status', 'updateStatus')
+    ->whereNumber('payment')
+    ->name('status');
+Route::get('/{payment}/edit', 'edit')
+    ->whereNumber('payment')
+    ->name('edit');
+Route::match(['put', 'patch'], '/{payment}', 'update')
+    ->whereNumber('payment')
+    ->name('update');
+Route::delete('/{payment}', 'destroy')
+    ->whereNumber('payment')
+    ->name('destroy');
+
+
+});
+
         });
 });
 
@@ -964,6 +1014,9 @@ Route::prefix('invoices')
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
+        Route::get('/{invoice}/print', 'print')
+            ->whereNumber('invoice')
+            ->name('print');
         Route::patch('/{invoice}/refresh-status', 'refreshPaymentStatus')
             ->whereNumber('invoice')
             ->name('refresh-status');
@@ -1255,7 +1308,8 @@ Route::prefix('payments')
 
             Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])
                 ->whereNumber('id')
-                ->name('users.force-delete');
+->name('users.forceDelete');
+
 
         });
 

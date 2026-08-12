@@ -79,6 +79,20 @@
           $roleSummary = collect($roleSummary ?? []);
           $monitoringPriorities = collect($monitoringPriorities ?? []);
 
+          $invoicePaymentLineChart = array_merge(
+              [
+                  'labels' => [],
+                  'invoice_totals' => [],
+                  'payment_totals' => [],
+                  'invoice_counts' => [],
+                  'payment_counts' => [],
+                  'invoice_sum' => 0.0,
+                  'payment_sum' => 0.0,
+                  'max_amount' => 1.0,
+              ],
+              $invoicePaymentLineChart ?? [],
+          );
+
           $branchSummary = array_merge(
               [
                   'total' => 0,
@@ -197,23 +211,22 @@
               $serviceCategorySummary ?? [],
           );
 
-            $serviceSummary = array_merge(
-                 [
-                      'total' => $services->count(),
-                      'active' => $services->where('status', 'active')->count(),
-                      'inactive' => $services->where('status', 'inactive')->count(),
-                      'active_percentage' => 0.0,
-                      'average_price' => 0.0,
-                 ],
-                 $serviceSummary ?? [],
-            );
+          $serviceSummary = array_merge(
+              [
+                  'total' => $services->count(),
+                  'active' => $services->where('status', 'active')->count(),
+                  'inactive' => $services->where('status', 'inactive')->count(),
+                  'active_percentage' => 0.0,
+                  'average_price' => 0.0,
+              ],
+              $serviceSummary ?? [],
+          );
 
-            $serviceTotal = max(0, (int) $serviceSummary['total']);
-            $serviceActive = max(0, (int) $serviceSummary['active']);
-            $serviceInactive = max(0, (int) $serviceSummary['inactive']);
-            $serviceSummary['active_percentage'] = $serviceTotal > 0
-                 ? round(($serviceActive / $serviceTotal) * 100, 1)
-                 : 0.0;
+          $serviceTotal = max(0, (int) $serviceSummary['total']);
+          $serviceActive = max(0, (int) $serviceSummary['active']);
+          $serviceInactive = max(0, (int) $serviceSummary['inactive']);
+          $serviceSummary['active_percentage'] =
+              $serviceTotal > 0 ? round(($serviceActive / $serviceTotal) * 100, 1) : 0.0;
 
           $serviceCategoryTotal = max(0, (int) ($serviceCategorySummary['total'] ?? 0));
           $serviceCategoryActive = max(0, (int) ($serviceCategorySummary['active'] ?? 0));
@@ -303,16 +316,20 @@
                   'trend_type' => 'up',
                   'theme' => 'blue',
               ],
-                 [
-                      'label' => 'Service Aktif',
-                      'value' => $serviceActive,
-                      'suffix' => '',
-                      'icon' => 'briefcase',
-                      'description' => number_format($serviceTotal, 0, ',', '.') . ' service terdaftar dengan ' . number_format($serviceInactive, 0, ',', '.') . ' nonaktif',
-                      'trend' => number_format($serviceSummary['active_percentage'], 1, ',', '.') . '% aktif',
-                      'trend_type' => 'up',
-                      'theme' => 'green',
-                 ],
+              [
+                  'label' => 'Service Aktif',
+                  'value' => $serviceActive,
+                  'suffix' => '',
+                  'icon' => 'briefcase',
+                  'description' =>
+                      number_format($serviceTotal, 0, ',', '.') .
+                      ' service terdaftar dengan ' .
+                      number_format($serviceInactive, 0, ',', '.') .
+                      ' nonaktif',
+                  'trend' => number_format($serviceSummary['active_percentage'], 1, ',', '.') . '% aktif',
+                  'trend_type' => 'up',
+                  'theme' => 'green',
+              ],
               [
                   'label' => 'Pengguna Terdaftar',
                   'value' => $totalUsers,
@@ -383,12 +400,12 @@
           );
 
           $quickActions = [
-                 [
-                      'label' => 'Service Layanan',
-                      'description' => 'Kode, harga, unit, durasi, dan status service',
-                      'icon' => 'briefcase',
-                      'url' => $servicesUrl ?? '#',
-                 ],
+              [
+                  'label' => 'Service Layanan',
+                  'description' => 'Kode, harga, unit, durasi, dan status service',
+                  'icon' => 'briefcase',
+                  'url' => $servicesUrl ?? '#',
+              ],
               [
                   'label' => 'Kategori Layanan',
                   'description' => 'Kode, nama, deskripsi, status, dan sampah data',
@@ -1239,6 +1256,166 @@
           .sad-chart-month {
                margin-top: 13px;
                color: var(--sad-muted);
+               font-size: 10px;
+               font-weight: 800;
+          }
+
+          /* INVOICE VS PAYMENT LINE CHART */
+          .sad-line-segment-body {
+               padding: 18px 20px;
+          }
+
+          .sad-line-segment-summary {
+               display: grid;
+               grid-template-columns: repeat(3, minmax(0, 1fr));
+               gap: 10px;
+               margin-bottom: 14px;
+          }
+
+          .sad-line-stat {
+               padding: 12px;
+               border: 1px solid var(--sad-border);
+               border-radius: 12px;
+               background: var(--sad-card-soft);
+          }
+
+          .sad-line-stat-label {
+               display: block;
+               margin-bottom: 6px;
+               color: var(--sad-muted);
+               font-size: 9px;
+               font-weight: 850;
+               text-transform: uppercase;
+               letter-spacing: 0.06em;
+          }
+
+          .sad-line-stat-value {
+               display: block;
+               color: var(--sad-heading);
+               font-size: 16px;
+               font-weight: 850;
+          }
+
+          .sad-line-canvas-wrap {
+               overflow-x: auto;
+               padding-bottom: 4px;
+          }
+
+          .sad-line-canvas {
+               min-width: 620px;
+               width: 100%;
+               height: auto;
+               display: block;
+          }
+
+          .sad-line-grid {
+               stroke: var(--sad-border);
+               stroke-width: 1;
+               stroke-dasharray: 4 6;
+          }
+
+          .sad-line-axis {
+               stroke: var(--sad-border);
+               stroke-width: 1;
+          }
+
+          .sad-line-axis-label {
+               fill: var(--sad-muted);
+               font-size: 9px;
+               font-weight: 700;
+          }
+
+          .sad-line-series-invoice,
+          .sad-line-series-payment {
+               fill: none;
+               stroke-width: 3;
+               stroke-linejoin: round;
+               stroke-linecap: round;
+          }
+
+          .sad-line-series-invoice {
+               stroke: #4f46e5;
+          }
+
+          .sad-line-series-payment {
+               stroke: #0ea5a4;
+          }
+
+          .sad-line-point-invoice,
+          .sad-line-point-payment {
+               stroke-width: 2;
+               cursor: pointer;
+               transition: transform 0.18s ease, r 0.18s ease;
+          }
+
+          .sad-line-point-invoice:hover,
+          .sad-line-point-payment:hover,
+          .sad-line-point-invoice.is-active,
+          .sad-line-point-payment.is-active {
+               r: 5;
+               transform: scale(1.02);
+          }
+
+          .sad-line-point-invoice {
+               fill: #ffffff;
+               stroke: #4f46e5;
+          }
+
+          .sad-line-point-payment {
+               fill: #ffffff;
+               stroke: #0ea5a4;
+          }
+
+          .sad-line-legend {
+               display: flex;
+               flex-wrap: wrap;
+               gap: 16px;
+               margin-top: 10px;
+          }
+
+          .sad-line-legend-item {
+               display: inline-flex;
+               align-items: center;
+               gap: 8px;
+               color: var(--sad-text);
+               font-size: 10px;
+               font-weight: 800;
+          }
+
+          .sad-line-legend-swatch {
+               width: 24px;
+               height: 3px;
+               border-radius: 999px;
+          }
+
+          .sad-line-legend-swatch.invoice {
+               background: #4f46e5;
+          }
+
+          .sad-line-legend-swatch.payment {
+               background: #0ea5a4;
+          }
+
+          .sad-line-click-result {
+               margin-top: 11px;
+               padding: 10px 12px;
+               border: 1px dashed var(--sad-border);
+               border-radius: 11px;
+               background: var(--sad-card-soft);
+          }
+
+          .sad-line-click-title {
+               margin: 0 0 5px;
+               color: var(--sad-heading);
+               font-size: 11px;
+               font-weight: 850;
+          }
+
+          .sad-line-click-values {
+               display: flex;
+               flex-wrap: wrap;
+               gap: 10px 16px;
+               color: var(--sad-text);
                font-size: 10px;
                font-weight: 800;
           }
@@ -2128,6 +2305,15 @@
                     flex-direction: column;
                     text-align: center;
                }
+
+               .sad-line-segment-summary {
+                    grid-template-columns: 1fr;
+               }
+
+               .sad-line-click-values {
+                    display: grid;
+                    grid-template-columns: 1fr;
+               }
           }
 
           @media (max-width: 520px) {
@@ -2157,10 +2343,10 @@
           }
 
           /* ======================================================================
-                                 HERO BRIGHTNESS PATCH
-                                 Mempertahankan struktur template yang ada dan hanya memperbaiki
-                                 warna hero agar lebih terang, kontras, dan mudah dibaca.
-                                 ====================================================================== */
+                                           HERO BRIGHTNESS PATCH
+                                           Mempertahankan struktur template yang ada dan hanya memperbaiki
+                                           warna hero agar lebih terang, kontras, dan mudah dibaca.
+                                           ====================================================================== */
           .sad-dashboard .sad-hero {
                border-color: rgba(255, 255, 255, 0.34);
                background:
@@ -2450,6 +2636,219 @@
           </section>
 
           @php
+               $lineLabels = collect($invoicePaymentLineChart['labels'] ?? [])->values();
+               $lineInvoiceTotals = collect($invoicePaymentLineChart['invoice_totals'] ?? [])
+                   ->map(fn($value) => (float) $value)
+                   ->values();
+               $linePaymentTotals = collect($invoicePaymentLineChart['payment_totals'] ?? [])
+                   ->map(fn($value) => (float) $value)
+                   ->values();
+               $lineInvoiceCounts = collect($invoicePaymentLineChart['invoice_counts'] ?? [])
+                   ->map(fn($value) => (int) $value)
+                   ->values();
+               $linePaymentCounts = collect($invoicePaymentLineChart['payment_counts'] ?? [])
+                   ->map(fn($value) => (int) $value)
+                   ->values();
+
+               $lineCount = max(1, $lineLabels->count());
+               $svgWidth = 860;
+               $svgHeight = 250;
+               $paddingLeft = 52;
+               $paddingTop = 18;
+               $paddingRight = 24;
+               $paddingBottom = 42;
+               $plotWidth = max(1, $svgWidth - $paddingLeft - $paddingRight);
+               $plotHeight = max(1, $svgHeight - $paddingTop - $paddingBottom);
+               $xStep = $lineCount > 1 ? $plotWidth / ($lineCount - 1) : 0;
+
+               $lineMaxAmount = max(1.0, (float) ($invoicePaymentLineChart['max_amount'] ?? 1));
+               $lineInvoiceSum = (float) ($invoicePaymentLineChart['invoice_sum'] ?? 0);
+               $linePaymentSum = (float) ($invoicePaymentLineChart['payment_sum'] ?? 0);
+               $lineGrandSum = $lineInvoiceSum + $linePaymentSum;
+
+               $buildPoint = static function (float $value, int $index) use (
+                   $paddingLeft,
+                   $paddingTop,
+                   $plotHeight,
+                   $lineMaxAmount,
+                   $xStep,
+               ): array {
+                   $safeValue = max(0.0, $value);
+                   $x = $paddingLeft + $index * $xStep;
+                   $y = $paddingTop + $plotHeight * (1 - min(1, $safeValue / $lineMaxAmount));
+
+                   return [
+                       'x' => round($x, 2),
+                       'y' => round($y, 2),
+                   ];
+               };
+
+               $lineInvoicePoints = $lineInvoiceTotals
+                   ->map(fn(float $value, int $index) => $buildPoint($value, $index))
+                   ->values();
+
+               $linePaymentPoints = $linePaymentTotals
+                   ->map(fn(float $value, int $index) => $buildPoint($value, $index))
+                   ->values();
+
+               $lineInvoicePolyline = $lineInvoicePoints
+                   ->map(fn(array $point): string => $point['x'] . ',' . $point['y'])
+                   ->implode(' ');
+
+               $linePaymentPolyline = $linePaymentPoints
+                   ->map(fn(array $point): string => $point['x'] . ',' . $point['y'])
+                   ->implode(' ');
+
+               $lineGridTicks = collect([0, 25, 50, 75, 100])
+                   ->map(function (int $percent) use ($paddingTop, $plotHeight, $lineMaxAmount): array {
+                       $y = $paddingTop + $plotHeight * (1 - $percent / 100);
+
+                       return [
+                           'y' => round($y, 2),
+                           'label' => 'Rp ' . number_format(($lineMaxAmount * $percent) / 100, 0, ',', '.'),
+                       ];
+                   })
+                   ->values();
+          @endphp
+
+          <section class="sad-card" style="margin-bottom: 24px;">
+               <header class="sad-card-header">
+                    <div class="sad-card-heading">
+                         <span class="sad-card-heading-icon">
+                              <i data-feather="activity"></i>
+                         </span>
+                         <div>
+                              <h2 class="sad-card-title">Line Segment Invoices vs Payments</h2>
+                              <p class="sad-card-subtitle">Tren nominal bulanan untuk invoice dan payment dalam
+                                   {{ $lineLabels->count() }} bulan terakhir.</p>
+                         </div>
+                    </div>
+               </header>
+
+               <div class="sad-line-segment-body">
+                    <div class="sad-line-segment-summary">
+                         <div class="sad-line-stat">
+                              <span class="sad-line-stat-label">Total Invoice</span>
+                              <span class="sad-line-stat-value">Rp
+                                   {{ number_format($lineInvoiceSum, 0, ',', '.') }}</span>
+                         </div>
+                         <div class="sad-line-stat">
+                              <span class="sad-line-stat-label">Total Payment</span>
+                              <span class="sad-line-stat-value">Rp
+                                   {{ number_format($linePaymentSum, 0, ',', '.') }}</span>
+                         </div>
+                         <div class="sad-line-stat">
+                              <span class="sad-line-stat-label">Total Keseluruhan</span>
+                              <span class="sad-line-stat-value">Rp {{ number_format($lineGrandSum, 0, ',', '.') }}</span>
+                         </div>
+                    </div>
+
+                    @if ($lineLabels->isNotEmpty())
+                         <div class="sad-line-canvas-wrap">
+                              <svg class="sad-line-canvas" viewBox="0 0 {{ $svgWidth }} {{ $svgHeight }}"
+                                   role="img" aria-label="Grafik line segment invoice dan payment per bulan">
+                                   <line class="sad-line-axis" x1="{{ $paddingLeft }}"
+                                        y1="{{ $paddingTop + $plotHeight }}" x2="{{ $svgWidth - $paddingRight }}"
+                                        y2="{{ $paddingTop + $plotHeight }}"></line>
+
+                                   @foreach ($lineGridTicks as $tick)
+                                        <line class="sad-line-grid" x1="{{ $paddingLeft }}" y1="{{ $tick['y'] }}"
+                                             x2="{{ $svgWidth - $paddingRight }}" y2="{{ $tick['y'] }}"></line>
+                                        <text class="sad-line-axis-label" x="8"
+                                             y="{{ $tick['y'] + 3 }}">{{ $tick['label'] }}</text>
+                                   @endforeach
+
+                                   @if ($lineInvoicePolyline !== '')
+                                        <polyline class="sad-line-series-invoice" points="{{ $lineInvoicePolyline }}">
+                                        </polyline>
+                                   @endif
+
+                                   @if ($linePaymentPolyline !== '')
+                                        <polyline class="sad-line-series-payment" points="{{ $linePaymentPolyline }}">
+                                        </polyline>
+                                   @endif
+
+                                   @foreach ($lineLabels as $index => $label)
+                                        @php
+                                             $pointX =
+                                                 (float) ($lineInvoicePoints[$index]['x'] ??
+                                                     $paddingLeft + $index * $xStep);
+                                             $invoicePoint = $lineInvoicePoints[$index] ?? [
+                                                 'x' => $pointX,
+                                                 'y' => $paddingTop + $plotHeight,
+                                             ];
+                                             $paymentPoint = $linePaymentPoints[$index] ?? [
+                                                 'x' => $pointX,
+                                                 'y' => $paddingTop + $plotHeight,
+                                             ];
+                                        @endphp
+
+                                        <text class="sad-line-axis-label" x="{{ $pointX }}" y="{{ $svgHeight - 16 }}"
+                                             text-anchor="middle">{{ $label }}</text>
+
+                                        <circle class="sad-line-point-invoice" cx="{{ $invoicePoint['x'] }}"
+                                             cy="{{ $invoicePoint['y'] }}" r="4" data-line-point
+                                             data-month="{{ $label }}"
+                                             data-invoice-amount="{{ (float) ($lineInvoiceTotals[$index] ?? 0) }}"
+                                             data-payment-amount="{{ (float) ($linePaymentTotals[$index] ?? 0) }}"
+                                             data-invoice-count="{{ (int) ($lineInvoiceCounts[$index] ?? 0) }}"
+                                             data-payment-count="{{ (int) ($linePaymentCounts[$index] ?? 0) }}">
+                                             <title>Invoice {{ $label }}: Rp
+                                                  {{ number_format((float) ($lineInvoiceTotals[$index] ?? 0), 0, ',', '.') }}
+                                                  ({{ (int) ($lineInvoiceCounts[$index] ?? 0) }} data)</title>
+                                        </circle>
+
+                                        <circle class="sad-line-point-payment" cx="{{ $paymentPoint['x'] }}"
+                                             cy="{{ $paymentPoint['y'] }}" r="4" data-line-point
+                                             data-month="{{ $label }}"
+                                             data-invoice-amount="{{ (float) ($lineInvoiceTotals[$index] ?? 0) }}"
+                                             data-payment-amount="{{ (float) ($linePaymentTotals[$index] ?? 0) }}"
+                                             data-invoice-count="{{ (int) ($lineInvoiceCounts[$index] ?? 0) }}"
+                                             data-payment-count="{{ (int) ($linePaymentCounts[$index] ?? 0) }}">
+                                             <title>Payment {{ $label }}: Rp
+                                                  {{ number_format((float) ($linePaymentTotals[$index] ?? 0), 0, ',', '.') }}
+                                                  ({{ (int) ($linePaymentCounts[$index] ?? 0) }} data)</title>
+                                        </circle>
+                                   @endforeach
+                              </svg>
+                         </div>
+
+                         <div class="sad-line-click-result" id="lineChartClickResult"
+                              data-default-title="Total Keseluruhan (Semua Bulan)"
+                              data-default-invoice="{{ $lineInvoiceSum }}" data-default-payment="{{ $linePaymentSum }}"
+                              data-default-total="{{ $lineGrandSum }}"
+                              data-default-invoice-count="{{ array_sum($lineInvoiceCounts->all()) }}"
+                              data-default-payment-count="{{ array_sum($linePaymentCounts->all()) }}">
+                              <p class="sad-line-click-title" id="lineChartClickTitle">Total Keseluruhan (Semua Bulan)</p>
+                              <div class="sad-line-click-values">
+                                   <span id="lineChartClickInvoice">Invoice: Rp
+                                        {{ number_format($lineInvoiceSum, 0, ',', '.') }}
+                                        ({{ number_format(array_sum($lineInvoiceCounts->all()), 0, ',', '.') }} data)</span>
+                                   <span id="lineChartClickPayment">Payment: Rp
+                                        {{ number_format($linePaymentSum, 0, ',', '.') }}
+                                        ({{ number_format(array_sum($linePaymentCounts->all()), 0, ',', '.') }} data)</span>
+                                   <span id="lineChartClickTotal">Total Gabungan: Rp
+                                        {{ number_format($lineGrandSum, 0, ',', '.') }}</span>
+                              </div>
+                         </div>
+                    @else
+                         <div class="sad-empty-state is-visible">
+                              <i data-feather="activity"></i>
+                              <h4>Data invoice/payment belum tersedia</h4>
+                              <p>Tambahkan transaksi invoice dan payment untuk menampilkan line segment.</p>
+                         </div>
+                    @endif
+
+                    <div class="sad-line-legend">
+                         <span class="sad-line-legend-item"><span
+                                   class="sad-line-legend-swatch invoice"></span>Invoices</span>
+                         <span class="sad-line-legend-item"><span
+                                   class="sad-line-legend-swatch payment"></span>Payments</span>
+                    </div>
+               </div>
+          </section>
+
+          @php
                $directionLabels = [
                    'increase' => 'Semakin besar semakin baik',
                    'decrease' => 'Semakin kecil semakin baik',
@@ -2469,29 +2868,56 @@
                          <span class="sad-card-heading-icon"><i data-feather="briefcase"></i></span>
                          <div>
                               <h2 class="sad-card-title">Service Terbaru</h2>
-                              <p class="sad-card-subtitle">Data terbaru dari tabel <code>services</code> berdasarkan kode, kategori, harga, durasi, dan status.</p>
+                              <p class="sad-card-subtitle">Data terbaru dari tabel <code>services</code> berdasarkan kode,
+                                   kategori, harga, durasi, dan status.</p>
                          </div>
                     </div>
                     @if (!empty($servicesUrl) && $servicesUrl !== '#')
-                         <a href="{{ $servicesUrl }}" class="sad-card-action">Kelola service <i data-feather="arrow-up-right"></i></a>
+                         <a href="{{ $servicesUrl }}" class="sad-card-action">Kelola service <i
+                                   data-feather="arrow-up-right"></i></a>
                     @endif
                </header>
                <div class="sad-table-wrapper">
                     <table class="sad-table">
-                         <thead><tr><th>Service</th><th>Kategori</th><th>Harga</th><th>Durasi</th><th>Status</th><th>Diperbarui</th></tr></thead>
+                         <thead>
+                              <tr>
+                                   <th>Service</th>
+                                   <th>Kategori</th>
+                                   <th>Harga</th>
+                                   <th>Durasi</th>
+                                   <th>Status</th>
+                                   <th>Diperbarui</th>
+                              </tr>
+                         </thead>
                          <tbody>
                               @forelse ($services->take(5) as $service)
                                    @php $serviceStatus = strtolower((string) data_get($service, 'status', 'inactive')); @endphp
                                    <tr>
-                                        <td><span class="sad-unit-name">{{ data_get($service, 'name', 'Tanpa nama') }}</span><span class="sad-unit-code">{{ data_get($service, 'service_code', '-') }}</span></td>
+                                        <td><span
+                                                  class="sad-unit-name">{{ data_get($service, 'name', 'Tanpa nama') }}</span><span
+                                                  class="sad-unit-code">{{ data_get($service, 'service_code', '-') }}</span>
+                                        </td>
                                         <td>{{ data_get($service, 'category_name', 'Tanpa kategori') }}</td>
-                                        <td><span class="sad-leader">Rp {{ number_format((float) data_get($service, 'base_price', 0), 0, ',', '.') }}</span><span class="sad-updated">/ {{ data_get($service, 'unit', 'service') }}</span></td>
-                                        <td>{{ data_get($service, 'estimated_duration_minutes') ? data_get($service, 'estimated_duration_minutes') . ' menit' : '-' }}</td>
-                                        <td><span class="sad-badge {{ $serviceStatus === 'active' ? 'success' : 'danger' }}">{{ $serviceStatus === 'active' ? 'Aktif' : 'Tidak Aktif' }}</span></td>
+                                        <td><span class="sad-leader">Rp
+                                                  {{ number_format((float) data_get($service, 'base_price', 0), 0, ',', '.') }}</span><span
+                                                  class="sad-updated">/ {{ data_get($service, 'unit', 'service') }}</span>
+                                        </td>
+                                        <td>{{ data_get($service, 'estimated_duration_minutes') ? data_get($service, 'estimated_duration_minutes') . ' menit' : '-' }}
+                                        </td>
+                                        <td><span
+                                                  class="sad-badge {{ $serviceStatus === 'active' ? 'success' : 'danger' }}">{{ $serviceStatus === 'active' ? 'Aktif' : 'Tidak Aktif' }}</span>
+                                        </td>
                                         <td>{{ optional(data_get($service, 'updated_at'))->format('d M Y') ?? '-' }}</td>
                                    </tr>
                               @empty
-                                   <tr><td colspan="6"><div class="sad-empty-state is-visible"><i data-feather="briefcase"></i><h4>Service belum tersedia</h4><p>Tambahkan service untuk menampilkannya di dashboard.</p></div></td></tr>
+                                   <tr>
+                                        <td colspan="6">
+                                             <div class="sad-empty-state is-visible"><i data-feather="briefcase"></i>
+                                                  <h4>Service belum tersedia</h4>
+                                                  <p>Tambahkan service untuk menampilkannya di dashboard.</p>
+                                             </div>
+                                        </td>
+                                   </tr>
                               @endforelse
                          </tbody>
                     </table>
@@ -3431,6 +3857,72 @@
                          'input',
                          filterPerformancePeriods
                     );
+
+                    const lineChartResult = document.getElementById('lineChartClickResult');
+                    const lineChartTitle = document.getElementById('lineChartClickTitle');
+                    const lineChartInvoice = document.getElementById('lineChartClickInvoice');
+                    const lineChartPayment = document.getElementById('lineChartClickPayment');
+                    const lineChartTotal = document.getElementById('lineChartClickTotal');
+                    const lineChartPoints = Array.from(document.querySelectorAll('[data-line-point]'));
+
+                    function formatCurrency(value) {
+                         return new Intl.NumberFormat('id-ID').format(Math.max(0, Number(value) || 0));
+                    }
+
+                    function formatCount(value) {
+                         return new Intl.NumberFormat('id-ID').format(Math.max(0, Number(value) || 0));
+                    }
+
+                    function renderLineResult(title, invoiceAmount, paymentAmount, invoiceCount, paymentCount) {
+                         if (!lineChartResult || !lineChartTitle || !lineChartInvoice || !lineChartPayment || !
+                              lineChartTotal) {
+                              return;
+                         }
+
+                         const totalAmount = Math.max(0, Number(invoiceAmount) || 0) + Math.max(0, Number(
+                              paymentAmount) || 0);
+
+                         lineChartTitle.textContent = title;
+                         lineChartInvoice.textContent = 'Invoice: Rp ' + formatCurrency(invoiceAmount) + ' (' +
+                              formatCount(invoiceCount) + ' data)';
+                         lineChartPayment.textContent = 'Payment: Rp ' + formatCurrency(paymentAmount) + ' (' +
+                              formatCount(paymentCount) + ' data)';
+                         lineChartTotal.textContent = 'Total Gabungan: Rp ' + formatCurrency(totalAmount);
+                    }
+
+                    if (lineChartResult && lineChartPoints.length > 0) {
+                         renderLineResult(
+                              lineChartResult.dataset.defaultTitle || 'Total Keseluruhan (Semua Bulan)',
+                              lineChartResult.dataset.defaultInvoice || 0,
+                              lineChartResult.dataset.defaultPayment || 0,
+                              lineChartResult.dataset.defaultInvoiceCount || 0,
+                              lineChartResult.dataset.defaultPaymentCount || 0
+                         );
+
+                         lineChartPoints.forEach(function(point) {
+                              point.addEventListener('click', function() {
+                                   lineChartPoints.forEach(function(item) {
+                                        item.classList.remove('is-active');
+                                   });
+
+                                   point.classList.add('is-active');
+
+                                   const month = point.dataset.month || '-';
+                                   const invoiceAmount = point.dataset.invoiceAmount || 0;
+                                   const paymentAmount = point.dataset.paymentAmount || 0;
+                                   const invoiceCount = point.dataset.invoiceCount || 0;
+                                   const paymentCount = point.dataset.paymentCount || 0;
+
+                                   renderLineResult(
+                                        'Ringkasan Bulan ' + month,
+                                        invoiceAmount,
+                                        paymentAmount,
+                                        invoiceCount,
+                                        paymentCount
+                                   );
+                              });
+                         });
+                    }
 
                     filterPerformancePeriods();
                });

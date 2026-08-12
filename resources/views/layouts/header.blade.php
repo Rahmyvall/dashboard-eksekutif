@@ -23,3 +23,4 @@
 <link rel="stylesheet" href="{{ asset('backend/assets/css/custom.css') }}">
 <link rel="stylesheet" href="{{ asset('backend/assets/css/cassie.css') }}">
 <link rel="stylesheet" href="{{ asset('backend/assets/css/dashboard-ui.css') }}">
+<link rel="stylesheet" href="{{ asset('backend/assets/css/admin-modern-crud.css') }}">

@@ -3,252 +3,358 @@
 @section('page-title', 'Manajemen Invoice')
 
 @section('content')
+     @php
+          $invoiceItems = $invoices->getCollection();
+          $totalOnPage = (float) $invoiceItems->sum('total_amount');
+          $paidCount = $invoiceItems->where('payment_status', 'paid')->count();
+          $partialCount = $invoiceItems->where('payment_status', 'partial')->count();
+          $unpaidCount = $invoiceItems->where('payment_status', 'unpaid')->count();
+     @endphp
+
      <style>
           .invoice-page {
+               --inv-text: #1e293b;
+               --inv-muted: #64748b;
+               --inv-border: #dbe3f1;
+               --inv-surface: #ffffff;
+               --inv-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
                min-height: calc(100vh - 70px);
-               padding: 30px 18px 48px;
-               background: linear-gradient(145deg, #f8fbff, #f7f4ff 55%, #effcff)
+               padding: 24px 18px 44px;
+               background:
+                    radial-gradient(circle at 8% 8%, rgba(14, 165, 233, 0.12), transparent 25%),
+                    radial-gradient(circle at 92% 12%, rgba(99, 102, 241, 0.14), transparent 28%),
+                    linear-gradient(145deg, #f8fbff, #f6f8ff 52%, #f0fbff);
           }
 
           .invoice-wrap {
-               max-width: 1580px;
-               margin: auto
+               max-width: 1600px;
+               margin: auto;
           }
 
           .invoice-hero {
                padding: 30px;
-               margin-bottom: 22px;
+               margin-bottom: 18px;
                color: #fff;
-               border-radius: 26px;
-               background: linear-gradient(120deg, #4338ca, #7c3aed 52%, #0891b2);
-               box-shadow: 0 22px 52px rgba(67, 56, 202, .2)
+               border-radius: 24px;
+               background: linear-gradient(125deg, #1d4ed8 0%, #4f46e5 42%, #0891b2 100%);
+               box-shadow: 0 24px 48px rgba(37, 99, 235, 0.26);
           }
 
           .invoice-hero-row {
                display: flex;
                align-items: center;
                justify-content: space-between;
-               gap: 18px
+               gap: 16px;
           }
 
           .invoice-heading {
                display: flex;
+               gap: 14px;
                align-items: center;
-               gap: 16px
           }
 
           .invoice-icon {
                display: inline-flex;
-               width: 62px;
-               height: 62px;
+               width: 60px;
+               height: 60px;
                align-items: center;
                justify-content: center;
-               color: #4f46e5;
-               font-size: 1.65rem;
-               border-radius: 19px;
-               background: #fff
+               color: #1d4ed8;
+               font-size: 1.5rem;
+               border-radius: 17px;
+               background: rgba(255, 255, 255, 0.95);
           }
 
           .invoice-hero h1 {
                margin: 0;
-               font-size: clamp(1.7rem, 3vw, 2.35rem);
+               font-size: clamp(1.6rem, 2.8vw, 2.3rem);
                font-weight: 850;
-               letter-spacing: -.04em
+               letter-spacing: -0.04em;
           }
 
           .invoice-hero p {
                margin: 8px 0 0;
-               color: rgba(255, 255, 255, .88)
+               color: rgba(255, 255, 255, 0.88);
           }
 
           .invoice-actions {
                display: flex;
+               gap: 10px;
                flex-wrap: wrap;
-               gap: 9px
+          }
+
+          .invoice-btn,
+          .invoice-btn-outline {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               gap: 8px;
+               min-height: 44px;
+               padding: 10px 15px;
+               font-size: 0.82rem;
+               font-weight: 800;
+               text-decoration: none;
+               border-radius: 12px;
+               transition: transform 0.2s ease, background-color 0.2s ease;
           }
 
           .invoice-btn {
-               display: inline-flex;
-               min-height: 46px;
-               padding: 10px 16px;
-               gap: 8px;
-               align-items: center;
-               color: #4338ca;
-               font-weight: 800;
-               text-decoration: none;
-               border-radius: 13px;
-               background: #fff
+               color: #1d4ed8;
+               background: #fff;
           }
 
           .invoice-btn-outline {
-               display: inline-flex;
-               min-height: 46px;
-               padding: 10px 16px;
-               gap: 8px;
-               align-items: center;
                color: #fff;
-               border: 1px solid rgba(255, 255, 255, .42);
-               border-radius: 13px;
-               background: rgba(255, 255, 255, .12);
-               font-weight: 800
+               border: 1px solid rgba(255, 255, 255, 0.45);
+               background: rgba(255, 255, 255, 0.12);
+          }
+
+          .invoice-btn:hover,
+          .invoice-btn-outline:hover {
+               transform: translateY(-1px);
+          }
+
+          .invoice-stats {
+               display: grid;
+               grid-template-columns: repeat(4, minmax(0, 1fr));
+               gap: 12px;
+               margin-bottom: 18px;
+          }
+
+          .stat-card {
+               padding: 14px;
+               border: 1px solid var(--inv-border);
+               border-radius: 16px;
+               background: var(--inv-surface);
+               box-shadow: var(--inv-shadow);
+          }
+
+          .stat-label {
+               color: var(--inv-muted);
+               font-size: 0.68rem;
+               font-weight: 800;
+               letter-spacing: 0.08em;
+               text-transform: uppercase;
+               margin-bottom: 7px;
+          }
+
+          .stat-value {
+               color: var(--inv-text);
+               font-size: 1.45rem;
+               font-weight: 850;
+               letter-spacing: -0.03em;
+               line-height: 1.1;
           }
 
           .invoice-card {
-               padding: 20px;
-               margin-top: 22px;
-               border: 1px solid #e2e8f0;
-               border-radius: 22px;
-               background: rgba(255, 255, 255, .96);
-               box-shadow: 0 16px 40px rgba(51, 65, 85, .07)
+               margin-top: 16px;
+               border: 1px solid var(--inv-border);
+               border-radius: 18px;
+               background: rgba(255, 255, 255, 0.97);
+               box-shadow: var(--inv-shadow);
+          }
+
+          .invoice-card-head {
+               padding: 16px 18px;
+               border-bottom: 1px solid #eaf0f8;
+               background: linear-gradient(90deg, #f8fbff, #f6f9ff);
+          }
+
+          .invoice-card-title {
+               margin: 0;
+               color: var(--inv-text);
+               font-size: 0.98rem;
+               font-weight: 850;
+          }
+
+          .invoice-card-subtitle {
+               margin: 4px 0 0;
+               color: var(--inv-muted);
+               font-size: 0.78rem;
+          }
+
+          .invoice-card-body {
+               padding: 16px 18px 18px;
           }
 
           .invoice-filter {
                display: grid;
-               grid-template-columns: 2fr 1fr auto auto;
-               gap: 12px;
-               align-items: end
+               grid-template-columns: 2fr 1fr auto;
+               gap: 11px;
+               align-items: end;
           }
 
           .invoice-filter label {
                display: block;
                margin-bottom: 6px;
-               color: #64748b;
-               font-size: .75rem;
-               font-weight: 800
+               color: #475569;
+               font-size: 0.74rem;
+               font-weight: 800;
           }
 
           .invoice-filter input,
           .invoice-filter select {
                width: 100%;
                min-height: 43px;
-               padding: 9px 12px;
-               border: 1px solid #dbe3ee;
-               border-radius: 11px
+               padding: 9px 11px;
+               border: 1px solid #d8e2f1;
+               border-radius: 11px;
+               background: #fff;
+          }
+
+          .filter-actions {
+               display: flex;
+               gap: 8px;
+               align-items: center;
+          }
+
+          .btn-filter,
+          .btn-reset {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               gap: 6px;
+               min-height: 43px;
+               padding: 9px 14px;
+               border-radius: 11px;
+               font-size: 0.78rem;
+               font-weight: 800;
+               text-decoration: none;
           }
 
           .btn-filter {
-               min-height: 43px;
-               padding: 9px 15px;
                color: #fff;
                border: 0;
-               border-radius: 11px;
-               background: #4f46e5;
-               font-weight: 800
+               background: linear-gradient(135deg, #2563eb, #4f46e5);
           }
 
           .btn-reset {
-               display: inline-flex;
-               min-height: 43px;
-               padding: 9px 15px;
-               align-items: center;
                color: #475569;
-               text-decoration: none;
                border: 1px solid #dbe3ee;
-               border-radius: 11px;
-               font-weight: 750
+               background: #fff;
           }
 
           .table-wrap {
                overflow-x: auto;
-               margin-top: 18px
           }
 
           .invoice-table {
                width: 100%;
-               min-width: 900px;
-               border-collapse: collapse
+               min-width: 980px;
+               border-collapse: collapse;
           }
 
           .invoice-table th {
-               padding: 13px;
+               padding: 12px;
                color: #64748b;
-               font-size: .7rem;
-               letter-spacing: .07em;
+               font-size: 0.67rem;
+               letter-spacing: 0.07em;
                text-align: left;
                text-transform: uppercase;
-               background: #f8fafc
+               background: #f8fbff;
+               border-bottom: 1px solid #e8eef7;
           }
 
           .invoice-table td {
-               padding: 14px 13px;
+               padding: 13px 12px;
                color: #334155;
-               border-bottom: 1px solid #eef2f7;
-               vertical-align: middle
+               font-size: 0.82rem;
+               border-bottom: 1px solid #edf2f8;
+               vertical-align: middle;
           }
 
           .invoice-table tr:hover td {
-               background: #fbfdff
+               background: #fbfdff;
           }
 
           .invoice-number {
-               color: #4f46e5;
+               color: #1d4ed8;
+               font-size: 0.84rem;
                font-weight: 850;
-               text-decoration: none
+               text-decoration: none;
           }
 
           .invoice-muted {
                color: #94a3b8;
-               font-size: .78rem
+               font-size: 0.74rem;
+               margin-top: 4px;
           }
 
           .invoice-amount {
                color: #0f172a;
                font-weight: 850;
-               white-space: nowrap
+               white-space: nowrap;
           }
 
           .invoice-badge {
                display: inline-flex;
-               padding: 5px 9px;
+               align-items: center;
+               padding: 5px 10px;
                border-radius: 999px;
-               font-size: .72rem;
-               font-weight: 800
+               font-size: 0.7rem;
+               font-weight: 800;
           }
 
           .badge-paid {
                color: #047857;
-               background: #d1fae5
+               background: #d1fae5;
           }
 
           .badge-partial {
                color: #b45309;
-               background: #fef3c7
+               background: #fef3c7;
           }
 
           .badge-unpaid {
                color: #be123c;
-               background: #ffe4e6
+               background: #ffe4e6;
           }
 
           .invoice-action {
                display: inline-flex;
-               width: 32px;
-               height: 32px;
+               width: 33px;
+               height: 33px;
                align-items: center;
                justify-content: center;
-               color: #4f46e5;
+               color: #1d4ed8;
                text-decoration: none;
-               border-radius: 9px;
-               background: #eef2ff
+               border-radius: 10px;
+               background: #e8efff;
           }
 
           .empty-invoice {
-               padding: 45px 15px;
+               padding: 52px 15px;
+               text-align: center;
                color: #94a3b8;
-               text-align: center
           }
 
-          @media(max-width:800px) {
+          .empty-invoice i {
+               margin-bottom: 12px;
+          }
+
+          .invoice-pagination {
+               padding-top: 14px;
+          }
+
+          @media (max-width: 900px) {
 
                .invoice-hero-row,
-               .invoice-filter {
+               .invoice-filter,
+               .invoice-stats {
                     display: grid;
-                    grid-template-columns: 1fr
+                    grid-template-columns: 1fr;
                }
 
                .invoice-btn,
-               .invoice-btn-outline {
-                    justify-content: center
+               .invoice-btn-outline,
+               .btn-filter,
+               .btn-reset {
+                    justify-content: center;
+               }
+
+               .filter-actions {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
                }
           }
 
@@ -258,11 +364,12 @@
                .topbar,
                .content-header,
                .invoice-hero,
-               .invoice-filter,
                .invoice-card:first-of-type,
+               .invoice-stats,
                .invoice-action,
-               .pagination {
-                    display: none !important
+               .invoice-pagination,
+               .invoice-actions {
+                    display: none !important;
                }
 
                .invoice-page,
@@ -271,44 +378,80 @@
                     margin: 0;
                     border: 0;
                     box-shadow: none;
-                    background: #fff
-               }
-
-               .invoice-table {
-                    min-width: 0;
-                    font-size: 10pt
+                    background: #fff;
                }
           }
      </style>
+
      <div class="invoice-page">
           <div class="invoice-wrap">
-               <div class="invoice-hero">
+               <header class="invoice-hero">
                     <div class="invoice-hero-row">
-                         <div class="invoice-heading"><span class="invoice-icon"><i
-                                        class="fas fa-file-invoice-dollar"></i></span>
+                         <div class="invoice-heading">
+                              <span class="invoice-icon">
+                                   <i class="fas fa-file-invoice-dollar"></i>
+                              </span>
                               <div>
-                                   <h1>Invoice</h1>
-                                   <p>Kelola tagihan layanan dan pantau status pembayarannya.</p>
+                                   <h1>Manajemen Invoice</h1>
+                                   <p>Kelola data tagihan layanan dengan tampilan ringkas, cepat, dan mudah dipantau.</p>
                               </div>
                          </div>
-                         <div class="invoice-actions"><button class="invoice-btn-outline" type="button"
-                                   onclick="window.print()"><i class="fas fa-print"></i> Cetak</button><a class="invoice-btn"
-                                   href="{{ route('super-admin.invoices.create') }}"><i class="fas fa-plus"></i> Buat
-                                   Invoice</a></div>
+                         <div class="invoice-actions">
+                              <button class="invoice-btn-outline" type="button" onclick="window.print()">
+                                   <i class="fas fa-print"></i>
+                                   Cetak Ringkasan
+                              </button>
+                              <a class="invoice-btn" href="{{ route('super-admin.invoices.create') }}">
+                                   <i class="fas fa-plus"></i>
+                                   Buat Invoice
+                              </a>
+                         </div>
                     </div>
-               </div>
+               </header>
+
+               <section class="invoice-stats" aria-label="Ringkasan invoice">
+                    <article class="stat-card">
+                         <div class="stat-label">Total Data</div>
+                         <div class="stat-value">{{ number_format($invoices->total()) }}</div>
+                    </article>
+                    <article class="stat-card">
+                         <div class="stat-label">Sudah Dibayar</div>
+                         <div class="stat-value">{{ number_format($paidCount) }}</div>
+                    </article>
+                    <article class="stat-card">
+                         <div class="stat-label">Sebagian Dibayar</div>
+                         <div class="stat-value">{{ number_format($partialCount) }}</div>
+                    </article>
+                    <article class="stat-card">
+                         <div class="stat-label">Total Halaman Ini</div>
+                         <div class="stat-value">Rp {{ number_format($totalOnPage, 0, ',', '.') }}</div>
+                    </article>
+               </section>
+
                @if (session('success'))
                     <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif @if (session('error'))
-                         <div class="alert alert-danger">{{ session('error') }}</div>
-                    @endif
-                    <div class="invoice-card">
+               @endif
+
+               @if (session('error'))
+                    <div class="alert alert-danger">{{ session('error') }}</div>
+               @endif
+
+               <section class="invoice-card">
+                    <div class="invoice-card-head">
+                         <h2 class="invoice-card-title">Filter Data Invoice</h2>
+                         <p class="invoice-card-subtitle">Cari invoice berdasarkan nomor invoice, service order, dan status
+                              pembayaran.</p>
+                    </div>
+                    <div class="invoice-card-body">
                          <form method="GET" action="{{ route('super-admin.invoices.index') }}" class="invoice-filter">
-                              <div><label for="search">Pencarian</label><input id="search" name="search"
-                                        value="{{ request('search') }}" placeholder="Nomor invoice atau service order...">
+                              <div>
+                                   <label for="search">Pencarian</label>
+                                   <input id="search" name="search" value="{{ request('search') }}"
+                                        placeholder="Nomor invoice atau service order...">
                               </div>
-                              <div><label for="payment_status">Status pembayaran</label><select id="payment_status"
-                                        name="payment_status">
+                              <div>
+                                   <label for="payment_status">Status Pembayaran</label>
+                                   <select id="payment_status" name="payment_status">
                                         <option value="">Semua status</option>
                                         @foreach ($statuses as $status)
                                              <option value="{{ $status }}" @selected(request('payment_status') === $status)>
@@ -316,12 +459,27 @@
                                         @endforeach
                                    </select>
                               </div>
-                              <div class="d-flex gap-2"><button class="btn-filter" type="submit"><i
-                                             class="fas fa-filter"></i> Filter</button><a class="btn-reset"
-                                        href="{{ route('super-admin.invoices.index') }}">Reset</a></div>
+                              <div class="filter-actions">
+                                   <button class="btn-filter" type="submit">
+                                        <i class="fas fa-filter"></i>
+                                        Filter
+                                   </button>
+                                   <a class="btn-reset" href="{{ route('super-admin.invoices.index') }}">
+                                        <i class="fas fa-undo"></i>
+                                        Reset
+                                   </a>
+                              </div>
                          </form>
                     </div>
-                    <div class="invoice-card">
+               </section>
+
+               <section class="invoice-card">
+                    <div class="invoice-card-head">
+                         <h2 class="invoice-card-title">Daftar Invoice</h2>
+                         <p class="invoice-card-subtitle">Menampilkan {{ number_format($invoices->count()) }} data pada
+                              halaman saat ini.</p>
+                    </div>
+                    <div class="invoice-card-body">
                          <div class="table-wrap">
                               <table class="invoice-table">
                                    <thead>
@@ -333,13 +491,14 @@
                                              <th>Jatuh Tempo</th>
                                              <th>Total</th>
                                              <th>Status</th>
-                                             <th></th>
+                                             <th class="text-center">Aksi</th>
                                         </tr>
                                    </thead>
                                    <tbody>
                                         @forelse($invoices as $invoice)
                                              <tr>
-                                                  <td><a class="invoice-number"
+                                                  <td>
+                                                       <a class="invoice-number"
                                                             href="{{ route('super-admin.invoices.show', $invoice) }}">{{ $invoice->invoice_number }}</a>
                                                        <div class="invoice-muted">{{ $invoice->payments->count() }}
                                                             pembayaran</div>
@@ -351,17 +510,23 @@
                                                   <td>{{ $invoice->due_date?->format('d/m/Y') ?? '-' }}</td>
                                                   <td class="invoice-amount">Rp
                                                        {{ number_format((float) $invoice->total_amount, 2, ',', '.') }}</td>
-                                                  <td><span
+                                                  <td>
+                                                       <span
                                                             class="invoice-badge badge-{{ $invoice->payment_status }}">{{ ucfirst($invoice->payment_status) }}</span>
                                                   </td>
-                                                  <td><a class="invoice-action" title="Detail"
-                                                            href="{{ route('super-admin.invoices.show', $invoice) }}"><i
-                                                                 class="fas fa-eye"></i></a></td>
-                                        </tr>@empty<tr>
+                                                  <td class="text-center">
+                                                       <a class="invoice-action" title="Detail"
+                                                            href="{{ route('super-admin.invoices.show', $invoice) }}">
+                                                            <i class="fas fa-eye"></i>
+                                                       </a>
+                                                  </td>
+                                             </tr>
+                                        @empty
+                                             <tr>
                                                   <td colspan="8">
-                                                       <div class="empty-invoice"><i
-                                                                 class="fas fa-file-invoice fa-2x mb-3"></i>
-                                                            <div>Belum ada invoice.</div>
+                                                       <div class="empty-invoice">
+                                                            <i class="fas fa-file-invoice fa-2x"></i>
+                                                            <div>Belum ada invoice yang dapat ditampilkan.</div>
                                                        </div>
                                                   </td>
                                              </tr>
@@ -369,8 +534,12 @@
                                    </tbody>
                               </table>
                          </div>
-                         <div class="mt-3">{{ $invoices->links() }}</div>
+
+                         <div class="invoice-pagination">
+                              {{ $invoices->links() }}
+                         </div>
                     </div>
+               </section>
           </div>
      </div>
 @endsection

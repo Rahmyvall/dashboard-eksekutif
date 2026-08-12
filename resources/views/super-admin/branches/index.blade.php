@@ -1323,14 +1323,9 @@
           $hasApproveRoute = \Illuminate\Support\Facades\Route::has('branches.approve');
           $hasRejectRoute = \Illuminate\Support\Facades\Route::has('branches.reject');
 
-          // Semua role di atas boleh melihat daftar dan detail.
-          $canViewBranches = $isSuperAdmin || $isDirektur || $isOperasional || $isAuditor;
-
-          // Hanya Super Admin dan Admin Operasional yang boleh mengubah data.
-          $canManageBranches = $isSuperAdmin || $isOperasional;
-
-          // Recycle bin hanya untuk Super Admin.
-          $canManageTrash = $isSuperAdmin;
+          // Sinkron dengan Gate/can middleware agar UI sesuai akses aktual.
+          $canManageBranches = $currentUser?->can('branch.create') ?? false;
+          $canManageTrash = $currentUser?->can('branch.trash') ?? false;
           $hasTrashRoute = $canManageTrash && \Illuminate\Support\Facades\Route::has('branches.trash');
 
           $filterIsActive = request()->filled('search') || request()->filled('status');
@@ -1566,6 +1561,7 @@
                                                   $canApproveCurrentStep =
                                                       $approvalStatus === 'pending' &&
                                                       ($isSuperAdmin || $roleMatchesCurrentStep) &&
+                                                                   ($currentUser?->can('branch.approve', $branch) ?? false) &&
                                                       !$isRequestSubmitter &&
                                                       !$isPreviousApprover &&
                                                       $hasApproveRoute &&
@@ -1576,8 +1572,9 @@
                                                       ($isSuperAdmin || $roleMatchesCurrentStep);
 
                                                   // Ketika masih pending, data dikunci dari edit/hapus.
-                                                  $canModifyThisBranch =
-                                                      $canManageBranches && $approvalStatus !== 'pending';
+                                                              $canModifyThisBranch =
+                                                                   ($currentUser?->can('branch.manage', $branch) ?? false) &&
+                                                                   $approvalStatus !== 'pending';
                                              @endphp
                                              <tr>
                                                   <td class="text-center">
@@ -1760,6 +1757,7 @@
                                         $canApproveCurrentStep =
                                             $approvalStatus === 'pending' &&
                                             ($isSuperAdmin || $roleMatchesCurrentStep) &&
+                                                       ($currentUser?->can('branch.approve', $branch) ?? false) &&
                                             !$isRequestSubmitter &&
                                             !$isPreviousApprover &&
                                             $hasApproveRoute &&
@@ -1768,7 +1766,9 @@
                                         $waitingForMyApproval =
                                             $approvalStatus === 'pending' && ($isSuperAdmin || $roleMatchesCurrentStep);
 
-                                        $canModifyThisBranch = $canManageBranches && $approvalStatus !== 'pending';
+                                                  $canModifyThisBranch =
+                                                       ($currentUser?->can('branch.manage', $branch) ?? false) &&
+                                                       $approvalStatus !== 'pending';
                                    @endphp
                                    <article class="bp-mobile-card">
                                         <div class="bp-mobile-top">

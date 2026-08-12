@@ -113,6 +113,17 @@ class InvoiceController extends Controller
         return view('super-admin.invoices.show', compact('invoice'));
     }
 
+    public function print(Invoice $invoice): View
+    {
+        $invoice->load([
+            'serviceOrder.customer',
+            'serviceOrder.items.service',
+            'payments.receiver',
+        ]);
+
+        return view('super-admin.invoices.print', compact('invoice'));
+    }
+
     public function edit(Invoice $invoice): View
     {
         $invoice->load('serviceOrder.customer');

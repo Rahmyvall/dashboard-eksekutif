@@ -47,6 +47,7 @@ $services = $this->getServices();
 
         $serviceCategorySummary = $this->buildServiceCategorySummary();
 $serviceSummary = $this->buildServiceSummary();
+        $invoicePaymentLineChart = $this->buildInvoicePaymentLineChart();
 
         $departmentSummary      = $this->buildDepartmentSummary();
         $roleSummary            = $this->buildRoleSummary();
@@ -122,6 +123,7 @@ $servicesUrl = $this->routeUrl('super-admin.services.index');
 
             'serviceCategorySummary'    => $serviceCategorySummary,
 'serviceSummary' => $serviceSummary,
+            'invoicePaymentLineChart'   => $invoicePaymentLineChart,
 
             'departmentSummary'         => $departmentSummary,
             'roleSummary'               => $roleSummary,
@@ -527,6 +529,153 @@ $servicesUrl = $this->routeUrl('super-admin.services.index');
         'average_price'     => $averagePrice,
     ];
 }
+
+    private function buildInvoicePaymentLineChart(int $months = 6): array
+    {
+        $months = max(3, min(12, $months));
+
+        $end = now()->startOfMonth();
+        $start = (clone $end)->subMonths($months - 1);
+
+        $periods = collect();
+        for ($i = 0; $i < $months; $i++) {
+            $period = (clone $start)->addMonths($i);
+            $periods->push([
+                'key'   => $period->format('Y-m'),
+                'label' => $period->translatedFormat('M Y'),
+            ]);
+        }
+
+        $invoiceMap = collect();
+        $invoiceCountMap = collect();
+        if (Schema::hasTable('invoices')) {
+            $invoiceDateColumn = null;
+            foreach (['invoice_date', 'created_at'] as $column) {
+                if (Schema::hasColumn('invoices', $column)) {
+                    $invoiceDateColumn = $column;
+                    break;
+                }
+            }
+
+            $invoiceAmountColumn = null;
+            foreach (['total_amount', 'grand_total', 'amount'] as $column) {
+                if (Schema::hasColumn('invoices', $column)) {
+                    $invoiceAmountColumn = $column;
+                    break;
+                }
+            }
+
+            if ($invoiceDateColumn && $invoiceAmountColumn) {
+                $invoiceMonthExpr = $this->monthKeyExpression($invoiceDateColumn);
+
+                $query = DB::table('invoices')
+                    ->whereDate($invoiceDateColumn, '>=', $start->toDateString())
+                    ->selectRaw(
+                        "{$invoiceMonthExpr} as month_key, " .
+                        "COALESCE(SUM({$invoiceAmountColumn}), 0) as total_amount, COUNT(*) as total_items"
+                    )
+                    ->groupByRaw($invoiceMonthExpr);
+
+                if (Schema::hasColumn('invoices', 'deleted_at')) {
+                    $query->whereNull('deleted_at');
+                }
+
+                $rows = $query->get();
+                $invoiceMap = $rows->mapWithKeys(
+                    static fn(object $row): array => [(string) $row->month_key => (float) ($row->total_amount ?? 0)]
+                );
+                $invoiceCountMap = $rows->mapWithKeys(
+                    static fn(object $row): array => [(string) $row->month_key => (int) ($row->total_items ?? 0)]
+                );
+            }
+        }
+
+        $paymentMap = collect();
+        $paymentCountMap = collect();
+        if (Schema::hasTable('payments')) {
+            $paymentDateColumn = null;
+            foreach (['payment_date', 'created_at'] as $column) {
+                if (Schema::hasColumn('payments', $column)) {
+                    $paymentDateColumn = $column;
+                    break;
+                }
+            }
+
+            $paymentAmountColumn = null;
+            foreach (['amount', 'paid_amount'] as $column) {
+                if (Schema::hasColumn('payments', $column)) {
+                    $paymentAmountColumn = $column;
+                    break;
+                }
+            }
+
+            if ($paymentDateColumn && $paymentAmountColumn) {
+                $paymentMonthExpr = $this->monthKeyExpression($paymentDateColumn);
+
+                $query = DB::table('payments')
+                    ->whereDate($paymentDateColumn, '>=', $start->toDateString())
+                    ->selectRaw(
+                        "{$paymentMonthExpr} as month_key, " .
+                        "COALESCE(SUM({$paymentAmountColumn}), 0) as total_amount, COUNT(*) as total_items"
+                    )
+                    ->groupByRaw($paymentMonthExpr);
+
+                if (Schema::hasColumn('payments', 'deleted_at')) {
+                    $query->whereNull('deleted_at');
+                }
+
+                $rows = $query->get();
+                $paymentMap = $rows->mapWithKeys(
+                    static fn(object $row): array => [(string) $row->month_key => (float) ($row->total_amount ?? 0)]
+                );
+                $paymentCountMap = $rows->mapWithKeys(
+                    static fn(object $row): array => [(string) $row->month_key => (int) ($row->total_items ?? 0)]
+                );
+            }
+        }
+
+        $labels = $periods->pluck('label')->all();
+        $invoiceTotals = $periods
+            ->map(static fn(array $period): float => (float) ($invoiceMap->get($period['key']) ?? 0.0))
+            ->values()
+            ->all();
+        $paymentTotals = $periods
+            ->map(static fn(array $period): float => (float) ($paymentMap->get($period['key']) ?? 0.0))
+            ->values()
+            ->all();
+        $invoiceCounts = $periods
+            ->map(static fn(array $period): int => (int) ($invoiceCountMap->get($period['key']) ?? 0))
+            ->values()
+            ->all();
+        $paymentCounts = $periods
+            ->map(static fn(array $period): int => (int) ($paymentCountMap->get($period['key']) ?? 0))
+            ->values()
+            ->all();
+
+        return [
+            'labels'            => $labels,
+            'invoice_totals'    => $invoiceTotals,
+            'payment_totals'    => $paymentTotals,
+            'invoice_counts'    => $invoiceCounts,
+            'payment_counts'    => $paymentCounts,
+            'invoice_sum'       => array_sum($invoiceTotals),
+            'payment_sum'       => array_sum($paymentTotals),
+            'max_amount'        => max(1.0, (float) max(array_merge($invoiceTotals, $paymentTotals))),
+        ];
+    }
+
+    private function monthKeyExpression(string $column): string
+    {
+        $driver = DB::connection()->getDriverName();
+        $wrappedColumn = DB::connection()->getQueryGrammar()->wrap($column);
+
+        return match ($driver) {
+            'pgsql' => "to_char({$wrappedColumn}, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', {$wrappedColumn})",
+            'sqlsrv' => "FORMAT({$wrappedColumn}, 'yyyy-MM')",
+            default => "DATE_FORMAT({$wrappedColumn}, '%Y-%m')",
+        };
+    }
 
     private function buildDepartmentSummary(): Collection
     {

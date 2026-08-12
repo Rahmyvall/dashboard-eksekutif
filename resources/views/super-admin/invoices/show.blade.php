@@ -302,9 +302,10 @@
                               <h1>{{ $invoice->invoice_number }}</h1>
                               <p>Detail tagihan, item layanan, dan riwayat pembayaran.</p>
                          </div>
-                         <div class="inv-actions"><button class="inv-btn inv-btn-print" type="button"
-                                   onclick="window.print()"><i class="fas fa-print"></i> Cetak</button><a class="inv-btn"
-                                   href="{{ route('super-admin.invoices.edit', $invoice) }}"><i class="fas fa-edit"></i>
+                         <div class="inv-actions"><a class="inv-btn inv-btn-print"
+                                   href="{{ route('super-admin.invoices.print', $invoice) }}"><i class="fas fa-print"></i>
+                                   Cetak</a><a class="inv-btn" href="{{ route('super-admin.invoices.edit', $invoice) }}"><i
+                                        class="fas fa-edit"></i>
                                    Edit</a><a class="inv-btn" href="{{ route('super-admin.invoices.index') }}"><i
                                         class="fas fa-list"></i> Daftar</a></div>
                     </div>
@@ -322,7 +323,8 @@
                          </div>
                          <div class="inv-kpi">
                               <div class="inv-kpi-label">Subtotal</div>
-                              <div class="inv-kpi-value">Rp {{ number_format((float) $invoice->subtotal, 2, ',', '.') }}</div>
+                              <div class="inv-kpi-value">Rp {{ number_format((float) $invoice->subtotal, 2, ',', '.') }}
+                              </div>
                          </div>
                          <div class="inv-kpi">
                               <div class="inv-kpi-label">Pembayaran</div>

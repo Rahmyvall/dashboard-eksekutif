@@ -41,7 +41,12 @@ class BranchController extends Controller
     private const VIEWER_ROLES = [
         'super_admin',
         'direktur_utama',
+        'hrd_manager',
+        'manager_departemen',
+        'karyawan',
+        'admin_pelayanan',
         'admin_operasional',
+        'finance_staff',
         'auditor_internal',
     ];
 
@@ -825,8 +830,31 @@ class BranchController extends Controller
 
     private function userHasAnyRole(User $user, array $roles): bool
     {
+        $normalizedUserRoles = $user->getRoleNames()
+            ->map(fn(string $role): string => strtolower(str_replace(['-', ' '], '_', trim($role))))
+            ->all();
+
+        $aliases = [
+            'super_admin' => ['super_admin', 'super administrator', 'superadministrator'],
+            'direktur_utama' => ['direktur_utama', 'direktur utama', 'direkturutama', 'executive'],
+            'hrd_manager' => ['hrd_manager', 'hrd manager', 'hrdmanager', 'hr'],
+            'manager_departemen' => ['manager_departemen', 'manager departemen', 'managerdepartemen'],
+            'karyawan' => ['karyawan', 'pegawai', 'employee'],
+            'admin_pelayanan' => ['admin_pelayanan', 'admin pelayanan'],
+            'admin_operasional' => ['admin_operasional', 'admin operasional'],
+            'finance_staff' => ['finance_staff', 'finance staff', 'finance'],
+            'auditor_internal' => ['auditor_internal', 'auditor internal', 'auditor'],
+        ];
+
         foreach ($roles as $role) {
-            if ($user->hasRole($role)) {
+            $normalizedRole = strtolower(str_replace(['-', ' '], '_', trim($role)));
+            $roleAliases = $aliases[$normalizedRole] ?? [$normalizedRole];
+            $normalizedAliases = array_map(
+                fn(string $alias): string => strtolower(str_replace(['-', ' '], '_', trim($alias))),
+                $roleAliases
+            );
+
+            if (array_intersect($normalizedUserRoles, $normalizedAliases) !== []) {
                 return true;
             }
         }

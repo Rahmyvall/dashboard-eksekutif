@@ -53,10 +53,13 @@ class PaymentApiController extends Controller
             'receiver:id,name,email',
         ])
             ->when($filters['search'] ?? null, function ($q, $search) {
-                $q->where('payment_number', 'LIKE', "%{$search}%")
-                    ->orWhere('reference_number', 'LIKE', "%{$search}%")
-                    ->orWhereHas('serviceOrder', fn($so) =>
-                        $so->where('order_number', 'LIKE', "%{$search}%"));
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('payment_number', 'LIKE', "%{$search}%")
+                        ->orWhere('reference_number', 'LIKE', "%{$search}%")
+                        ->orWhereHas('serviceOrder', function ($so) use ($search) {
+                            $so->where('order_number', 'LIKE', "%{$search}%");
+                        });
+                });
             })
             ->when($filters['status'] ?? null, fn($q, $status) =>
                 $q->where('status', $status))
@@ -164,7 +167,8 @@ class PaymentApiController extends Controller
     public function show(Payment $payment): JsonResponse
     {
         $payment->load([
-            'serviceOrder:id,order_number,customer_id,status,total_price',
+'serviceOrder:id,order_number,customer_id,order_status,total_amount',
+
             'serviceOrder.customer:id,name,email,phone,address',
             'invoice:id,invoice_number,invoice_date,due_date,total_amount,payment_status',
             'receiver:id,name,email',
@@ -211,13 +215,6 @@ class PaymentApiController extends Controller
                 $this->syncInvoicePaymentStatus($payment->invoice_id);
             }
         });
-
-        $payment->load([
-            'serviceOrder:id,order_number,customer_id',
-            'serviceOrder.customer:id,name,email,phone',
-            'invoice:id,invoice_number,total_amount,payment_status',
-            'receiver:id,name,email',
-        ]);
 
         return response()->json([
             'success' => true,

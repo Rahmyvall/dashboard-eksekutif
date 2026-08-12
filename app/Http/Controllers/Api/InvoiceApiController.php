@@ -48,9 +48,13 @@ class InvoiceApiController extends Controller
             'payments:id,invoice_id,payment_number,payment_date,amount,payment_method,status',
         ])
             ->when($filters['search'] ?? null, function ($q, $search) {
-                $q->where('invoice_number', 'LIKE', "%{$search}%")
-                    ->orWhereHas('serviceOrder', fn($so) =>
-                        $so->where('order_number', 'LIKE', "%{$search}%"));
+$q->where(function ($query) use ($search) {
+    $query->where('invoice_number', 'LIKE', "%{$search}%")
+        ->orWhereHas('serviceOrder', fn($so) =>
+            $so->where('order_number', 'LIKE', "%{$search}%"));
+
+});
+
             })
             ->when($filters['payment_status'] ?? null, fn($q, $status) =>
                 $q->where('payment_status', $status))
@@ -145,7 +149,8 @@ class InvoiceApiController extends Controller
     public function show(Invoice $invoice): JsonResponse
     {
         $invoice->load([
-            'serviceOrder:id,order_number,customer_id,status,total_price',
+'serviceOrder:id,order_number,customer_id,order_status,total_amount',
+
             'serviceOrder.customer:id,name,email,phone,address',
             'payments:id,invoice_id,payment_number,payment_date,amount,payment_method,reference_number,status,notes',
         ]);

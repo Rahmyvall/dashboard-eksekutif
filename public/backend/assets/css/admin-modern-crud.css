@@ -1,0 +1,218 @@
+/* Unified modern UI for Employee, Invoices, and Payments CRUD pages */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap");
+
+:root {
+    --admin-ui-surface: #ffffff;
+    --admin-ui-border: #e3eaf7;
+    --admin-ui-text: #1f2a44;
+    --admin-ui-muted: #60708f;
+    --admin-ui-shadow: 0 14px 36px rgba(31, 42, 68, 0.08);
+    --admin-ui-shadow-hover: 0 20px 44px rgba(31, 42, 68, 0.12);
+    --admin-ui-ring: 0 0 0 0.2rem rgba(59, 130, 246, 0.16);
+}
+
+.employee-page,
+.employee-edit-page,
+.employee-show-page,
+.invoice-page,
+.inv-create,
+.inv-edit,
+.inv-show,
+.payment-page,
+.pay-create,
+.pay-edit,
+.payment-show {
+    font-family: "Plus Jakarta Sans", "Manrope", sans-serif;
+}
+
+.employee-hero,
+.employee-edit-hero,
+.employee-profile-hero,
+.invoice-hero,
+.inv-hero,
+.payment-hero,
+.pay-hero,
+.payment-show-hero {
+    border-radius: 24px;
+    box-shadow: 0 20px 44px rgba(37, 99, 235, 0.2);
+}
+
+.employee-card,
+.employee-edit-card,
+.employee-detail-card,
+.invoice-card,
+.inv-card,
+.inv-side-card,
+.show-card,
+.pay-card,
+.pay-side-card,
+.payment-card {
+    border: 1px solid var(--admin-ui-border) !important;
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: var(--admin-ui-shadow) !important;
+}
+
+.employee-card:hover,
+.inv-card:hover,
+.pay-card:hover,
+.payment-card:hover,
+.invoice-card:hover {
+    box-shadow: var(--admin-ui-shadow-hover) !important;
+}
+
+.employee-page .form-control,
+.employee-page .form-select,
+.employee-edit-page .form-control,
+.employee-edit-page .form-select,
+.invoice-page .form-control,
+.invoice-page .form-select,
+.inv-create .form-control,
+.inv-create .form-select,
+.inv-edit .form-control,
+.inv-edit .form-select,
+.pay-create .form-control,
+.pay-create .form-select,
+.pay-edit .form-control,
+.pay-edit .form-select,
+.payment-page .form-control,
+.payment-page .form-select,
+.payment-show .form-control,
+.payment-show .form-select {
+    border: 1px solid #d4deef !important;
+    border-radius: 12px !important;
+    color: var(--admin-ui-text) !important;
+    font-size: 0.91rem;
+    transition:
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.employee-page .form-control:focus,
+.employee-page .form-select:focus,
+.employee-edit-page .form-control:focus,
+.employee-edit-page .form-select:focus,
+.invoice-page .form-control:focus,
+.invoice-page .form-select:focus,
+.inv-create .form-control:focus,
+.inv-create .form-select:focus,
+.inv-edit .form-control:focus,
+.inv-edit .form-select:focus,
+.pay-create .form-control:focus,
+.pay-create .form-select:focus,
+.pay-edit .form-control:focus,
+.pay-edit .form-select:focus,
+.payment-page .form-control:focus,
+.payment-page .form-select:focus,
+.payment-show .form-control:focus,
+.payment-show .form-select:focus {
+    border-color: #60a5fa !important;
+    box-shadow: var(--admin-ui-ring) !important;
+}
+
+.btn,
+.inv-btn,
+.invoice-btn,
+.invoice-btn-outline,
+.payment-btn,
+.payment-btn-outline,
+.pay-back,
+.inv-back,
+.show-btn,
+.btn-hero,
+.btn-back,
+.employee-edit-save,
+.employee-edit-cancel,
+.inv-save,
+.inv-cancel,
+.pay-save,
+.pay-cancel {
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.btn:hover,
+.inv-btn:hover,
+.invoice-btn:hover,
+.invoice-btn-outline:hover,
+.payment-btn:hover,
+.payment-btn-outline:hover,
+.pay-back:hover,
+.inv-back:hover,
+.show-btn:hover,
+.btn-hero:hover,
+.btn-back:hover,
+.employee-edit-save:hover,
+.employee-edit-cancel:hover,
+.inv-save:hover,
+.inv-cancel:hover,
+.pay-save:hover,
+.pay-cancel:hover {
+    transform: translateY(-1px);
+}
+
+.invoice-table th,
+.invoice-table td,
+.payment-table th,
+.payment-table td,
+.inv-table th,
+.inv-table td {
+    border-color: #ebf1fb !important;
+}
+
+.invoice-table th,
+.payment-table th,
+.inv-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f7faff !important;
+}
+
+.invoice-muted,
+.payment-muted,
+.inv-note,
+.employee-note,
+.employee-edit-note {
+    color: var(--admin-ui-muted) !important;
+}
+
+.invoice-badge,
+.badge-payment,
+.status,
+.inv-status,
+.employee-status-badge {
+    border-radius: 999px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em;
+}
+
+@media (max-width: 992px) {
+    .employee-page,
+    .employee-edit-page,
+    .employee-show-page,
+    .invoice-page,
+    .inv-create,
+    .inv-edit,
+    .inv-show,
+    .payment-page,
+    .pay-create,
+    .pay-edit,
+    .payment-show {
+        padding: 16px 12px 32px !important;
+    }
+
+    .employee-hero,
+    .employee-edit-hero,
+    .employee-profile-hero,
+    .invoice-hero,
+    .inv-hero,
+    .payment-hero,
+    .pay-hero,
+    .payment-show-hero {
+        border-radius: 18px !important;
+    }
+}

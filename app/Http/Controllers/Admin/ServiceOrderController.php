@@ -176,7 +176,8 @@ class ServiceOrderController extends Controller
         return [
             'customers' => Customer::query()->active()->orderBy('name')->get(),
             'services' => Service::query()->active()->orderBy('name')->get(),
-            'employees' => Employee::query()->active()->orderBy('name')->get(),
+'employees' => Employee::query()->active()->orderBy('full_name')->get(),
+
             'statuses' => self::STATUSES,
         ];
     }
