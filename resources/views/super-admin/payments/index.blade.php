@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('page-title', 'Manajemen Pembayaran')
+@section('page-title', 'Dashboard Monitoring Produktivitas Karyawan')
 
 @section('content')
      @php
@@ -9,6 +9,15 @@
           $confirmedCount = $paymentItems->where('status', 'confirmed')->count();
           $pendingCount = $paymentItems->where('status', 'pending')->count();
           $cancelledCount = $paymentItems->where('status', 'cancelled')->count();
+
+          $currentSearch = trim((string) request('search', ''));
+          $currentMethod = trim((string) request('payment_method', ''));
+          $currentStatus = trim((string) request('status', ''));
+          $hasActiveFilter = $currentSearch !== '' || $currentMethod !== '' || $currentStatus !== '';
+
+          $completionRate = $payments->count() > 0 ? round(($confirmedCount / $payments->count()) * 100) : 0;
+
+          $avgPaymentAmount = $payments->count() > 0 ? $totalOnPage / $payments->count() : 0;
      @endphp
 
      <style>
@@ -82,6 +91,34 @@
                flex-wrap: wrap;
           }
 
+          .payment-alert {
+               display: flex;
+               align-items: flex-start;
+               gap: 10px;
+               padding: 12px 14px;
+               margin-bottom: 12px;
+               border: 0;
+               border-radius: 12px;
+               font-size: 0.82rem;
+               font-weight: 700;
+          }
+
+          .payment-alert i {
+               margin-top: 2px;
+          }
+
+          .payment-alert-success {
+               color: #065f46;
+               border-left: 4px solid #10b981;
+               background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+          }
+
+          .payment-alert-danger {
+               color: #991b1b;
+               border-left: 4px solid #ef4444;
+               background: linear-gradient(135deg, #fff1f2, #fee2e2);
+          }
+
           .payment-btn,
           .payment-btn-outline {
                display: inline-flex;
@@ -108,9 +145,124 @@
                background: rgba(255, 255, 255, 0.12);
           }
 
+          .payment-btn-outline strong {
+               display: block;
+               font-size: 0.8rem;
+               line-height: 1.1;
+               letter-spacing: 0.01em;
+          }
+
+          .payment-btn-outline small {
+               display: block;
+               margin-top: 2px;
+               color: rgba(255, 255, 255, 0.88);
+               font-size: 0.66rem;
+               font-weight: 700;
+               letter-spacing: 0.03em;
+               text-transform: uppercase;
+          }
+
+          .print-indicator {
+               width: 8px;
+               height: 8px;
+               border-radius: 999px;
+               background: #86efac;
+               box-shadow: 0 0 0 0 rgba(134, 239, 172, 0.7);
+               animation: printPulse 1.8s infinite;
+          }
+
+          @keyframes printPulse {
+               0% {
+                    box-shadow: 0 0 0 0 rgba(134, 239, 172, 0.7);
+               }
+
+               70% {
+                    box-shadow: 0 0 0 10px rgba(134, 239, 172, 0);
+               }
+
+               100% {
+                    box-shadow: 0 0 0 0 rgba(134, 239, 172, 0);
+               }
+          }
+
           .payment-btn:hover,
           .payment-btn-outline:hover {
                transform: translateY(-1px);
+          }
+
+          .payment-monitor-grid {
+               display: grid;
+               grid-template-columns: repeat(3, minmax(0, 1fr));
+               gap: 12px;
+               margin-bottom: 18px;
+          }
+
+          .monitor-card {
+               padding: 14px;
+               border: 1px solid var(--pay-border);
+               border-radius: 16px;
+               background: #fff;
+               box-shadow: var(--pay-shadow);
+          }
+
+          .monitor-label {
+               color: var(--pay-muted);
+               font-size: 0.68rem;
+               font-weight: 800;
+               letter-spacing: 0.08em;
+               text-transform: uppercase;
+               margin-bottom: 7px;
+          }
+
+          .monitor-value {
+               color: #0f172a;
+               font-size: 1.2rem;
+               font-weight: 850;
+               line-height: 1.2;
+          }
+
+          .monitor-note {
+               margin-top: 6px;
+               color: #64748b;
+               font-size: 0.74rem;
+               font-weight: 650;
+          }
+
+          .payment-quick-actions {
+               display: grid;
+               grid-template-columns: repeat(4, minmax(0, 1fr));
+               gap: 10px;
+               margin-bottom: 18px;
+          }
+
+          .quick-action-btn {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               gap: 8px;
+               min-height: 44px;
+               padding: 10px 12px;
+               color: #334155;
+               font-size: 0.78rem;
+               font-weight: 800;
+               text-decoration: none;
+               border: 1px solid var(--pay-border);
+               border-radius: 12px;
+               background: #ffffff;
+               box-shadow: var(--pay-shadow);
+               transition: transform 0.2s ease, box-shadow 0.2s ease;
+          }
+
+          .quick-action-btn:hover {
+               color: #0f172a;
+               transform: translateY(-2px);
+               box-shadow: 0 18px 30px rgba(15, 23, 42, 0.12);
+          }
+
+          .quick-action-btn.primary {
+               color: #ffffff;
+               border: 0;
+               background: linear-gradient(135deg, #0f766e, #0f9f94);
           }
 
           .payment-stats {
@@ -154,9 +306,26 @@
           }
 
           .payment-card-head {
+               display: flex;
+               align-items: center;
+               justify-content: space-between;
+               gap: 12px;
                padding: 16px 18px;
                border-bottom: 1px solid #eaf0f8;
                background: linear-gradient(90deg, #f6fdff, #f3f9ff);
+          }
+
+          .payment-result-chip {
+               display: inline-flex;
+               align-items: center;
+               gap: 6px;
+               padding: 6px 10px;
+               color: #0f766e;
+               font-size: 0.72rem;
+               font-weight: 800;
+               border: 1px solid #99f6e4;
+               border-radius: 999px;
+               background: #f0fdfa;
           }
 
           .payment-card-title {
@@ -243,6 +412,19 @@
                border-collapse: collapse;
           }
 
+          .row-number {
+               display: inline-flex;
+               width: 30px;
+               height: 30px;
+               align-items: center;
+               justify-content: center;
+               color: #0f766e;
+               font-size: 0.74rem;
+               font-weight: 800;
+               border-radius: 10px;
+               background: #ccfbf1;
+          }
+
           .payment-table th {
                padding: 12px;
                color: #64748b;
@@ -287,10 +469,20 @@
           .badge-payment {
                display: inline-flex;
                align-items: center;
+               gap: 6px;
                padding: 5px 10px;
                border-radius: 999px;
                font-size: 0.7rem;
                font-weight: 800;
+          }
+
+          .badge-payment::before {
+               width: 6px;
+               height: 6px;
+               content: '';
+               border-radius: 999px;
+               background: currentColor;
+               opacity: 0.8;
           }
 
           .badge-confirmed,
@@ -324,6 +516,47 @@
                background: #def7f3;
           }
 
+          .action-group {
+               display: inline-flex;
+               gap: 6px;
+               align-items: center;
+               justify-content: center;
+          }
+
+          .action-link.print {
+               color: #0369a1;
+               background: #e0f2fe;
+          }
+
+          .action-link.edit {
+               color: #a16207;
+               background: #fef3c7;
+          }
+
+          .action-link:hover {
+               transform: translateY(-1px);
+          }
+
+          .active-filter-wrap {
+               display: flex;
+               flex-wrap: wrap;
+               gap: 8px;
+               margin-top: 10px;
+          }
+
+          .active-filter-chip {
+               display: inline-flex;
+               gap: 5px;
+               align-items: center;
+               padding: 5px 9px;
+               color: #0f766e;
+               font-size: 0.72rem;
+               font-weight: 800;
+               border: 1px solid #99f6e4;
+               border-radius: 999px;
+               background: #f0fdfa;
+          }
+
           .empty-payment {
                padding: 52px 15px;
                color: #94a3b8;
@@ -338,7 +571,9 @@
 
                .payment-hero-row,
                .payment-filter,
-               .payment-stats {
+               .payment-stats,
+               .payment-monitor-grid,
+               .payment-quick-actions {
                     display: grid;
                     grid-template-columns: 1fr;
                }
@@ -351,6 +586,11 @@
                     display: grid;
                     grid-template-columns: 1fr 1fr;
                }
+
+               .payment-card-head {
+                    align-items: flex-start;
+                    flex-direction: column;
+               }
           }
 
           @media print {
@@ -360,6 +600,8 @@
                .content-header,
                .payment-hero,
                .payment-stats,
+               .payment-monitor-grid,
+               .payment-quick-actions,
                .payment-card:first-of-type,
                .action-link,
                .payment-actions,
@@ -398,15 +640,39 @@
                          <div class="payment-heading">
                               <span class="payment-icon"><i class="fas fa-money-bill-wave"></i></span>
                               <div>
-                                   <h1>Manajemen Pembayaran</h1>
-                                   <p>Pantau transaksi pembayaran, metode bayar, dan status konfirmasi secara lebih
-                                        terstruktur.</p>
+                                   <h1>Dashboard Monitoring Produktivitas Karyawan</h1>
+                                   <p>Pantau transaksi jasa, status pembayaran, dan efisiensi proses konfirmasi dalam satu
+                                        tampilan operasional modern.</p>
                               </div>
                          </div>
                          <div class="payment-actions">
+                              @if (Route::has('super-admin.service-orders.index'))
+                                   <a class="payment-btn-outline" href="{{ route('super-admin.service-orders.index') }}">
+                                        <i class="fas fa-clipboard-list"></i>
+                                        <span>
+                                             <strong>Service Order</strong>
+                                             <small>Transaksi Jasa</small>
+                                        </span>
+                                   </a>
+                              @endif
+
+                              @if (Route::has('super-admin.invoices.index'))
+                                   <a class="payment-btn-outline" href="{{ route('super-admin.invoices.index') }}">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                        <span>
+                                             <strong>Data Invoice</strong>
+                                             <small>Monitoring Tagihan</small>
+                                        </span>
+                                   </a>
+                              @endif
+
                               <button class="payment-btn-outline" type="button" onclick="window.print()">
                                    <i class="fas fa-print"></i>
-                                   Cetak Data
+                                   <span>
+                                        <strong>Cetak Data</strong>
+                                        <small>Laporan Monitoring Pembayaran</small>
+                                   </span>
+                                   <span class="print-indicator" aria-hidden="true"></span>
                               </button>
                               <a class="payment-btn" href="{{ route('super-admin.payments.create') }}">
                                    <i class="fas fa-plus"></i>
@@ -418,7 +684,7 @@
 
                <section class="payment-stats" aria-label="Ringkasan pembayaran">
                     <article class="stat-card">
-                         <div class="stat-label">Total Data</div>
+                         <div class="stat-label">Total Pembayaran</div>
                          <div class="stat-value">{{ number_format($payments->total()) }}</div>
                     </article>
                     <article class="stat-card">
@@ -435,24 +701,91 @@
                     </article>
                </section>
 
+               <section class="payment-monitor-grid" aria-label="Monitoring produktivitas dan transaksi">
+                    <article class="monitor-card">
+                         <div class="monitor-label">Tingkat Konfirmasi</div>
+                         <div class="monitor-value">{{ $completionRate }}%</div>
+                         <div class="monitor-note">Pembayaran confirmed dari data halaman ini</div>
+                    </article>
+
+                    <article class="monitor-card">
+                         <div class="monitor-label">Butuh Tindak Lanjut</div>
+                         <div class="monitor-value">{{ number_format($pendingCount + $cancelledCount) }} transaksi</div>
+                         <div class="monitor-note">Status pending dan cancelled pada halaman ini</div>
+                    </article>
+
+                    <article class="monitor-card">
+                         <div class="monitor-label">Rata-rata Nominal</div>
+                         <div class="monitor-value">Rp {{ number_format($avgPaymentAmount, 0, ',', '.') }}</div>
+                         <div class="monitor-note">Rata-rata nilai pembayaran pada halaman aktif</div>
+                    </article>
+               </section>
+
+               <section class="payment-quick-actions" aria-label="Aksi cepat pembayaran">
+                    @if (Route::has('super-admin.payments.create'))
+                         <a class="quick-action-btn primary" href="{{ route('super-admin.payments.create') }}">
+                              <i class="fas fa-plus-circle"></i>
+                              Catat Pembayaran Baru
+                         </a>
+                    @endif
+
+                    @if (Route::has('super-admin.payments.index'))
+                         <a class="quick-action-btn"
+                              href="{{ route('super-admin.payments.index', ['status' => 'pending']) }}">
+                              <i class="fas fa-hourglass-half"></i>
+                              Fokus Pending
+                         </a>
+                    @endif
+
+                    @if (Route::has('super-admin.payments.index'))
+                         <a class="quick-action-btn"
+                              href="{{ route('super-admin.payments.index', ['status' => 'confirmed']) }}">
+                              <i class="fas fa-check-circle"></i>
+                              Fokus Confirmed
+                         </a>
+                    @endif
+
+                    @if (Route::has('super-admin.invoices.index'))
+                         <a class="quick-action-btn"
+                              href="{{ route('super-admin.invoices.index', ['payment_status' => 'unpaid']) }}">
+                              <i class="fas fa-file-invoice"></i>
+                              Invoice Belum Lunas
+                         </a>
+                    @endif
+               </section>
+
                @if (session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                    <div class="payment-alert payment-alert-success">
+                         <i class="fas fa-check-circle"></i>
+                         <span>{{ session('success') }}</span>
+                    </div>
                @endif
                @if (session('error'))
-                    <div class="alert alert-danger">{{ session('error') }}</div>
+                    <div class="payment-alert payment-alert-danger">
+                         <i class="fas fa-exclamation-triangle"></i>
+                         <span>{{ session('error') }}</span>
+                    </div>
                @endif
 
                <section class="payment-card">
                     <div class="payment-card-head">
-                         <h2 class="payment-card-title">Filter Pembayaran</h2>
-                         <p class="payment-card-subtitle">Saring berdasarkan kata kunci, metode pembayaran, atau status
-                              transaksi.</p>
+                         <div>
+                              <h2 class="payment-card-title">Filter Pembayaran</h2>
+                              <p class="payment-card-subtitle">Saring berdasarkan kata kunci, metode pembayaran, atau status
+                                   transaksi.</p>
+                         </div>
+                         @if ($hasActiveFilter)
+                              <span class="payment-result-chip">
+                                   <i class="fas fa-filter"></i>
+                                   Filter Aktif
+                              </span>
+                         @endif
                     </div>
                     <div class="payment-card-body">
                          <form method="GET" action="{{ route('super-admin.payments.index') }}" class="payment-filter">
                               <div>
                                    <label for="search">Pencarian</label>
-                                   <input id="search" name="search" value="{{ request('search') }}"
+                                   <input id="search" name="search" value="{{ $currentSearch }}"
                                         placeholder="Nomor pembayaran, referensi, invoice...">
                               </div>
                               <div>
@@ -460,7 +793,7 @@
                                    <select id="payment_method" name="payment_method">
                                         <option value="">Semua metode</option>
                                         @foreach ($methods as $method)
-                                             <option value="{{ $method }}" @selected(request('payment_method') === $method)>
+                                             <option value="{{ $method }}" @selected($currentMethod === $method)>
                                                   {{ ucwords(str_replace('_', ' ', $method)) }}
                                              </option>
                                         @endforeach
@@ -471,7 +804,7 @@
                                    <select id="status" name="status">
                                         <option value="">Semua status</option>
                                         @foreach ($statuses as $status)
-                                             <option value="{{ $status }}" @selected(request('status') === $status)>
+                                             <option value="{{ $status }}" @selected($currentStatus === $status)>
                                                   {{ ucfirst($status) }}</option>
                                         @endforeach
                                    </select>
@@ -487,20 +820,53 @@
                                    </a>
                               </div>
                          </form>
+
+                         @if ($hasActiveFilter)
+                              <div class="active-filter-wrap">
+                                   @if ($currentSearch !== '')
+                                        <span class="active-filter-chip">
+                                             <i class="fas fa-search"></i>
+                                             Kata kunci: {{ $currentSearch }}
+                                        </span>
+                                   @endif
+
+                                   @if ($currentMethod !== '')
+                                        <span class="active-filter-chip">
+                                             <i class="fas fa-credit-card"></i>
+                                             Metode: {{ ucwords(str_replace('_', ' ', $currentMethod)) }}
+                                        </span>
+                                   @endif
+
+                                   @if ($currentStatus !== '')
+                                        <span class="active-filter-chip">
+                                             <i class="fas fa-receipt"></i>
+                                             Status: {{ ucfirst($currentStatus) }}
+                                        </span>
+                                   @endif
+                              </div>
+                         @endif
                     </div>
                </section>
 
                <section class="payment-card">
                     <div class="payment-card-head">
-                         <h2 class="payment-card-title">Daftar Pembayaran</h2>
-                         <p class="payment-card-subtitle">Menampilkan {{ number_format($payments->count()) }} data pada
-                              halaman ini.</p>
+                         <div>
+                              <h2 class="payment-card-title">Daftar Pembayaran</h2>
+                              <p class="payment-card-subtitle">Menampilkan {{ number_format($payments->count()) }} data
+                                   pada
+                                   halaman ini.</p>
+                         </div>
+                         <span class="payment-result-chip">
+                              <i class="fas fa-bolt"></i>
+                              Pending: {{ number_format($pendingCount) }}
+                         </span>
                     </div>
                     <div class="payment-card-body">
                          <div class="table-wrap">
                               <table class="payment-table">
                                    <thead>
                                         <tr>
+                                             <th>No</th>
                                              <th>Pembayaran</th>
                                              <th>Service Order</th>
                                              <th>Invoice</th>
@@ -513,7 +879,15 @@
                                    </thead>
                                    <tbody>
                                         @forelse($payments as $payment)
+                                             @php
+                                                  $paymentStatus = strtolower((string) $payment->status);
+                                             @endphp
                                              <tr>
+                                                  <td>
+                                                       <span class="row-number">
+                                                            {{ ($payments->firstItem() ?? 1) + $loop->index }}
+                                                       </span>
+                                                  </td>
                                                   <td>
                                                        <a class="payment-number"
                                                             href="{{ route('super-admin.payments.show', $payment) }}">{{ $payment->payment_number }}</a>
@@ -533,18 +907,35 @@
                                                        {{ number_format((float) $payment->amount, 2, ',', '.') }}</td>
                                                   <td>
                                                        <span
-                                                            class="badge-payment badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span>
+                                                            class="badge-payment badge-{{ $paymentStatus }}">{{ ucfirst($paymentStatus) }}</span>
                                                   </td>
                                                   <td class="text-center">
-                                                       <a class="action-link" title="Detail"
-                                                            href="{{ route('super-admin.payments.show', $payment) }}">
-                                                            <i class="fas fa-eye"></i>
-                                                       </a>
+                                                       <div class="action-group">
+                                                            <a class="action-link" title="Detail"
+                                                                 href="{{ route('super-admin.payments.show', $payment) }}">
+                                                                 <i class="fas fa-eye"></i>
+                                                            </a>
+
+                                                            @if (Route::has('super-admin.payments.print'))
+                                                                 <a class="action-link print" title="Cetak"
+                                                                      href="{{ route('super-admin.payments.print', $payment) }}"
+                                                                      target="_blank" rel="noopener">
+                                                                      <i class="fas fa-print"></i>
+                                                                 </a>
+                                                            @endif
+
+                                                            @if (Route::has('super-admin.payments.edit'))
+                                                                 <a class="action-link edit" title="Edit"
+                                                                      href="{{ route('super-admin.payments.edit', $payment) }}">
+                                                                      <i class="fas fa-pen"></i>
+                                                                 </a>
+                                                            @endif
+                                                       </div>
                                                   </td>
                                              </tr>
                                         @empty
                                              <tr>
-                                                  <td colspan="8">
+                                                  <td colspan="9">
                                                        <div class="empty-payment">
                                                             <i class="fas fa-receipt fa-2x mb-3"></i>
                                                             <div>Belum ada data pembayaran.</div>

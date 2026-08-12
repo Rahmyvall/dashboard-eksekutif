@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Manajemen Pelanggan')
+@section('title', 'Dashboard Monitoring Produktivitas Karyawan')
 
 @section('content')
      @php
@@ -86,6 +86,22 @@
                   default => 'Tidak Diketahui',
               };
           };
+
+          $monitoringStats = array_replace(
+              [
+                  'employees_total' => 0,
+                  'employees_active' => 0,
+                  'activities_today' => 0,
+                  'activities_pending_verify' => 0,
+                  'service_orders_this_month' => 0,
+                  'service_orders_processing' => 0,
+                  'invoices_unpaid' => 0,
+                  'payments_pending' => 0,
+                  'payments_confirmed_this_month' => 0,
+                  'service_revenue_this_month' => 0,
+              ],
+              is_array($monitoringStats ?? null) ? $monitoringStats : [],
+          );
      @endphp
 
      <style>
@@ -163,8 +179,8 @@
           }
 
           /* ================================================================
-                HERO
-             ================================================================= */
+                               HERO
+                            ================================================================= */
 
           .customer-hero {
                position: relative;
@@ -257,7 +273,9 @@
                display: flex;
                flex: 0 0 auto;
                gap: 10px;
+               flex-wrap: wrap;
                align-items: center;
+               justify-content: flex-end;
           }
 
           .customer-hero-button {
@@ -305,8 +323,8 @@
           }
 
           /* ================================================================
-                ALERT
-             ================================================================= */
+                               ALERT
+                            ================================================================= */
 
           .customer-alert {
                display: flex;
@@ -354,8 +372,8 @@
           }
 
           /* ================================================================
-                STATISTICS
-             ================================================================= */
+                               STATISTICS
+                            ================================================================= */
 
           .customer-stats-row {
                margin-bottom: 22px;
@@ -458,9 +476,135 @@
                height: 23px;
           }
 
+          .monitoring-row {
+               margin-bottom: 22px;
+          }
+
+          .monitoring-card,
+          .quick-action-card {
+               height: 100%;
+               padding: 20px;
+               border: 1px solid rgba(226, 232, 240, .92);
+               border-radius: 22px;
+               background: rgba(255, 255, 255, .95);
+               box-shadow: 0 15px 38px rgba(51, 65, 85, .075);
+               backdrop-filter: blur(12px);
+          }
+
+          .monitoring-title,
+          .quick-action-title {
+               display: flex;
+               gap: 10px;
+               align-items: center;
+               margin-bottom: 16px;
+               color: var(--customer-text);
+               font-size: .92rem;
+               font-weight: 830;
+               letter-spacing: .02em;
+               text-transform: uppercase;
+          }
+
+          .monitoring-title i,
+          .quick-action-title i {
+               display: inline-flex;
+               width: 34px;
+               height: 34px;
+               align-items: center;
+               justify-content: center;
+               color: var(--customer-primary);
+               border-radius: 10px;
+               background: var(--customer-soft-indigo);
+          }
+
+          .monitoring-title i svg,
+          .quick-action-title i svg {
+               width: 16px;
+               height: 16px;
+          }
+
+          .monitoring-mini {
+               height: 100%;
+               padding: 14px;
+               border: 1px solid #e5eaf4;
+               border-radius: 14px;
+               background: linear-gradient(160deg, #ffffff 0%, #f8fbff 100%);
+          }
+
+          .monitoring-mini-label {
+               display: block;
+               margin-bottom: 6px;
+               color: #64748b;
+               font-size: .71rem;
+               font-weight: 780;
+               letter-spacing: .05em;
+               text-transform: uppercase;
+          }
+
+          .monitoring-mini-value {
+               display: block;
+               color: #0f172a;
+               font-size: 1.35rem;
+               font-weight: 850;
+               letter-spacing: -.02em;
+               line-height: 1.15;
+          }
+
+          .monitoring-mini-caption {
+               margin-top: 7px;
+               color: #64748b;
+               font-size: .75rem;
+               font-weight: 650;
+          }
+
+          .quick-action-grid {
+               display: grid;
+               grid-template-columns: repeat(2, minmax(0, 1fr));
+               gap: 10px;
+          }
+
+          .quick-action-button {
+               display: inline-flex;
+               min-height: 46px;
+               padding: 10px 12px;
+               gap: 8px;
+               align-items: center;
+               justify-content: center;
+               color: #334155;
+               font-size: .8rem;
+               font-weight: 800;
+               text-decoration: none;
+               border: 1px solid #d9e2ef;
+               border-radius: 12px;
+               background: #ffffff;
+               transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+          }
+
+          .quick-action-button i svg {
+               width: 15px;
+               height: 15px;
+          }
+
+          .quick-action-button:hover {
+               color: #0f172a;
+               text-decoration: none;
+               transform: translateY(-2px);
+               box-shadow: 0 10px 20px rgba(15, 23, 42, .08);
+          }
+
+          .quick-action-button.is-primary {
+               color: #ffffff;
+               border-color: transparent;
+               background: linear-gradient(135deg, #6366f1, #8b5cf6, #22d3ee);
+          }
+
+          .quick-action-button.is-primary:hover {
+               color: #ffffff;
+               box-shadow: 0 12px 24px rgba(99, 102, 241, .3);
+          }
+
           /* ================================================================
-                FILTER
-             ================================================================= */
+                               FILTER
+                            ================================================================= */
 
           .customer-filter-card {
                padding: 22px;
@@ -634,8 +778,8 @@
           }
 
           /* ================================================================
-                TABLE CARD
-             ================================================================= */
+                               TABLE CARD
+                            ================================================================= */
 
           .customer-card {
                overflow: hidden;
@@ -1071,8 +1215,8 @@
           }
 
           /* ================================================================
-                PAGINATION
-             ================================================================= */
+                               PAGINATION
+                            ================================================================= */
 
           .customer-pagination-wrap {
                display: flex;
@@ -1132,8 +1276,8 @@
           }
 
           /* ================================================================
-                RESPONSIVE
-             ================================================================= */
+                               RESPONSIVE
+                            ================================================================= */
 
           @media (max-width: 1199.98px) {
                .customer-hero-content {
@@ -1172,6 +1316,10 @@
                .customer-card-header {
                     align-items: flex-start;
                }
+
+               .quick-action-grid {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+               }
           }
 
           @media (max-width: 767.98px) {
@@ -1200,6 +1348,10 @@
 
                .customer-hero-actions {
                     flex-direction: column;
+               }
+
+               .quick-action-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
                }
 
                .customer-filter-card {
@@ -1241,6 +1393,10 @@
                     grid-template-columns: 1fr;
                }
 
+               .quick-action-grid {
+                    grid-template-columns: 1fr;
+               }
+
                .customer-list-subtitle,
                .customer-result-badge {
                     margin-left: 0;
@@ -1261,16 +1417,32 @@
                               </div>
 
                               <div>
-                                   <h1>Manajemen Pelanggan</h1>
+                                   <h1>Dashboard Monitoring Produktivitas Karyawan</h1>
 
                                    <p>
-                                        Kelola data pelanggan perorangan dan perusahaan, informasi kontak,
-                                        alamat, nomor pajak, serta status pelanggan dalam satu halaman terpadu.
+                                        Pantau performa karyawan dan transaksi jasa dari aktivitas harian,
+                                        service order, invoice, hingga status pembayaran dalam satu tampilan modern.
                                    </p>
                               </div>
                          </div>
 
                          <div class="customer-hero-actions">
+                              @if ($routeHas('super-admin.employee-activities.index'))
+                                   <a href="{{ route('super-admin.employee-activities.index') }}"
+                                        class="customer-hero-button is-soft">
+                                        <i data-feather="activity"></i>
+                                        <span>Aktivitas</span>
+                                   </a>
+                              @endif
+
+                              @if ($routeHas('super-admin.service-orders.index'))
+                                   <a href="{{ route('super-admin.service-orders.index') }}"
+                                        class="customer-hero-button is-soft">
+                                        <i data-feather="clipboard"></i>
+                                        <span>Service Order</span>
+                                   </a>
+                              @endif
+
                               @if ($canAccessTrash && $routeHas('super-admin.customers.trash'))
                                    <a href="{{ route('super-admin.customers.trash') }}" class="customer-hero-button is-soft">
                                         <i data-feather="trash-2"></i>
@@ -1323,17 +1495,17 @@
                          <article class="customer-stat-card customer-stat-total">
                               <div class="customer-stat-inner">
                                    <div>
-                                        <div class="customer-stat-title">Hasil Ditemukan</div>
+                                        <div class="customer-stat-title">Total Karyawan</div>
                                         <div class="customer-stat-value">
-                                             {{ number_format($filteredTotal) }}
+                                             {{ number_format((int) $monitoringStats['employees_total']) }}
                                         </div>
                                         <div class="customer-stat-caption">
-                                             Total sesuai filter saat ini
+                                             {{ number_format((int) $monitoringStats['employees_active']) }} karyawan aktif
                                         </div>
                                    </div>
 
                                    <span class="customer-stat-icon">
-                                        <i data-feather="database"></i>
+                                        <i data-feather="users"></i>
                                    </span>
                               </div>
                          </article>
@@ -1343,17 +1515,18 @@
                          <article class="customer-stat-card customer-stat-active">
                               <div class="customer-stat-inner">
                                    <div>
-                                        <div class="customer-stat-title">Pelanggan Aktif</div>
+                                        <div class="customer-stat-title">Aktivitas Hari Ini</div>
                                         <div class="customer-stat-value">
-                                             {{ number_format($activeOnPage) }}
+                                             {{ number_format((int) $monitoringStats['activities_today']) }}
                                         </div>
                                         <div class="customer-stat-caption">
-                                             Aktif pada halaman ini
+                                             {{ number_format((int) $monitoringStats['activities_pending_verify']) }} pending
+                                             verifikasi
                                         </div>
                                    </div>
 
                                    <span class="customer-stat-icon">
-                                        <i data-feather="user-check"></i>
+                                        <i data-feather="activity"></i>
                                    </span>
                               </div>
                          </article>
@@ -1363,17 +1536,18 @@
                          <article class="customer-stat-card customer-stat-company">
                               <div class="customer-stat-inner">
                                    <div>
-                                        <div class="customer-stat-title">Perusahaan</div>
+                                        <div class="customer-stat-title">Order Jasa Bulan Ini</div>
                                         <div class="customer-stat-value">
-                                             {{ number_format($companyOnPage) }}
+                                             {{ number_format((int) $monitoringStats['service_orders_this_month']) }}
                                         </div>
                                         <div class="customer-stat-caption">
-                                             Perusahaan pada halaman ini
+                                             {{ number_format((int) $monitoringStats['service_orders_processing']) }} sedang
+                                             diproses
                                         </div>
                                    </div>
 
                                    <span class="customer-stat-icon">
-                                        <i data-feather="briefcase"></i>
+                                        <i data-feather="package"></i>
                                    </span>
                               </div>
                          </article>
@@ -1383,20 +1557,171 @@
                          <article class="customer-stat-card customer-stat-individual">
                               <div class="customer-stat-inner">
                                    <div>
-                                        <div class="customer-stat-title">Perorangan</div>
+                                        <div class="customer-stat-title">Payment Terkonfirmasi</div>
                                         <div class="customer-stat-value">
-                                             {{ number_format($individualOnPage) }}
+                                             Rp
+                                             {{ number_format((float) $monitoringStats['payments_confirmed_this_month'], 0, ',', '.') }}
                                         </div>
                                         <div class="customer-stat-caption">
-                                             Perorangan pada halaman ini
+                                             {{ number_format((int) $monitoringStats['invoices_unpaid']) }} invoice belum
+                                             lunas
                                         </div>
                                    </div>
 
                                    <span class="customer-stat-icon">
-                                        <i data-feather="user"></i>
+                                        <i data-feather="dollar-sign"></i>
                                    </span>
                               </div>
                          </article>
+                    </div>
+               </div>
+
+               <div class="row g-3 monitoring-row">
+                    <div class="col-12 col-xxl-8">
+                         <section class="monitoring-card">
+                              <div class="monitoring-title">
+                                   <i data-feather="bar-chart-2"></i>
+                                   <span>Monitoring Produktivitas dan Transaksi Jasa</span>
+                              </div>
+
+                              <div class="row g-3">
+                                   <div class="col-12 col-md-6 col-xl-3">
+                                        <div class="monitoring-mini">
+                                             <span class="monitoring-mini-label">Aktivitas Terverifikasi</span>
+                                             <span class="monitoring-mini-value">
+                                                  {{ number_format(max((int) $monitoringStats['activities_today'] - (int) $monitoringStats['activities_pending_verify'], 0)) }}
+                                             </span>
+                                             <div class="monitoring-mini-caption">
+                                                  dari {{ number_format((int) $monitoringStats['activities_today']) }}
+                                                  aktivitas hari ini
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div class="col-12 col-md-6 col-xl-3">
+                                        <div class="monitoring-mini">
+                                             <span class="monitoring-mini-label">Pendapatan Jasa/Bulan</span>
+                                             <span class="monitoring-mini-value">
+                                                  Rp
+                                                  {{ number_format((float) $monitoringStats['service_revenue_this_month'], 0, ',', '.') }}
+                                             </span>
+                                             <div class="monitoring-mini-caption">
+                                                  berdasarkan invoice bulan berjalan
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div class="col-12 col-md-6 col-xl-3">
+                                        <div class="monitoring-mini">
+                                             <span class="monitoring-mini-label">Payment Pending</span>
+                                             <span class="monitoring-mini-value">
+                                                  {{ number_format((int) $monitoringStats['payments_pending']) }}
+                                             </span>
+                                             <div class="monitoring-mini-caption">
+                                                  membutuhkan tindak lanjut
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div class="col-12 col-md-6 col-xl-3">
+                                        <div class="monitoring-mini">
+                                             <span class="monitoring-mini-label">Pelanggan Aktif (Halaman)</span>
+                                             <span class="monitoring-mini-value">
+                                                  {{ number_format((int) $activeOnPage) }}
+                                             </span>
+                                             <div class="monitoring-mini-caption">
+                                                  dari {{ number_format((int) $currentPageCount) }} data halaman saat ini
+                                             </div>
+                                        </div>
+                                   </div>
+                              </div>
+                         </section>
+                    </div>
+
+                    <div class="col-12 col-xxl-4">
+                         <section class="quick-action-card">
+                              <div class="quick-action-title">
+                                   <i data-feather="grid"></i>
+                                   <span>Button Aksi Cepat</span>
+                              </div>
+
+                              <div class="quick-action-grid">
+                                   @if ($canManageCustomers && $routeHas('super-admin.customers.create'))
+                                        <a href="{{ route('super-admin.customers.create') }}"
+                                             class="quick-action-button is-primary">
+                                             <i data-feather="user-plus"></i>
+                                             <span>Tambah Pelanggan</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($routeHas('super-admin.customers.index'))
+                                        <a href="{{ route('super-admin.customers.index') }}" class="quick-action-button">
+                                             <i data-feather="users"></i>
+                                             <span>Daftar Pelanggan</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($routeHas('super-admin.employee-activities.index'))
+                                        <a href="{{ route('super-admin.employee-activities.index') }}"
+                                             class="quick-action-button">
+                                             <i data-feather="activity"></i>
+                                             <span>Data Aktivitas</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($routeHas('super-admin.employee-activities.create'))
+                                        <a href="{{ route('super-admin.employee-activities.create') }}"
+                                             class="quick-action-button">
+                                             <i data-feather="plus-square"></i>
+                                             <span>Input Aktivitas</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($routeHas('super-admin.service-orders.index'))
+                                        <a href="{{ route('super-admin.service-orders.index') }}"
+                                             class="quick-action-button">
+                                             <i data-feather="clipboard"></i>
+                                             <span>Service Order</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin && $routeHas('super-admin.service-orders.create'))
+                                        <a href="{{ route('super-admin.service-orders.create') }}"
+                                             class="quick-action-button">
+                                             <i data-feather="file-plus"></i>
+                                             <span>Buat Order</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($routeHas('super-admin.invoices.index'))
+                                        <a href="{{ route('super-admin.invoices.index') }}" class="quick-action-button">
+                                             <i data-feather="file-text"></i>
+                                             <span>Daftar Invoice</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin && $routeHas('super-admin.invoices.create'))
+                                        <a href="{{ route('super-admin.invoices.create') }}" class="quick-action-button">
+                                             <i data-feather="file-plus"></i>
+                                             <span>Buat Invoice</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($routeHas('super-admin.payments.index'))
+                                        <a href="{{ route('super-admin.payments.index') }}" class="quick-action-button">
+                                             <i data-feather="credit-card"></i>
+                                             <span>Daftar Payment</span>
+                                        </a>
+                                   @endif
+
+                                   @if ($isSuperAdmin && $routeHas('super-admin.payments.create'))
+                                        <a href="{{ route('super-admin.payments.create') }}" class="quick-action-button">
+                                             <i data-feather="dollar-sign"></i>
+                                             <span>Input Payment</span>
+                                        </a>
+                                   @endif
+                              </div>
+                         </section>
                     </div>
                </div>
 
@@ -1422,8 +1747,8 @@
                                    <div class="customer-search-shell">
                                         <i data-feather="search"></i>
 
-                                        <input type="search" id="customer-search" name="search" value="{{ $search }}"
-                                             class="form-control customer-filter-control"
+                                        <input type="search" id="customer-search" name="search"
+                                             value="{{ $search }}" class="form-control customer-filter-control"
                                              placeholder="Kode, nama, perusahaan, telepon, email, NPWP..."
                                              autocomplete="off">
                                    </div>
@@ -1451,7 +1776,8 @@
                                         Status
                                    </label>
 
-                                   <select id="customer-status" name="status" class="form-select customer-filter-control">
+                                   <select id="customer-status" name="status"
+                                        class="form-select customer-filter-control">
                                         <option value="">Semua Status</option>
 
                                         @foreach ($statusOptions as $value => $label)

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Service Category Management')
+@section('title', 'Dashboard Monitoring Produktivitas Karyawan')
 
 @section('content')
      <style>
@@ -257,6 +257,73 @@
                font-size: 1.42rem;
                border-radius: 17px;
                background: rgba(255, 255, 255, .72);
+          }
+
+          .monitoring-row {
+               margin-bottom: 22px;
+          }
+
+          .monitoring-card {
+               height: 100%;
+               padding: 20px;
+               border: 1px solid rgba(226, 232, 240, .88);
+               border-radius: 22px;
+               background: rgba(255, 255, 255, .93);
+               box-shadow: 0 15px 38px rgba(51, 65, 85, .075);
+          }
+
+          .monitoring-title {
+               display: flex;
+               gap: 10px;
+               align-items: center;
+               margin-bottom: 15px;
+               color: var(--category-text);
+               font-size: .93rem;
+               font-weight: 820;
+          }
+
+          .monitoring-title span {
+               display: grid;
+               width: 36px;
+               height: 36px;
+               place-items: center;
+               color: var(--category-primary-dark);
+               border-radius: 11px;
+               background: #edf2ff;
+          }
+
+          .monitor-mini {
+               height: 100%;
+               padding: 14px;
+               border: 1px solid #e5eaf4;
+               border-radius: 14px;
+               background: linear-gradient(160deg, #ffffff 0%, #f8fbff 100%);
+          }
+
+          .monitor-mini-label {
+               display: block;
+               margin-bottom: 6px;
+               color: #64748b;
+               font-size: .71rem;
+               font-weight: 780;
+               letter-spacing: .05em;
+               text-transform: uppercase;
+          }
+
+          .monitor-mini-value {
+               display: block;
+               color: #0f172a;
+               font-size: 1.35rem;
+               font-weight: 850;
+               line-height: 1.1;
+               letter-spacing: -.02em;
+          }
+
+          .monitor-mini-caption {
+               margin-top: 7px;
+               color: #64748b;
+               font-size: .75rem;
+               font-weight: 650;
           }
 
           .filter-card {
@@ -683,6 +750,22 @@
               'code_asc' => 'Kode A–Z',
               'code_desc' => 'Kode Z–A',
           ];
+
+          $monitoringStats = array_replace(
+              [
+                  'employees_total' => 0,
+                  'employees_active' => 0,
+                  'activities_today' => 0,
+                  'activities_pending_verify' => 0,
+                  'service_orders_this_month' => 0,
+                  'service_orders_processing' => 0,
+                  'invoices_unpaid' => 0,
+                  'payments_pending' => 0,
+                  'payments_confirmed_this_month' => 0,
+                  'service_revenue_this_month' => 0,
+              ],
+              is_array($monitoringStats ?? null) ? $monitoringStats : [],
+          );
      @endphp
 
      <div class="category-page">
@@ -691,19 +774,33 @@
                     <div class="hero-content">
                          <div class="hero-title-wrap">
                               <div class="hero-icon">
-                                   <i class="bi bi-grid-1x2-fill"></i>
+                                   <i class="bi bi-speedometer2"></i>
                               </div>
 
                               <div>
-                                   <h1>Service Category Management</h1>
+                                   <h1>Dashboard Monitoring Produktivitas Karyawan</h1>
                                    <p>
-                                        Kelola kode, nama, deskripsi, dan status kategori layanan
-                                        yang digunakan pada sistem pelayanan perusahaan.
+                                        Pantau produktivitas tim dan transaksi jasa dari aktivitas harian,
+                                        service order, invoice, serta status pembayaran dalam satu dashboard.
                                    </p>
                               </div>
                          </div>
 
                          <div class="hero-actions">
+                              @if (Route::has('super-admin.employee-activities.index'))
+                                   <a href="{{ route('super-admin.employee-activities.index') }}" class="btn-trash-link">
+                                        <i class="bi bi-activity"></i>
+                                        Aktivitas
+                                   </a>
+                              @endif
+
+                              @if (Route::has('super-admin.service-orders.index'))
+                                   <a href="{{ route('super-admin.service-orders.index') }}" class="btn-trash-link">
+                                        <i class="bi bi-receipt"></i>
+                                        Service Order
+                                   </a>
+                              @endif
+
                               @if (Route::has('super-admin.service-categories.trashed'))
                                    <a href="{{ route('super-admin.service-categories.trashed') }}" class="btn-trash-link">
                                         <i class="bi bi-trash3-fill"></i>
@@ -754,13 +851,16 @@
                          <div class="stat-card stat-total h-100">
                               <div class="stat-card-inner">
                                    <div>
-                                        <div class="stat-title">Total Hasil</div>
-                                        <div class="stat-value">{{ $serviceCategories->total() }}</div>
-                                        <div class="stat-caption">Kategori sesuai filter</div>
+                                        <div class="stat-title">Total Karyawan</div>
+                                        <div class="stat-value">
+                                             {{ number_format((int) $monitoringStats['employees_total']) }}</div>
+                                        <div class="stat-caption">
+                                             {{ number_format((int) $monitoringStats['employees_active']) }} karyawan aktif
+                                        </div>
                                    </div>
 
                                    <div class="stat-icon">
-                                        <i class="bi bi-grid-fill"></i>
+                                        <i class="bi bi-people-fill"></i>
                                    </div>
                               </div>
                          </div>
@@ -770,13 +870,16 @@
                          <div class="stat-card stat-active h-100">
                               <div class="stat-card-inner">
                                    <div>
-                                        <div class="stat-title">Aktif</div>
-                                        <div class="stat-value">{{ $activeOnPage }}</div>
-                                        <div class="stat-caption">Pada halaman ini</div>
+                                        <div class="stat-title">Aktivitas Hari Ini</div>
+                                        <div class="stat-value">
+                                             {{ number_format((int) $monitoringStats['activities_today']) }}</div>
+                                        <div class="stat-caption">
+                                             {{ number_format((int) $monitoringStats['activities_pending_verify']) }}
+                                             pending verifikasi</div>
                                    </div>
 
                                    <div class="stat-icon">
-                                        <i class="bi bi-check-circle-fill"></i>
+                                        <i class="bi bi-activity"></i>
                                    </div>
                               </div>
                          </div>
@@ -786,13 +889,16 @@
                          <div class="stat-card stat-inactive h-100">
                               <div class="stat-card-inner">
                                    <div>
-                                        <div class="stat-title">Tidak Aktif</div>
-                                        <div class="stat-value">{{ $inactiveOnPage }}</div>
-                                        <div class="stat-caption">Pada halaman ini</div>
+                                        <div class="stat-title">Order Jasa Bulan Ini</div>
+                                        <div class="stat-value">
+                                             {{ number_format((int) $monitoringStats['service_orders_this_month']) }}</div>
+                                        <div class="stat-caption">
+                                             {{ number_format((int) $monitoringStats['service_orders_processing']) }} sedang
+                                             diproses</div>
                                    </div>
 
                                    <div class="stat-icon">
-                                        <i class="bi bi-x-circle-fill"></i>
+                                        <i class="bi bi-box-seam"></i>
                                    </div>
                               </div>
                          </div>
@@ -802,15 +908,82 @@
                          <div class="stat-card stat-page h-100">
                               <div class="stat-card-inner">
                                    <div>
-                                        <div class="stat-title">Halaman</div>
-                                        <div class="stat-value">{{ $serviceCategories->currentPage() }}</div>
-                                        <div class="stat-caption">
-                                             Dari {{ $serviceCategories->lastPage() }} halaman
+                                        <div class="stat-title">Payment Terkonfirmasi</div>
+                                        <div class="stat-value">Rp
+                                             {{ number_format((float) $monitoringStats['payments_confirmed_this_month'], 0, ',', '.') }}
                                         </div>
+                                        <div class="stat-caption">
+                                             {{ number_format((int) $monitoringStats['invoices_unpaid']) }} invoice belum
+                                             lunas</div>
                                    </div>
 
                                    <div class="stat-icon">
-                                        <i class="bi bi-files"></i>
+                                        <i class="bi bi-cash-stack"></i>
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </div>
+
+               <div class="row g-3 monitoring-row">
+                    <div class="col-12">
+                         <div class="monitoring-card">
+                              <div class="monitoring-title">
+                                   <span>
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                   </span>
+                                   Monitoring Produktivitas dan Transaksi Jasa
+                              </div>
+
+                              <div class="row g-3">
+                                   <div class="col-12 col-sm-6 col-lg-3">
+                                        <div class="monitor-mini">
+                                             <span class="monitor-mini-label">Aktivitas Terverifikasi</span>
+                                             <span class="monitor-mini-value">
+                                                  {{ number_format(max((int) $monitoringStats['activities_today'] - (int) $monitoringStats['activities_pending_verify'], 0)) }}
+                                             </span>
+                                             <div class="monitor-mini-caption">
+                                                  dari {{ number_format((int) $monitoringStats['activities_today']) }}
+                                                  aktivitas hari ini
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div class="col-12 col-sm-6 col-lg-3">
+                                        <div class="monitor-mini">
+                                             <span class="monitor-mini-label">Pendapatan Jasa/Bulan</span>
+                                             <span class="monitor-mini-value">
+                                                  Rp
+                                                  {{ number_format((float) $monitoringStats['service_revenue_this_month'], 0, ',', '.') }}
+                                             </span>
+                                             <div class="monitor-mini-caption">
+                                                  berdasarkan invoice bulan berjalan
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div class="col-12 col-sm-6 col-lg-3">
+                                        <div class="monitor-mini">
+                                             <span class="monitor-mini-label">Payment Pending</span>
+                                             <span class="monitor-mini-value">
+                                                  {{ number_format((int) $monitoringStats['payments_pending']) }}
+                                             </span>
+                                             <div class="monitor-mini-caption">
+                                                  menunggu tindak lanjut konfirmasi
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div class="col-12 col-sm-6 col-lg-3">
+                                        <div class="monitor-mini">
+                                             <span class="monitor-mini-label">Kategori Aktif (Halaman)</span>
+                                             <span
+                                                  class="monitor-mini-value">{{ number_format((int) $activeOnPage) }}</span>
+                                             <div class="monitor-mini-caption">
+                                                  {{ number_format((int) $serviceCategories->total()) }} kategori sesuai
+                                                  filter
+                                             </div>
+                                        </div>
                                    </div>
                               </div>
                          </div>

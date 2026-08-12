@@ -8,10 +8,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\Customer;
+use App\Models\Employee;
+use App\Models\EmployeeActivity;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\ServiceOrder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Throwable;
 
@@ -107,15 +113,96 @@ class CustomerController extends Controller
 
         return view(
             'super-admin.customers.index',
-            compact(
-                'customers',
-                'customerTypeOptions',
-                'statusOptions',
-                'search',
-                'status',
-                'customerType'
+            array_merge(
+                compact(
+                    'customers',
+                    'customerTypeOptions',
+                    'statusOptions',
+                    'search',
+                    'status',
+                    'customerType'
+                ),
+                [
+                    'monitoringStats' => $this->getMonitoringStats(),
+                ]
             )
         );
+    }
+
+    /**
+     * Ringkasan monitoring produktivitas karyawan dan transaksi jasa.
+     *
+     * @return array<string, int|float>
+     */
+    private function getMonitoringStats(): array
+    {
+        $now = now();
+
+        $stats = [
+            'employees_total'               => 0,
+            'employees_active'              => 0,
+            'activities_today'              => 0,
+            'activities_pending_verify'     => 0,
+            'service_orders_this_month'     => 0,
+            'service_orders_processing'     => 0,
+            'invoices_unpaid'               => 0,
+            'payments_pending'              => 0,
+            'payments_confirmed_this_month' => 0.0,
+            'service_revenue_this_month'    => 0.0,
+        ];
+
+        if (Schema::hasTable('employees')) {
+            $stats['employees_total'] = Employee::query()->count();
+            $stats['employees_active'] = Employee::query()
+                ->where('status', 'active')
+                ->count();
+        }
+
+        if (Schema::hasTable('employee_activities')) {
+            $stats['activities_today'] = EmployeeActivity::query()
+                ->whereDate('activity_date', $now->toDateString())
+                ->count();
+
+            $stats['activities_pending_verify'] = EmployeeActivity::query()
+                ->pendingVerification()
+                ->count();
+        }
+
+        if (Schema::hasTable('service_orders')) {
+            $stats['service_orders_this_month'] = ServiceOrder::query()
+                ->whereYear('order_date', $now->year)
+                ->whereMonth('order_date', $now->month)
+                ->count();
+
+            $stats['service_orders_processing'] = ServiceOrder::query()
+                ->where('order_status', ServiceOrder::ORDER_STATUS_PROCESSING)
+                ->count();
+        }
+
+        if (Schema::hasTable('invoices')) {
+            $stats['invoices_unpaid'] = Invoice::query()
+                ->where('payment_status', Invoice::PAYMENT_STATUS_UNPAID)
+                ->count();
+
+            $stats['service_revenue_this_month'] = (float) Invoice::query()
+                ->whereYear('invoice_date', $now->year)
+                ->whereMonth('invoice_date', $now->month)
+                ->sum('total_amount');
+        }
+
+        if (Schema::hasTable('payments')) {
+            $stats['payments_pending'] = Payment::query()
+                ->where('status', Payment::STATUS_PENDING)
+                ->count();
+
+            $stats['payments_confirmed_this_month'] = (float) Payment::query()
+                ->where('status', Payment::STATUS_CONFIRMED)
+                ->whereYear('payment_date', $now->year)
+                ->whereMonth('payment_date', $now->month)
+                ->sum('amount');
+        }
+
+        return $stats;
     }
 
     /**

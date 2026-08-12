@@ -6,50 +6,36 @@
      <meta name="viewport" content="width=device-width, initial-scale=1">
      <title>Bukti Pembayaran {{ $payment->payment_number }}</title>
      <style>
+          :root {
+               --pay-primary: #0f766e;
+               --pay-secondary: #0ea5e9;
+               --pay-text: #1f2937;
+               --pay-muted: #64748b;
+               --pay-border: #dbe3ef;
+               --pay-soft: #f8fafc;
+          }
+
           * {
                box-sizing: border-box;
           }
 
           body {
                margin: 0;
-               color: #1f2937;
+               color: var(--pay-text);
                font: 13px/1.55 'Segoe UI', Tahoma, sans-serif;
-               background: #eef3f8;
-          }
-
-          .print-actions {
-               display: flex;
-               justify-content: center;
-               gap: 10px;
-               margin: 14px auto;
-          }
-
-          .print-actions button,
-          .print-actions a {
-               padding: 10px 16px;
-               border: 0;
-               border-radius: 8px;
-               font-weight: 700;
-               cursor: pointer;
-               text-decoration: none;
-          }
-
-          .print-actions button {
-               color: #fff;
-               background: #0f766e;
-          }
-
-          .print-actions a {
-               color: #334155;
-               background: #dfe7f1;
+               background:
+                    radial-gradient(circle at 8% 8%, rgba(15, 118, 110, 0.16), transparent 24%),
+                    radial-gradient(circle at 92% 12%, rgba(14, 165, 233, 0.14), transparent 26%),
+                    #eef3f8;
           }
 
           .paper {
                width: 210mm;
                min-height: 297mm;
-               margin: 12px auto 26px;
+               margin: 16px auto 26px;
                padding: 12mm;
                background: #fff;
+               border-radius: 12px;
                box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
                border: 1px solid #d9e2ef;
           }
@@ -59,20 +45,25 @@
                justify-content: space-between;
                gap: 20px;
                align-items: flex-start;
-               padding-bottom: 12px;
-               border-bottom: 2px solid #0f766e;
+               padding: 14px;
+               border: 1px solid #bde8e1;
+               border-radius: 12px;
+               background:
+                    radial-gradient(circle at 90% 0%, rgba(255, 255, 255, .26), transparent 24%),
+                    linear-gradient(125deg, #0f766e 0%, #0891b2 52%, #4f46e5 100%);
+               color: #fff;
           }
 
           .brand h1 {
                margin: 0;
-               color: #0f172a;
+               color: #fff;
                font-size: 22px;
                letter-spacing: -0.01em;
           }
 
           .brand p {
                margin: 3px 0 0;
-               color: #64748b;
+               color: rgba(255, 255, 255, 0.9);
                font-size: 12px;
           }
 
@@ -81,17 +72,47 @@
           }
 
           .doc-meta .title {
-               color: #0f172a;
+               color: #fff;
                font-size: 17px;
                font-weight: 800;
                letter-spacing: 0.04em;
           }
 
           .doc-meta .number {
-               color: #0f766e;
+               color: #e2fafe;
                font-size: 14px;
                font-weight: 700;
                margin-top: 2px;
+          }
+
+          .kpi-grid {
+               display: grid;
+               grid-template-columns: repeat(4, minmax(0, 1fr));
+               gap: 10px;
+               margin-top: 12px;
+          }
+
+          .kpi-card {
+               padding: 10px;
+               border: 1px solid var(--pay-border);
+               border-radius: 10px;
+               background: var(--pay-soft);
+          }
+
+          .kpi-label {
+               color: var(--pay-muted);
+               font-size: 9px;
+               font-weight: 800;
+               letter-spacing: .07em;
+               text-transform: uppercase;
+          }
+
+          .kpi-value {
+               margin-top: 4px;
+               color: #0f172a;
+               font-size: 12px;
+               font-weight: 800;
+               line-height: 1.3;
           }
 
           .section-title {
@@ -108,6 +129,8 @@
                width: 100%;
                border-collapse: collapse;
                border: 1px solid #dbe3ef;
+               border-radius: 10px;
+               overflow: hidden;
           }
 
           .data-table th,
@@ -143,6 +166,13 @@
                background: #ecfeff;
           }
 
+          .amount-table .highlight th,
+          .amount-table .highlight td {
+               color: #1e3a8a;
+               font-weight: 800;
+               background: #eef2ff;
+          }
+
           .notes {
                margin-top: 10px;
                padding: 10px 12px;
@@ -163,17 +193,19 @@
                     background: #fff;
                }
 
-               .print-actions {
-                    display: none;
-               }
-
                .paper {
                     width: auto;
                     min-height: 0;
                     margin: 0;
-                    padding: 0;
+                    padding: 8mm;
+                    border-radius: 0;
                     box-shadow: none;
                     border: 0;
+               }
+
+               .doc-header {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                }
           }
 
@@ -190,6 +222,10 @@
                .doc-meta {
                     text-align: left;
                     margin-top: 10px;
+               }
+
+               .kpi-grid {
+                    grid-template-columns: 1fr 1fr;
                }
 
                .data-table th,
@@ -217,30 +253,40 @@
           }
 
           $currentAmount = (float) $payment->amount;
-          $remaining = max(
-              0.0,
-              $invoiceTotal -
-                  ($confirmedBefore +
-                      ($payment->status === \App\Models\Payment::STATUS_CONFIRMED ? $currentAmount : 0.0)),
-          );
+          $confirmedCurrent = $payment->status === \App\Models\Payment::STATUS_CONFIRMED ? $currentAmount : 0.0;
+          $remaining = max(0.0, $invoiceTotal - ($confirmedBefore + $confirmedCurrent));
      @endphp
-
-     <div class="print-actions">
-          <button type="button" onclick="window.print()">Cetak Bukti</button>
-          <a href="{{ route('super-admin.payments.show', $payment) }}">Kembali</a>
-     </div>
 
      <main class="paper">
           <header class="doc-header">
                <div class="brand">
-                    <h1>{{ $companyName }}</h1>
-                    <p>{{ $companyTagline }}</p>
+                    <h1>Dashboard Monitoring Transaksi Jasa</h1>
+                    <p>{{ $companyName }} - {{ $companyTagline }}</p>
                </div>
                <div class="doc-meta">
                     <div class="title">PAYMENT RECEIPT</div>
                     <div class="number">{{ $payment->payment_number }}</div>
                </div>
           </header>
+
+          <section class="kpi-grid">
+               <div class="kpi-card">
+                    <span class="kpi-label">Nominal Pembayaran</span>
+                    <div class="kpi-value">Rp {{ number_format($currentAmount, 2, ',', '.') }}</div>
+               </div>
+               <div class="kpi-card">
+                    <span class="kpi-label">Status Pembayaran</span>
+                    <div class="kpi-value">{{ ucfirst((string) $payment->status) }}</div>
+               </div>
+               <div class="kpi-card">
+                    <span class="kpi-label">Total Invoice</span>
+                    <div class="kpi-value">Rp {{ number_format($invoiceTotal, 2, ',', '.') }}</div>
+               </div>
+               <div class="kpi-card">
+                    <span class="kpi-label">Sisa Tagihan</span>
+                    <div class="kpi-value">Rp {{ number_format($remaining, 2, ',', '.') }}</div>
+               </div>
+          </section>
 
           <h3 class="section-title">Data Pembayaran</h3>
           <table class="data-table">
@@ -296,6 +342,10 @@
                <tr>
                     <th>Nominal Pembayaran Ini</th>
                     <td>Rp {{ number_format($currentAmount, 2, ',', '.') }}</td>
+               </tr>
+               <tr class="highlight">
+                    <th>Nominal Terkonfirmasi Dokumen Ini</th>
+                    <td>Rp {{ number_format($confirmedCurrent, 2, ',', '.') }}</td>
                </tr>
                <tr class="grand">
                     <th>Sisa Tagihan Setelah Pembayaran</th>
