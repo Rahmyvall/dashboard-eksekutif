@@ -520,16 +520,16 @@
           }
 
           .department-table thead th {
-               padding: 15px 13px;
+               padding: 13px 13px;
                color: #52627a;
-               font-size: .72rem;
+               font-size: .7rem;
                font-weight: 850;
                letter-spacing: .07em;
                white-space: nowrap;
                text-transform: uppercase;
                vertical-align: middle;
                border: 0;
-               background: linear-gradient(180deg, #fafbff, #f2f5ff);
+               background: linear-gradient(180deg, #f6f8ff, #eef2ff);
           }
 
           .department-table thead th:first-child {
@@ -663,9 +663,9 @@
 
           .action-group {
                display: inline-flex;
-               gap: 7px;
+               gap: 6px;
                align-items: center;
-               white-space: nowrap;
+               flex-wrap: nowrap;
           }
 
           .action-btn {
@@ -675,47 +675,60 @@
                padding: 0;
                align-items: center;
                justify-content: center;
-               font-size: .92rem;
-               border: 0;
-               border-radius: 12px;
-               transition: .21s ease;
+               font-size: .9rem;
+               white-space: nowrap;
+               text-decoration: none;
+               border: 1.5px solid transparent;
+               border-radius: 10px;
+               cursor: pointer;
+               transition: all .22s cubic-bezier(.4, 0, .2, 1);
+          }
+
+          .action-btn i {
+               font-size: .88rem;
           }
 
           .action-btn:hover {
-               transform: translateY(-2px) scale(1.03);
+               transform: translateY(-2px);
           }
 
           .btn-view {
                color: #0369a1;
-               background: #e0f2fe;
+               border-color: #bae6fd;
+               background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
           }
 
           .btn-view:hover {
                color: #ffffff;
-               background: #0ea5e9;
-               box-shadow: 0 8px 18px rgba(14, 165, 233, .25);
+               border-color: #0ea5e9;
+               background: linear-gradient(135deg, #0ea5e9, #0284c7);
+               box-shadow: 0 8px 20px rgba(14, 165, 233, .32);
           }
 
           .btn-edit {
-               color: #a16207;
-               background: #fef3c7;
+               color: #92400e;
+               border-color: #fde68a;
+               background: linear-gradient(135deg, #fffbeb, #fef3c7);
           }
 
           .btn-edit:hover {
                color: #ffffff;
-               background: #f59e0b;
-               box-shadow: 0 8px 18px rgba(245, 158, 11, .25);
+               border-color: #f59e0b;
+               background: linear-gradient(135deg, #f59e0b, #d97706);
+               box-shadow: 0 8px 20px rgba(245, 158, 11, .32);
           }
 
           .btn-delete {
-               color: #be123c;
-               background: #ffe4e6;
+               color: #9f1239;
+               border-color: #fecdd3;
+               background: linear-gradient(135deg, #fff1f2, #ffe4e6);
           }
 
           .btn-delete:hover {
                color: #ffffff;
-               background: #f43f5e;
-               box-shadow: 0 8px 18px rgba(244, 63, 94, .25);
+               border-color: #f43f5e;
+               background: linear-gradient(135deg, #f43f5e, #e11d48);
+               box-shadow: 0 8px 20px rgba(244, 63, 94, .32);
           }
 
           /* EMPTY */
@@ -904,6 +917,17 @@
                     flex-direction: column;
                     justify-content: center;
                }
+
+               .action-group {
+                    flex-wrap: wrap;
+                    justify-content: center;
+               }
+
+               .action-btn {
+                    height: 32px;
+                    padding: 0 10px;
+                    font-size: .74rem;
+               }
           }
      </style>
 
@@ -914,35 +938,10 @@
           $currentStatus = request('status', $status ?? '');
 
           /*
-           * Hak kelola Department hanya untuk Super Admin.
-           * Role lain tetap dapat melihat daftar dan halaman detail.
+           * Tampilkan tombol CRUD untuk semua pengguna yang sudah login.
            */
           $currentUser = auth()->user();
-          $canManageDepartments = false;
-
-          if ($currentUser) {
-              if (method_exists($currentUser, 'hasRole')) {
-                  $canManageDepartments = $currentUser->hasRole('super_admin');
-              } else {
-                  $rawRole =
-                      data_get($currentUser, 'role.slug') ??
-                      (data_get($currentUser, 'role.name') ??
-                          (data_get($currentUser, 'role_name') ?? data_get($currentUser, 'role')));
-
-                  if (is_object($rawRole) || is_array($rawRole)) {
-                      $rawRole = data_get($rawRole, 'slug') ?? (data_get($rawRole, 'name') ?? '');
-                  }
-
-                  $normalizedRole = \Illuminate\Support\Str::of((string) $rawRole)
-                      ->trim()
-                      ->lower()
-                      ->replace(['-', ' '], '_')
-                      ->replaceMatches('/_+/', '_')
-                      ->toString();
-
-                  $canManageDepartments = in_array($normalizedRole, ['super_admin', 'superadmin'], true);
-              }
-          }
+          $canManageDepartments = (bool) $currentUser;
      @endphp
 
      <div class="department-page">
@@ -1244,7 +1243,7 @@
                                                        <div class="action-group">
                                                             @if (Route::has('super-admin.departments.show'))
                                                                  <a href="{{ route('super-admin.departments.show', $department) }}"
-                                                                      class="btn action-btn btn-view" title="Lihat detail"
+                                                                      class="action-btn btn-view"
                                                                       aria-label="Lihat detail {{ $department->name }}">
                                                                       <i class="bi bi-eye-fill"></i>
                                                                  </a>
@@ -1253,8 +1252,7 @@
                                                             @if ($canManageDepartments)
                                                                  @if (Route::has('super-admin.departments.edit'))
                                                                       <a href="{{ route('super-admin.departments.edit', $department) }}"
-                                                                           class="btn action-btn btn-edit"
-                                                                           title="Edit department"
+                                                                           class="action-btn btn-edit"
                                                                            aria-label="Edit {{ $department->name }}">
                                                                            <i class="bi bi-pencil-fill"></i>
                                                                       </a>
@@ -1263,13 +1261,12 @@
                                                                  @if (Route::has('super-admin.departments.destroy'))
                                                                       <form action="{{ route('super-admin.departments.destroy', $department) }}"
                                                                            method="POST" class="d-inline"
-                                                                           onsubmit="return confirm('Yakin ingin menghapus department {{ addslashes($department->name) }}?')">
+                                                                           onsubmit="return confirm('Yakin hapus department \'{{ addslashes($department->name) }}\'?')">
                                                                            @csrf
                                                                            @method('DELETE')
 
                                                                            <button type="submit"
-                                                                                class="btn action-btn btn-delete"
-                                                                                title="Hapus department"
+                                                                                class="action-btn btn-delete"
                                                                                 aria-label="Hapus {{ $department->name }}">
                                                                                 <i class="bi bi-trash3-fill"></i>
                                                                            </button>
