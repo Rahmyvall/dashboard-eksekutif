@@ -1,0 +1,272 @@
+{
+  "info": {
+    "name": "Expense API – Dashboard Monitoring",
+    "_postman_id": "expense-api-v1",
+    "description": "REST API pengeluaran untuk Dashboard Monitoring Produktivitas Karyawan Dan Transaksi Jasa.\n\nBase URL: http://localhost/dashboard-eksekutif/public/api/v1\n\nSemua endpoint mengembalikan JSON.\nUntuk upload file gunakan body type **form-data**.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost/dashboard-eksekutif/public/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "expense_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. List Expenses (GET /expenses)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/expenses?per_page=10&sort_by=created_at&sort_direction=desc",
+          "host": ["{{base_url}}"],
+          "path": ["expenses"],
+          "query": [
+            { "key": "search",           "value": "",     "disabled": true, "description": "Cari kategori/deskripsi/order/customer" },
+            { "key": "category",         "value": "",     "disabled": true, "description": "Filter kategori (exact)" },
+            { "key": "service_order_id", "value": "",     "disabled": true, "description": "Filter service order ID" },
+            { "key": "start_date",       "value": "",     "disabled": true, "description": "YYYY-MM-DD" },
+            { "key": "end_date",         "value": "",     "disabled": true, "description": "YYYY-MM-DD" },
+            { "key": "per_page",         "value": "10",   "description": "Baris per halaman (1-100)" },
+            { "key": "sort_by",          "value": "created_at", "description": "id|expense_date|amount|category|created_at" },
+            { "key": "sort_direction",   "value": "desc", "description": "asc|desc" }
+          ]
+        },
+        "description": "Mengambil daftar pengeluaran dengan filter, sorting, dan paginasi."
+      }
+    },
+    {
+      "name": "2. Create Expense – JSON (POST /expenses)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept",       "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"expense_date\": \"2026-08-13\",\n  \"category\": \"Operasional\",\n  \"description\": \"Pembelian alat tulis kantor untuk divisi admin\",\n  \"amount\": 250000,\n  \"service_order_id\": null\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/expenses",
+          "host": ["{{base_url}}"],
+          "path": ["expenses"]
+        },
+        "description": "Membuat pengeluaran baru tanpa lampiran file (Content-Type: application/json)."
+      }
+    },
+    {
+      "name": "3. Create Expense – with File (POST /expenses)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "expense_date",     "value": "2026-08-13",                  "type": "text" },
+            { "key": "category",         "value": "Bahan Baku",                   "type": "text" },
+            { "key": "description",      "value": "Pembelian bahan baku produksi", "type": "text" },
+            { "key": "amount",           "value": "1500000",                      "type": "text" },
+            { "key": "service_order_id", "value": "",                             "type": "text", "disabled": true },
+            { "key": "attachment",       "src":   [],                             "type": "file", "description": "File JPG/PNG/PDF max 5MB" }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/expenses",
+          "host": ["{{base_url}}"],
+          "path": ["expenses"]
+        },
+        "description": "Membuat pengeluaran baru dengan upload lampiran (multipart/form-data)."
+      }
+    },
+    {
+      "name": "4. Get Expense Detail (GET /expenses/{id})",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/expenses/{{expense_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["expenses", "{{expense_id}}"]
+        },
+        "description": "Mengambil detail satu pengeluaran beserta relasi service order dan creator."
+      }
+    },
+    {
+      "name": "5. Update Expense – JSON (PUT /expenses/{id})",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Accept",       "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"expense_date\": \"2026-08-14\",\n  \"category\": \"Transportasi\",\n  \"description\": \"Biaya transportasi pengiriman barang ke klien\",\n  \"amount\": 350000,\n  \"service_order_id\": null\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/expenses/{{expense_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["expenses", "{{expense_id}}"]
+        },
+        "description": "Memperbarui pengeluaran tanpa mengganti file."
+      }
+    },
+    {
+      "name": "6. Update Expense – with New File (PATCH /expenses/{id})",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "expense_date",  "value": "2026-08-14",                         "type": "text" },
+            { "key": "category",      "value": "Transportasi",                        "type": "text" },
+            { "key": "description",   "value": "Biaya transportasi (update dengan nota)", "type": "text" },
+            { "key": "amount",        "value": "380000",                              "type": "text" },
+            { "key": "attachment",    "src":   [],                                    "type": "file", "description": "Upload lampiran baru (opsional)" }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/expenses/{{expense_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["expenses", "{{expense_id}}"]
+        },
+        "description": "Memperbarui pengeluaran dengan mengganti file lampiran. Gunakan PATCH + form-data."
+      }
+    },
+    {
+      "name": "7. Remove Attachment (PATCH /expenses/{id})",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "expense_date",       "value": "2026-08-14",   "type": "text" },
+            { "key": "category",           "value": "Transportasi", "type": "text" },
+            { "key": "description",        "value": "Update tanpa lampiran", "type": "text" },
+            { "key": "amount",             "value": "380000",       "type": "text" },
+            { "key": "remove_attachment",  "value": "1",            "type": "text", "description": "Set 1 untuk hapus lampiran saat ini" }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/expenses/{{expense_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["expenses", "{{expense_id}}"]
+        },
+        "description": "Menghapus lampiran saat ini tanpa mengganti dengan file baru."
+      }
+    },
+    {
+      "name": "8. Delete Expense (DELETE /expenses/{id})",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/expenses/{{expense_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["expenses", "{{expense_id}}"]
+        },
+        "description": "Menghapus pengeluaran beserta file lampirannya dari storage."
+      }
+    },
+    {
+      "name": "9. Expense Summary (GET /expenses/summary)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/expenses/summary",
+          "host": ["{{base_url}}"],
+          "path": ["expenses", "summary"],
+          "query": [
+            { "key": "start_date", "value": "2026-01-01", "disabled": true, "description": "YYYY-MM-DD" },
+            { "key": "end_date",   "value": "2026-12-31", "disabled": true, "description": "YYYY-MM-DD" }
+          ]
+        },
+        "description": "Agregasi total nominal dan breakdown per kategori. Bisa di-filter per rentang tanggal."
+      }
+    },
+    {
+      "name": "10. Filter by Category",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/expenses?category=operasional&per_page=15",
+          "host": ["{{base_url}}"],
+          "path": ["expenses"],
+          "query": [
+            { "key": "category", "value": "operasional" },
+            { "key": "per_page", "value": "15" }
+          ]
+        },
+        "description": "Contoh filter berdasarkan kategori 'operasional'."
+      }
+    },
+    {
+      "name": "11. Filter by Date Range",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/expenses?start_date=2026-08-01&end_date=2026-08-31&sort_by=amount&sort_direction=desc",
+          "host": ["{{base_url}}"],
+          "path": ["expenses"],
+          "query": [
+            { "key": "start_date",     "value": "2026-08-01" },
+            { "key": "end_date",       "value": "2026-08-31" },
+            { "key": "sort_by",        "value": "amount" },
+            { "key": "sort_direction", "value": "desc" }
+          ]
+        },
+        "description": "Filter pengeluaran bulan Agustus 2026, diurutkan nominal terbesar."
+      }
+    },
+    {
+      "name": "12. Search Expense",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/expenses?search=transportasi",
+          "host": ["{{base_url}}"],
+          "path": ["expenses"],
+          "query": [
+            { "key": "search", "value": "transportasi", "description": "Cari di kategori / deskripsi / order_number / nama customer" }
+          ]
+        },
+        "description": "Pencarian teks bebas di semua kolom relevan."
+      }
+    }
+  ]
+}

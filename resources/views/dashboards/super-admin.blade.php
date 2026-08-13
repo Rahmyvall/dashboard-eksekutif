@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Super Admin | Monitoring Kinerja Organisasi')
+@section('title', 'Dashboard Super Admin | Monitoring Produktivitas Karyawan dan Transaksi Jasa')
 
 @section('content')
      @php
@@ -440,25 +440,27 @@
      @endphp
 
      <style>
+          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+
           .sad-dashboard {
-               --sad-primary: #4f46e5;
-               --sad-primary-dark: #312e81;
-               --sad-primary-soft: rgba(79, 70, 229, 0.10);
-               --sad-accent: #06b6d4;
+               --sad-primary: #0f766e;
+               --sad-primary-dark: #134e4a;
+               --sad-primary-soft: rgba(15, 118, 110, 0.10);
+               --sad-accent: #0ea5e9;
                --sad-success: #16a34a;
                --sad-warning: #d97706;
                --sad-danger: #dc2626;
-               --sad-info: #0284c7;
-               --sad-purple: #7c3aed;
-               --sad-heading: #101828;
-               --sad-text: #475467;
-               --sad-muted: #667085;
-               --sad-border: #e4e7ec;
-               --sad-background: #f6f8fc;
+               --sad-info: #0369a1;
+               --sad-purple: #0f766e;
+               --sad-heading: #0f172a;
+               --sad-text: #334155;
+               --sad-muted: #64748b;
+               --sad-border: #dde4ee;
+               --sad-background: #f4f8fc;
                --sad-card: #ffffff;
-               --sad-card-soft: #f9fafb;
-               --sad-shadow: 0 12px 34px rgba(16, 24, 40, 0.07);
-               --sad-shadow-hover: 0 22px 52px rgba(16, 24, 40, 0.12);
+               --sad-card-soft: #f8fafc;
+               --sad-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+               --sad-shadow-hover: 0 24px 54px rgba(15, 23, 42, 0.14);
 
                width: auto;
                min-height: 100vh;
@@ -467,10 +469,10 @@
                overflow-x: hidden;
                color: var(--sad-text);
                background:
-                    radial-gradient(circle at 96% 0%, rgba(79, 70, 229, 0.12), transparent 30%),
-                    radial-gradient(circle at 0% 42%, rgba(6, 182, 212, 0.08), transparent 26%),
-                    linear-gradient(180deg, #f8faff 0%, var(--sad-background) 38%, #f3f6fb 100%);
-               font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    radial-gradient(circle at 92% -2%, rgba(14, 165, 233, 0.16), transparent 34%),
+                    radial-gradient(circle at 8% 38%, rgba(20, 184, 166, 0.10), transparent 31%),
+                    linear-gradient(180deg, #f9fcff 0%, var(--sad-background) 42%, #edf4fa 100%);
+               font-family: "Plus Jakarta Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
           }
 
           html[data-theme="dark"] .sad-dashboard,
@@ -503,6 +505,16 @@
                text-decoration: none;
           }
 
+          .sad-dashboard code {
+               padding: 2px 6px;
+               color: #0c4a6e;
+               font-size: 0.92em;
+               font-weight: 700;
+               border: 1px solid rgba(14, 165, 233, 0.20);
+               border-radius: 8px;
+               background: rgba(14, 165, 233, 0.09);
+          }
+
           .sad-dashboard button,
           .sad-dashboard input {
                font: inherit;
@@ -520,12 +532,12 @@
                min-height: 300px;
                padding: clamp(34px, 4.5vw, 58px);
                margin-bottom: 22px;
-               border: 1px solid rgba(255, 255, 255, 0.18);
+               border: 1px solid rgba(255, 255, 255, 0.30);
                border-radius: 30px;
                background:
-                    radial-gradient(circle at 82% 15%, rgba(255, 255, 255, 0.16), transparent 22%),
-                    linear-gradient(118deg, #101828 0%, #312e81 48%, #0891b2 100%);
-               box-shadow: 0 30px 72px rgba(49, 46, 129, 0.26);
+                    radial-gradient(circle at 80% 12%, rgba(255, 255, 255, 0.26), transparent 28%),
+                    linear-gradient(118deg, #0f766e 0%, #0369a1 52%, #0284c7 100%);
+               box-shadow: 0 30px 72px rgba(12, 74, 110, 0.28);
           }
 
           .sad-hero::before {
@@ -589,7 +601,8 @@
                margin: 0 0 16px;
                color: #ffffff;
                font-size: clamp(34px, 4.2vw, 58px);
-               font-weight: 850;
+               font-family: "Sora", "Plus Jakarta Sans", sans-serif;
+               font-weight: 800;
                letter-spacing: -0.045em;
                line-height: 1.04;
           }
@@ -599,7 +612,43 @@
                margin: 0;
                color: rgba(255, 255, 255, 0.82);
                font-size: 15px;
+               font-weight: 600;
                line-height: 1.78;
+          }
+
+          .sad-hero-kpi {
+               display: grid;
+               grid-template-columns: repeat(3, minmax(0, 1fr));
+               gap: 10px;
+               max-width: 760px;
+               margin-top: 18px;
+          }
+
+          .sad-hero-kpi-item {
+               padding: 12px 13px;
+               border: 1px solid rgba(255, 255, 255, 0.24);
+               border-radius: 13px;
+               background: rgba(255, 255, 255, 0.12);
+               backdrop-filter: blur(10px);
+          }
+
+          .sad-hero-kpi-item strong {
+               display: block;
+               color: #ffffff;
+               font-family: "Sora", "Plus Jakarta Sans", sans-serif;
+               font-size: 18px;
+               font-weight: 700;
+               line-height: 1.1;
+          }
+
+          .sad-hero-kpi-item span {
+               display: block;
+               margin-top: 4px;
+               color: rgba(255, 255, 255, 0.85);
+               font-size: 10px;
+               font-weight: 700;
+               letter-spacing: 0.03em;
+               text-transform: uppercase;
           }
 
           .sad-hero-meta {
@@ -809,9 +858,11 @@
                overflow: hidden;
                min-height: 190px;
                padding: 23px;
-               border: 1px solid var(--sad-border);
+               border: 1px solid rgba(15, 118, 110, 0.16);
                border-radius: 22px;
-               background: var(--sad-card);
+               background:
+                    linear-gradient(160deg, rgba(15, 118, 110, 0.04), transparent 44%),
+                    var(--sad-card);
                box-shadow: var(--sad-shadow);
                transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
           }
@@ -991,7 +1042,7 @@
 
           .sad-card {
                overflow: hidden;
-               border: 1px solid var(--sad-border);
+               border: 1px solid rgba(15, 118, 110, 0.14);
                border-radius: 24px;
                background: var(--sad-card);
                box-shadow: var(--sad-shadow);
@@ -1011,7 +1062,7 @@
                padding: 23px 25px 19px;
                border-bottom: 1px solid var(--sad-border);
                background:
-                    linear-gradient(180deg, rgba(79, 70, 229, 0.024), transparent);
+                    linear-gradient(180deg, rgba(15, 118, 110, 0.05), transparent);
           }
 
           .sad-card-heading {
@@ -1040,7 +1091,8 @@
                margin: 0;
                color: var(--sad-heading);
                font-size: 16px;
-               font-weight: 850;
+               font-family: "Sora", "Plus Jakarta Sans", sans-serif;
+               font-weight: 700;
                letter-spacing: -0.015em;
           }
 
@@ -1072,7 +1124,7 @@
 
           .sad-card-action:hover {
                color: var(--sad-primary);
-               border-color: rgba(79, 70, 229, 0.35);
+               border-color: rgba(15, 118, 110, 0.35);
                background: var(--sad-primary-soft);
           }
 
@@ -1274,9 +1326,9 @@
 
           .sad-line-stat {
                padding: 12px;
-               border: 1px solid var(--sad-border);
+               border: 1px solid rgba(15, 118, 110, 0.14);
                border-radius: 12px;
-               background: var(--sad-card-soft);
+               background: linear-gradient(145deg, rgba(15, 118, 110, 0.05), var(--sad-card-soft));
           }
 
           .sad-line-stat-label {
@@ -1784,7 +1836,7 @@
           }
 
           .sad-search input:focus {
-               border-color: rgba(79, 70, 229, 0.50);
+               border-color: rgba(15, 118, 110, 0.52);
                box-shadow: 0 0 0 4px var(--sad-primary-soft);
           }
 
@@ -1826,7 +1878,7 @@
           }
 
           .sad-table tbody tr:hover {
-               background: rgba(79, 70, 229, 0.028);
+               background: rgba(15, 118, 110, 0.05);
           }
 
           .sad-table tbody tr:last-child td {
@@ -2157,15 +2209,31 @@
                border: 1px solid var(--sad-border);
                border-radius: 15px;
                background:
-                    linear-gradient(145deg, rgba(79, 70, 229, 0.04), transparent 72%);
+                    linear-gradient(145deg, rgba(15, 118, 110, 0.07), transparent 74%);
                transition: 0.2s ease;
           }
 
           .sad-quick-action:hover {
                color: var(--sad-text);
-               border-color: rgba(79, 70, 229, 0.38);
+               border-color: rgba(15, 118, 110, 0.38);
                background: var(--sad-primary-soft);
                transform: translateY(-2px);
+          }
+
+          .sad-reveal {
+               opacity: 1;
+               transform: none;
+          }
+
+          .sad-dashboard.has-reveal .sad-reveal {
+               opacity: 0;
+               transform: translateY(18px);
+               transition: opacity 0.55s ease, transform 0.55s ease;
+          }
+
+          .sad-dashboard.has-reveal .sad-reveal.is-visible {
+               opacity: 1;
+               transform: translateY(0);
           }
 
           .sad-quick-icon {
@@ -2326,6 +2394,10 @@
                     flex-direction: column;
                }
 
+               .sad-hero-kpi {
+                    grid-template-columns: 1fr;
+               }
+
                .sad-chart-area {
                     grid-template-columns: 27px minmax(0, 1fr);
                }
@@ -2348,10 +2420,10 @@
           }
 
           /* ======================================================================
-                                                HERO BRIGHTNESS PATCH
-                                                Mempertahankan struktur template yang ada dan hanya memperbaiki
-                                                warna hero agar lebih terang, kontras, dan mudah dibaca.
-                                                ====================================================================== */
+                                                          HERO BRIGHTNESS PATCH
+                                                          Mempertahankan struktur template yang ada dan hanya memperbaiki
+                                                          warna hero agar lebih terang, kontras, dan mudah dibaca.
+                                                          ====================================================================== */
           .sad-dashboard .sad-hero {
                border-color: rgba(255, 255, 255, 0.34);
                background:
@@ -2362,11 +2434,11 @@
                          rgba(255, 255, 255, 0.13),
                          transparent 35%),
                     linear-gradient(112deg,
-                         #4f46e5 0%,
-                         #2563eb 46%,
-                         #06b6d4 100%) !important;
+                         #0f766e 0%,
+                         #0369a1 46%,
+                         #0ea5e9 100%) !important;
                box-shadow:
-                    0 28px 65px rgba(37, 99, 235, 0.26),
+                    0 28px 65px rgba(3, 105, 161, 0.30),
                     inset 0 1px 0 rgba(255, 255, 255, 0.22);
           }
 
@@ -2446,23 +2518,35 @@
                          rgba(255, 255, 255, 0.22),
                          transparent 25%),
                     linear-gradient(112deg,
-                         #4338ca 0%,
-                         #2563eb 48%,
-                         #0891b2 100%) !important;
+                         #0f766e 0%,
+                         #1d4ed8 48%,
+                         #0e7490 100%) !important;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+
+               .sad-reveal,
+               .sad-reveal.is-visible,
+               .sad-stat-card,
+               .sad-card,
+               .sad-button {
+                    transition: none !important;
+                    transform: none !important;
+               }
           }
      </style>
 
      <div class="sad-dashboard">
-          <section class="sad-hero">
+          <section class="sad-hero sad-reveal">
                <div class="sad-hero-content">
                     <div class="sad-role-badge">{{ $currentUserRole }}</div>
 
-                    <h1>Pusat Kendali Super Admin</h1>
+                    <h1>Dashboard Monitoring Produktivitas Karyawan dan Transaksi Jasa</h1>
 
                     <p class="sad-hero-description">
-                         Selamat datang, {{ $currentUserName }}. Pantau struktur organisasi,
-                         kategori layanan, periode penilaian, status cabang, pengguna, dan aktivitas sistem
-                         melalui dashboard eksekutif yang terpusat.
+                         Selamat datang, {{ $currentUserName }}. Pantau performa indikator tim, aktivitas karyawan,
+                         tren invoice versus payment, status layanan, dan prioritas tindak lanjut secara real-time
+                         melalui tampilan eksekutif yang lebih fokus dan mudah dipantau.
                     </p>
 
                     <div class="sad-hero-meta">
@@ -2486,6 +2570,21 @@
                               Akses administrator tertinggi
                          </span>
                     </div>
+
+                    <div class="sad-hero-kpi">
+                         <div class="sad-hero-kpi-item">
+                              <strong>{{ number_format($indicatorActive, 0, ',', '.') }}</strong>
+                              <span>Indikator Aktif</span>
+                         </div>
+                         <div class="sad-hero-kpi-item">
+                              <strong>{{ number_format($serviceActive, 0, ',', '.') }}</strong>
+                              <span>Service Aktif</span>
+                         </div>
+                         <div class="sad-hero-kpi-item">
+                              <strong>{{ number_format($totalUsers, 0, ',', '.') }}</strong>
+                              <span>Pengguna Terhubung</span>
+                         </div>
+                    </div>
                </div>
 
                <div class="sad-hero-actions">
@@ -2501,7 +2600,7 @@
                </div>
           </section>
 
-          <section class="sad-period-overview">
+          <section class="sad-period-overview sad-reveal">
                <div class="sad-period-main">
                     <span class="sad-period-icon">
                          <i data-feather="calendar"></i>
@@ -2613,7 +2712,7 @@
                </a>
           </section>
 
-          <section class="sad-stat-grid">
+          <section class="sad-stat-grid sad-reveal">
                @foreach ($dashboardStatistics as $statistic)
                     <article class="sad-stat-card theme-{{ $statistic['theme'] }}">
                          <div class="sad-stat-top">
@@ -2716,14 +2815,14 @@
                    ->values();
           @endphp
 
-          <section class="sad-card" style="margin-bottom: 24px;">
+          <section class="sad-card sad-reveal" style="margin-bottom: 24px;">
                <header class="sad-card-header">
                     <div class="sad-card-heading">
                          <span class="sad-card-heading-icon">
                               <i data-feather="activity"></i>
                          </span>
                          <div>
-                              <h2 class="sad-card-title">Line Segment Invoices vs Payments</h2>
+                              <h2 class="sad-card-title">Tren Transaksi Invoice dan Payment</h2>
                               <p class="sad-card-subtitle">Tren nominal bulanan untuk invoice dan payment dalam
                                    {{ $lineLabels->count() }} bulan terakhir.</p>
                          </div>
@@ -2884,7 +2983,7 @@
                ];
           @endphp
 
-          <section class="sad-card sad-monitoring-card" style="margin-bottom: 24px;">
+          <section class="sad-card sad-monitoring-card sad-reveal" style="margin-bottom: 24px;">
                <header class="sad-card-header">
                     <div class="sad-card-heading">
                          <span class="sad-card-heading-icon"><i data-feather="briefcase"></i></span>
@@ -2946,7 +3045,7 @@
                </div>
           </section>
 
-          <section class="sad-main-grid">
+          <section class="sad-main-grid sad-reveal">
                {{-- Grafik bobot indikator --}}
                <article class="sad-card">
                     <header class="sad-card-header">
@@ -3175,7 +3274,7 @@
                </article>
           </section>
 
-          <section class="sad-secondary-grid">
+          <section class="sad-secondary-grid sad-reveal">
                <article class="sad-card">
                     <header class="sad-card-header">
                          <div class="sad-card-heading">
@@ -3526,7 +3625,7 @@
           </section>
 
 
-          <section class="sad-bottom-grid">
+          <section class="sad-bottom-grid sad-reveal">
                <article class="sad-card">
                     <header class="sad-card-header">
                          <div class="sad-card-heading">
@@ -3675,7 +3774,7 @@
                </article>
           </section>
 
-          <section class="sad-footer-grid">
+          <section class="sad-footer-grid sad-reveal">
                <article class="sad-card">
                     <header class="sad-card-header">
                          <div class="sad-card-heading">
@@ -3765,6 +3864,37 @@
                document.addEventListener('DOMContentLoaded', function() {
                     if (typeof feather !== 'undefined') {
                          feather.replace();
+                    }
+
+                    const revealElements = Array.from(document.querySelectorAll('.sad-reveal'));
+                    const dashboardRoot = document.querySelector('.sad-dashboard');
+                    const canUseRevealObserver = typeof window !== 'undefined' &&
+                         'IntersectionObserver' in window;
+
+                    if (revealElements.length > 0) {
+                         if (canUseRevealObserver) {
+                              dashboardRoot?.classList.add('has-reveal');
+
+                              const revealObserver = new IntersectionObserver(function(entries) {
+                                   entries.forEach(function(entry) {
+                                        if (entry.isIntersecting) {
+                                             entry.target.classList.add('is-visible');
+                                             revealObserver.unobserve(entry.target);
+                                        }
+                                   });
+                              }, {
+                                   threshold: 0.15
+                              });
+
+                              revealElements.forEach(function(element, index) {
+                                   element.style.transitionDelay = Math.min(index * 70, 360) + 'ms';
+                                   revealObserver.observe(element);
+                              });
+                         } else {
+                              revealElements.forEach(function(element) {
+                                   element.classList.add('is-visible');
+                              });
+                         }
                     }
 
                     const liveClock = document.getElementById('sadLiveClock');

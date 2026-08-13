@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\EmployeeActivityController;
+use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\InvoiceController;
 
 use App\Http\Controllers\Admin\PerformanceIndicatorController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\ServiceOrderController;
+use App\Http\Controllers\Admin\ServiceOrderStatusHistoryController;
 
 
 use App\Http\Controllers\Admin\ServiceCategoryController;
@@ -1065,6 +1067,27 @@ Route::prefix('payments')
             ->name('show');
     });
 
+Route::prefix('expenses')
+    ->name('expenses.')
+    ->controller(ExpenseController::class)
+    ->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{expense}/edit', 'edit')
+            ->whereNumber('expense')
+            ->name('edit');
+        Route::match(['put', 'patch'], '/{expense}', 'update')
+            ->whereNumber('expense')
+            ->name('update');
+        Route::delete('/{expense}', 'destroy')
+            ->whereNumber('expense')
+            ->name('destroy');
+        Route::get('/{expense}', 'show')
+            ->whereNumber('expense')
+            ->name('show');
+    });
+
             /*
             |--------------------------------------------------------------------------
             | Performance Period Management
@@ -1317,6 +1340,29 @@ Route::prefix('payments')
 
                     Route::get('/{employeeActivity}', [EmployeeActivityController::class, 'show'])
                         ->whereNumber('employeeActivity')
+                        ->name('show');
+                });
+
+            Route::prefix('service-order-status-histories')
+                ->name('service-order-status-histories.')
+                ->group(function (): void {
+                    Route::get('/', [ServiceOrderStatusHistoryController::class, 'webIndex'])
+                        ->name('index');
+
+                    Route::get('/{serviceOrderStatusHistory}/edit', [ServiceOrderStatusHistoryController::class, 'webEdit'])
+                        ->whereNumber('serviceOrderStatusHistory')
+                        ->name('edit');
+
+                    Route::match(['put', 'patch'], '/{serviceOrderStatusHistory}', [ServiceOrderStatusHistoryController::class, 'webUpdate'])
+                        ->whereNumber('serviceOrderStatusHistory')
+                        ->name('update');
+
+                    Route::delete('/{serviceOrderStatusHistory}', [ServiceOrderStatusHistoryController::class, 'webDestroy'])
+                        ->whereNumber('serviceOrderStatusHistory')
+                        ->name('destroy');
+
+                    Route::get('/{serviceOrderStatusHistory}', [ServiceOrderStatusHistoryController::class, 'webShow'])
+                        ->whereNumber('serviceOrderStatusHistory')
                         ->name('show');
                 });
         });

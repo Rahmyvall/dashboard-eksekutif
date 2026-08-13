@@ -164,7 +164,9 @@
          return '#';
      };
 
-     $routeActive = static fn(string ...$patterns): bool => request()->routeIs(...$patterns);
+     $routeActive = static function (string ...$patterns): bool {
+         return request()->routeIs(...$patterns);
+     };
 
      /*
     |--------------------------------------------------------------------------
@@ -203,13 +205,15 @@
      }
 
      $roleHintText = $roleHints
-         ->filter(static fn($value): bool => filled($value))
-         ->map(
-             static fn($value): string => \Illuminate\Support\Str::of((string) $value)
+         ->filter(static function ($value): bool {
+             return filled($value);
+         })
+         ->map(static function ($value): string {
+             return \Illuminate\Support\Str::of((string) $value)
                  ->lower()
                  ->replace(['-', '_'], ' ')
-                 ->toString(),
-         )
+                 ->toString();
+         })
          ->implode(' ');
 
      $isDirekturByHint = \Illuminate\Support\Str::contains($roleHintText, ['direktur', 'executive']);
@@ -329,6 +333,7 @@
              'service-order-status-histories.index',
              'service-orders.status-histories.index',
              'super-admin.service-order-status-histories.index',
+             'super-admin.service_order_status_histories.index',
          ],
 
          // SDM operasional
@@ -510,6 +515,7 @@
          'super-admin.employee-activities.*',
          'service-order-status-histories.*',
          'super-admin.service-order-status-histories.*',
+         'super-admin.service_order_status_histories.*',
      );
 
      $hrOperationsOpen = $routeActive(
@@ -763,7 +769,7 @@
 
                                    @if ($isSuperAdmin || $isDirektur || $isPelayanan || $isOperasional || $isAuditor)
                                         <a href="{{ $menuUrl('serviceOrderHistories') }}"
-                                             class="nav-sub-link {{ $routeActive('service-order-status-histories.*', 'super-admin.service-order-status-histories.*', 'service-orders.status-histories.*') ? 'active' : '' }}">
+                                             class="nav-sub-link {{ $routeActive('service-order-status-histories.*', 'super-admin.service-order-status-histories.*', 'super-admin.service_order_status_histories.*', 'service-orders.status-histories.*') ? 'active' : '' }}">
                                              7. Riwayat Status Pesanan
                                         </a>
                                    @endif
@@ -1111,6 +1117,11 @@
 --}}
 @once
      <style>
+          .sidebar {
+               background: linear-gradient(180deg, #243447 0%, #2d4258 55%, #365069 100%) !important;
+               box-shadow: 10px 0 30px rgba(20, 33, 49, 0.14);
+          }
+
           .sidebar-brand {
                display: flex;
                flex-direction: column;

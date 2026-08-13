@@ -10,12 +10,14 @@ use App\Http\Controllers\Api\PerformancePeriodController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\RoleApiController;
 use App\Http\Controllers\Api\ServiceCategoryController;
+use App\Http\Controllers\Admin\ServiceOrderStatusHistoryController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\InvoiceApiController;
 
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\PaymentApiController;
 use App\Http\Controllers\Api\LookupController;
+use App\Http\Controllers\Api\ExpenseApiController;
 
 
 
@@ -1567,6 +1569,39 @@ Route::prefix('v1/employee-activities')
 
 /*
 |--------------------------------------------------------------------------
+| Service Order Status History API
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/service-order-status-histories')
+    ->name('api.v1.service-order-status-histories.')
+    ->group(function (): void {
+        Route::get('/', [ServiceOrderStatusHistoryController::class, 'index'])->name('index');
+        Route::post('/', [ServiceOrderStatusHistoryController::class, 'store'])->name('store');
+
+        Route::get('/{serviceOrderStatusHistory}', [ServiceOrderStatusHistoryController::class, 'show'])
+            ->whereNumber('serviceOrderStatusHistory')
+            ->name('show');
+
+        Route::put('/{serviceOrderStatusHistory}', [ServiceOrderStatusHistoryController::class, 'update'])
+            ->whereNumber('serviceOrderStatusHistory')
+            ->name('update');
+
+        Route::patch('/{serviceOrderStatusHistory}', [ServiceOrderStatusHistoryController::class, 'update'])
+            ->whereNumber('serviceOrderStatusHistory')
+            ->name('patch');
+
+        Route::delete('/{serviceOrderStatusHistory}', [ServiceOrderStatusHistoryController::class, 'destroy'])
+            ->whereNumber('serviceOrderStatusHistory')
+            ->name('destroy');
+    });
+
+Route::patch('/v1/service-orders/{serviceOrder}/status', [ServiceOrderStatusHistoryController::class, 'updateStatus'])
+    ->whereNumber('serviceOrder')
+    ->name('api.v1.service-orders.status');
+
+/*
+|--------------------------------------------------------------------------
 | Lookup API
 |--------------------------------------------------------------------------
 */
@@ -1582,4 +1617,54 @@ Route::prefix('v1/lookups')
             ->name('service-orders');
         Route::get('/employee-activity-statuses', [LookupController::class, 'employeeActivityStatuses'])
             ->name('employee-activity-statuses');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Expense API
+|--------------------------------------------------------------------------
+|
+| Base URL : /api/v1/expenses
+|
+| Endpoints:
+| GET    /api/v1/expenses             → index   (list + filter + paginate)
+| POST   /api/v1/expenses             → store   (buat pengeluaran; gunakan multipart jika ada file)
+| GET    /api/v1/expenses/summary     → summary (agregasi nominal per kategori)
+| GET    /api/v1/expenses/{id}        → show    (detail)
+| PUT    /api/v1/expenses/{id}        → update  (ubah semua field)
+| PATCH  /api/v1/expenses/{id}        → update  (alias multipart-friendly di Postman)
+| DELETE /api/v1/expenses/{id}        → destroy
+|
+| Query filter (index):
+|   search           – kategori / deskripsi / order_number / nama customer
+|   category         – string (exact, case-insensitive)
+|   service_order_id – integer
+|   start_date       – YYYY-MM-DD
+|   end_date         – YYYY-MM-DD
+|   per_page         – 1-100 (default 15)
+|   sort_by          – id | expense_date | amount | category | created_at
+|   sort_direction   – asc | desc
+|
+| Query filter (summary):
+|   start_date – YYYY-MM-DD
+|   end_date   – YYYY-MM-DD
+|
+*/
+
+Route::prefix('v1/expenses')
+    ->name('api.v1.expenses.')
+    ->group(function (): void {
+        Route::get('/summary', [ExpenseApiController::class, 'summary'])->name('summary');
+
+        Route::get('/', [ExpenseApiController::class, 'index'])->name('index');
+        Route::post('/', [ExpenseApiController::class, 'store'])->name('store');
+
+        Route::get('/{expense}', [ExpenseApiController::class, 'show'])
+            ->whereNumber('expense')->name('show');
+        Route::put('/{expense}', [ExpenseApiController::class, 'update'])
+            ->whereNumber('expense')->name('update');
+        Route::patch('/{expense}', [ExpenseApiController::class, 'update'])
+            ->whereNumber('expense')->name('patch');
+        Route::delete('/{expense}', [ExpenseApiController::class, 'destroy'])
+            ->whereNumber('expense')->name('destroy');
     });
