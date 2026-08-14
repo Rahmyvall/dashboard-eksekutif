@@ -6,7 +6,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -195,6 +197,37 @@ use Notifiable;
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class, 'user_id');
+    }
+
+    public function assignedEmployee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'id');
+    }
+
+    public function resolveEmployee(): ?Employee
+    {
+        if ($this->employee_id !== null) {
+            if ($this->relationLoaded('assignedEmployee')) {
+                return $this->getRelation('assignedEmployee');
+            }
+
+            $employee = $this->assignedEmployee()->first();
+
+            if ($employee !== null) {
+                return $employee;
+            }
+        }
+
+        if ($this->relationLoaded('employee')) {
+            return $this->getRelation('employee');
+        }
+
+        return $this->employee()->first();
+    }
+
+    public function approvedLeaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class, 'approved_by', 'id');
     }
 
     public function canAccessDashboard(): bool

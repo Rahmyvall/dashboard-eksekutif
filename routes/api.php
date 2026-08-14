@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\PaymentApiController;
 use App\Http\Controllers\Api\LookupController;
 use App\Http\Controllers\Api\ExpenseApiController;
+use App\Http\Controllers\Api\LeaveRequestApiController;
 
 
 
@@ -1667,4 +1668,65 @@ Route::prefix('v1/expenses')
             ->whereNumber('expense')->name('patch');
         Route::delete('/{expense}', [ExpenseApiController::class, 'destroy'])
             ->whereNumber('expense')->name('destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Leave Request API
+|--------------------------------------------------------------------------
+|
+| Base URL : /api/v1/leave-requests
+|
+| Endpoints:
+| GET    /api/v1/leave-requests/{id}            → show
+| GET    /api/v1/leave-requests                 → index
+| POST   /api/v1/leave-requests                 → store
+| PUT    /api/v1/leave-requests/{id}            → update
+| PATCH  /api/v1/leave-requests/{id}            → update
+| PATCH  /api/v1/leave-requests/{id}/approve    → approve
+| PATCH  /api/v1/leave-requests/{id}/reject     → reject
+| DELETE /api/v1/leave-requests/{id}            → destroy
+|
+*/
+
+Route::prefix('v1/leave-requests')
+    ->name('api.v1.leave-requests.')
+    ->group(function (): void {
+        Route::get('/', [LeaveRequestApiController::class, 'index'])->name('index');
+        Route::post('/', [LeaveRequestApiController::class, 'store'])->name('store');
+
+        Route::patch('/{leaveRequest}/approve', [LeaveRequestApiController::class, 'approve'])
+            ->whereNumber('leaveRequest')->name('approve');
+        Route::patch('/{leaveRequest}/reject', [LeaveRequestApiController::class, 'reject'])
+            ->whereNumber('leaveRequest')->name('reject');
+
+        Route::get('/{leaveRequest}', [LeaveRequestApiController::class, 'show'])
+            ->whereNumber('leaveRequest')->name('show');
+        Route::put('/{leaveRequest}', [LeaveRequestApiController::class, 'update'])
+            ->whereNumber('leaveRequest')->name('update');
+        Route::patch('/{leaveRequest}', [LeaveRequestApiController::class, 'update'])
+            ->whereNumber('leaveRequest')->name('patch');
+        Route::delete('/{leaveRequest}', [LeaveRequestApiController::class, 'destroy'])
+            ->whereNumber('leaveRequest')->name('destroy');
+    });
+
+Route::prefix('leave-requests')
+    ->name('api.leave-requests.')
+    ->group(function (): void {
+        Route::get('/', [LeaveRequestApiController::class, 'index'])->name('index');
+        Route::post('/', [LeaveRequestApiController::class, 'store'])->name('store');
+
+        Route::patch('/{leaveRequest}/approve', [LeaveRequestApiController::class, 'approve'])
+            ->whereNumber('leaveRequest')->name('approve');
+        Route::patch('/{leaveRequest}/reject', [LeaveRequestApiController::class, 'reject'])
+            ->whereNumber('leaveRequest')->name('reject');
+
+        Route::get('/{leaveRequest}', [LeaveRequestApiController::class, 'show'])
+            ->whereNumber('leaveRequest')->name('show');
+        Route::put('/{leaveRequest}', [LeaveRequestApiController::class, 'update'])
+            ->whereNumber('leaveRequest')->name('update');
+        Route::patch('/{leaveRequest}', [LeaveRequestApiController::class, 'update'])
+            ->whereNumber('leaveRequest')->name('patch');
+        Route::delete('/{leaveRequest}', [LeaveRequestApiController::class, 'destroy'])
+            ->whereNumber('leaveRequest')->name('destroy');
     });

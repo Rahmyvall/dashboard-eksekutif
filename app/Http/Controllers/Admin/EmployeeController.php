@@ -298,6 +298,7 @@ class EmployeeController extends Controller
                     $employee = new Employee();
                     $employee->forceFill($data);
                     $employee->save();
+                    $this->syncEmployeeUserReference($employee, $data['user_id'] ?? null);
 
                     return $employee;
                 },
@@ -415,10 +416,11 @@ class EmployeeController extends Controller
                     $employee,
                     $validated
                 ): void {
-                    $employee->forceFill(
-                        $this->normalizeEmployeeData($validated)
-                    );
+                    $data = $this->normalizeEmployeeData($validated);
+
+                    $employee->forceFill($data);
                     $employee->save();
+                    $this->syncEmployeeUserReference($employee, $data['user_id'] ?? null);
                 },
                 3
             );
@@ -914,6 +916,29 @@ class EmployeeController extends Controller
         }
 
         return $data;
+    }
+
+    private function syncEmployeeUserReference(
+        Employee $employee,
+        int|string|null $userId
+    ): void {
+        $resolvedUserId = $userId !== null ? (int) $userId : null;
+
+        User::query()
+            ->where('employee_id', $employee->getKey())
+            ->when(
+                $resolvedUserId !== null,
+                fn(Builder $query): Builder => $query->whereKeyNot($resolvedUserId)
+            )
+            ->update(['employee_id' => null]);
+
+        if ($resolvedUserId === null) {
+            return;
+        }
+
+        User::query()
+            ->whereKey($resolvedUserId)
+            ->update(['employee_id' => $employee->getKey()]);
     }
 
     /**

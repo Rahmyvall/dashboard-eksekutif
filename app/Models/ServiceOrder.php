@@ -251,5 +251,16 @@ class ServiceOrder extends Model
     /**
      * Update total harga
      */
+    public function calculateTotal(): static
+    {
+        $itemsSubtotal = (float) $this->items()->sum('subtotal');
+        $discount = max(0.0, (float) $this->discount);
+        $tax = max(0.0, (float) $this->tax);
+
+        $this->subtotal = max(0.0, $itemsSubtotal);
+        $this->total_amount = max(0.0, $this->subtotal - $discount + $tax);
+
+        return $this;
+    }
 
 }

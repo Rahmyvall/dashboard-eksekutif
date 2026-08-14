@@ -3,6 +3,8 @@
 declare (strict_types = 1);
 
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\EnforceReadOnlyRoles;
+use App\Http\Middleware\CheckMenuPermission;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -47,6 +49,8 @@ return Application::configure(
             */
 
             'active.user' => EnsureUserIsActive::class,
+            'read.only.role' => EnforceReadOnlyRoles::class,
+            'check.menu.permission' => CheckMenuPermission::class,
 
             /*
             |--------------------------------------------------------------------------
@@ -60,6 +64,15 @@ return Application::configure(
             */
 
             'role'        => RoleMiddleware::class,
+        ]);
+
+        // Blokir seluruh request mutasi untuk role read-only di web dan API.
+        $middleware->web(append: [
+            EnforceReadOnlyRoles::class,
+        ]);
+
+        $middleware->api(append: [
+            EnforceReadOnlyRoles::class,
         ]);
 
         /*

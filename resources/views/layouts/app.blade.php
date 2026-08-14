@@ -13,8 +13,42 @@
 
 </head>
 
+@php
+     $authUser = auth()->user();
+     $activeRoleName = (string) session('active_role_name', '');
 
-<body>
+     $normalizedActiveRole = strtolower(str_replace(['-', ' '], '_', trim($activeRoleName)));
+     $isReadOnlyRole = in_array(
+         $normalizedActiveRole,
+         ['direktur_utama', 'direkturutama', 'executive', 'manager_departemen', 'managerdepartemen'],
+         true,
+     );
+
+     if (!$isReadOnlyRole && $authUser && method_exists($authUser, 'hasAnyRole')) {
+         $hasWritableRole = $authUser->hasAnyRole([
+             'super_admin',
+             'hrd_manager',
+             'karyawan',
+             'admin_pelayanan',
+             'admin_operasional',
+             'finance_staff',
+             'auditor_internal',
+         ]);
+
+         if ($normalizedActiveRole !== '' || $hasWritableRole) {
+             $isReadOnlyRole = false;
+         } else {
+             $isReadOnlyRole = $authUser->hasAnyRole(['direktur_utama', 'manager_departemen']);
+         }
+     }
+
+     $bodyClass = $isReadOnlyRole ? 'readonly-role' : '';
+@endphp
+
+<body class="{{ $bodyClass }}" data-read-only-role="{{ $isReadOnlyRole ? '1' : '0' }}">
+     <script>
+          window.__READ_ONLY_ROLE__ = @json($isReadOnlyRole);
+     </script>
 
 
      {{-- Sidebar --}}

@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\EmployeeActivityController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\LeaveRequestController;
 
 use App\Http\Controllers\Admin\PerformanceIndicatorController;
 use App\Http\Controllers\Admin\PerformancePeriodController;
@@ -24,6 +26,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WorkScheduleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Middleware\CheckMenuPermission;
 use App\Models\PerformanceIndicator;
 use App\Models\PerformancePeriod;
 use App\Models\Service;
@@ -31,6 +34,7 @@ use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\WorkSchedule;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -106,6 +110,74 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Attendance Aliases (Sidebar Compatibility)
+    |--------------------------------------------------------------------------
+    |
+    | Menyediakan route name umum attendances.* agar menu sidebar yang
+    | menggunakan fallback route tetap dapat bekerja lintas role.
+    |
+    */
+
+    Route::prefix('attendances')
+        ->name('attendances.')
+        ->group(function (): void {
+            Route::get('/', function (Request $request): RedirectResponse {
+                $user = $request->user();
+
+                if (
+                    $user &&
+                    method_exists($user, 'hasRole') &&
+                    $user->hasRole('karyawan')
+                ) {
+                    return redirect()->route('attendances.mine');
+                }
+
+                return redirect()->route('super-admin.attendances.index');
+            })->name('index');
+
+            Route::get('/mine', [AttendanceController::class, 'mine'])
+                ->name('mine');
+
+            Route::get('/my', [AttendanceController::class, 'mine'])
+                ->name('my');
+        });
+
+    Route::prefix('leave-requests')
+        ->name('leave-requests.')
+        ->group(function (): void {
+            Route::get('/', function (Request $request): RedirectResponse {
+                $user = $request->user();
+
+                if (
+                    $user &&
+                    method_exists($user, 'hasRole') &&
+                    $user->hasRole('karyawan')
+                ) {
+                    return redirect()->route('leave-requests.mine');
+                }
+
+                return redirect()->route('super-admin.leave-requests.index');
+            })->name('index');
+
+            Route::get('/mine', [LeaveRequestController::class, 'mine'])
+                ->middleware('role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_operasional|auditor_internal')
+                ->name('mine');
+
+            Route::get('/my', [LeaveRequestController::class, 'mine'])
+                ->middleware('role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_operasional|auditor_internal')
+                ->name('my');
+
+            Route::get('/create', [LeaveRequestController::class, 'create'])
+                ->middleware('role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_operasional|auditor_internal')
+                ->name('create');
+
+            Route::post('/', [LeaveRequestController::class, 'store'])
+                ->middleware('role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_operasional|auditor_internal')
+                ->name('store');
+        });
+
 
 
     /*
@@ -142,7 +214,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
                 'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
             )->group(function (): void {
                 Route::get('/', [BranchController::class, 'index'])
-                    ->middleware('can:branch.viewAny')
+                    ->middleware(CheckMenuPermission::class . ':branches.view')
                     ->name('index');
             });
 
@@ -156,11 +228,11 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::middleware('role:super_admin')->group(function (): void {
 
                 Route::get('/create', [BranchController::class, 'create'])
-                    ->middleware('can:branch.create')
+                    ->middleware(CheckMenuPermission::class . ':branches.create')
                     ->name('create');
 
                 Route::post('/', [BranchController::class, 'store'])
-                    ->middleware('can:branch.create')
+                    ->middleware(CheckMenuPermission::class . ':branches.create')
                     ->name('store');
             });
 
@@ -176,16 +248,16 @@ Route::middleware('role:super_admin')->group(function (): void {
 
             Route::middleware('role:super_admin')->group(function (): void {
                 Route::get('/trash', [BranchController::class, 'trash'])
-                    ->middleware('can:branch.trash')
+                    ->middleware(CheckMenuPermission::class . ':branches.delete')
                     ->name('trash');
 
                 Route::post('/{id}/restore', [BranchController::class, 'restore'])
-                    ->middleware('can:branch.trash')
+                    ->middleware(CheckMenuPermission::class . ':branches.delete')
                     ->whereNumber('id')
                     ->name('restore');
 
                 Route::delete('/{id}/force-delete', [BranchController::class, 'forceDelete'])
-                    ->middleware('can:branch.trash')
+                    ->middleware(CheckMenuPermission::class . ':branches.delete')
                     ->whereNumber('id')
                     ->name('force-delete');
             });
@@ -208,12 +280,12 @@ Route::middleware('role:super_admin')->group(function (): void {
 
             )->group(function (): void {
                 Route::patch('/{branch}/approve', [BranchController::class, 'approve'])
-                    ->middleware('can:branch.approve,branch')
+                    ->middleware(CheckMenuPermission::class . ':branches.approve')
                     ->whereNumber('branch')
                     ->name('approve');
 
                 Route::patch('/{branch}/reject', [BranchController::class, 'reject'])
-                    ->middleware('can:branch.approve,branch')
+                    ->middleware(CheckMenuPermission::class . ':branches.approve')
                     ->whereNumber('branch')
                     ->name('reject');
             });
@@ -228,17 +300,17 @@ Route::middleware('role:super_admin')->group(function (): void {
 Route::middleware('role:super_admin')->group(function (): void {
 
                 Route::get('/{branch}/edit', [BranchController::class, 'edit'])
-                    ->middleware('can:branch.manage,branch')
+                    ->middleware(CheckMenuPermission::class . ':branches.edit')
                     ->whereNumber('branch')
                     ->name('edit');
 
                 Route::match(['put', 'patch'], '/{branch}', [BranchController::class, 'update'])
-                    ->middleware('can:branch.manage,branch')
+                    ->middleware(CheckMenuPermission::class . ':branches.edit')
                     ->whereNumber('branch')
                     ->name('update');
 
                 Route::delete('/{branch}', [BranchController::class, 'destroy'])
-                    ->middleware('can:branch.manage,branch')
+                    ->middleware(CheckMenuPermission::class . ':branches.delete')
                     ->whereNumber('branch')
                     ->name('destroy');
             });
@@ -256,7 +328,7 @@ Route::middleware('role:super_admin')->group(function (): void {
                 'role:super_admin|direktur_utama|hrd_manager|manager_departemen|karyawan|admin_pelayanan|admin_operasional|finance_staff|auditor_internal'
             )->group(function (): void {
                 Route::get('/{branch}', [BranchController::class, 'show'])
-                    ->middleware('can:branch.view,branch')
+                    ->middleware(CheckMenuPermission::class . ':branches.view')
                     ->whereNumber('branch')
                     ->name('show');
             });
@@ -312,6 +384,7 @@ Route::middleware('role:super_admin')->group(function (): void {
                     Route::middleware('role:super_admin')
                         ->group(function (): void {
                             Route::get('/{department}/edit', 'edit')
+                                ->middleware(CheckMenuPermission::class . ':departments.edit')
                                 ->whereNumber('department')
                                 ->name('edit');
 
@@ -320,10 +393,12 @@ Route::middleware('role:super_admin')->group(function (): void {
                                 '/{department}',
                                 'update'
                             )
+                                ->middleware(CheckMenuPermission::class . ':departments.edit')
                                 ->whereNumber('department')
                                 ->name('update');
 
                             Route::delete('/{department}', 'destroy')
+                                ->middleware(CheckMenuPermission::class . ':departments.delete')
                                 ->whereNumber('department')
                                 ->name('destroy');
                         });
@@ -364,12 +439,14 @@ Route::middleware('role:super_admin')->group(function (): void {
                         '/departments-trash',
                         [DepartmentController::class, 'trash']
                     )
+                        ->middleware(CheckMenuPermission::class . ':departments.delete')
                         ->name('departments.trash');
 
                     Route::post(
                         '/departments/{id}/restore',
                         [DepartmentController::class, 'restore']
                     )
+                        ->middleware(CheckMenuPermission::class . ':departments.delete')
                         ->whereNumber('id')
                         ->name('departments.restore');
 
@@ -377,6 +454,7 @@ Route::middleware('role:super_admin')->group(function (): void {
                         '/departments/{id}/force-delete',
                         [DepartmentController::class, 'forceDelete']
                     )
+                        ->middleware(CheckMenuPermission::class . ':departments.delete')
                         ->whereNumber('id')
                         ->name('departments.force-delete');
                 });
@@ -460,6 +538,7 @@ Route::middleware('role:super_admin')->group(function (): void {
 )->group(function (): void {
 
                         Route::get('/', 'index')
+                            ->middleware(CheckMenuPermission::class . ':positions.view')
                             ->name('index');
 
                         /*
@@ -467,6 +546,7 @@ Route::middleware('role:super_admin')->group(function (): void {
                          * tidak dianggap sebagai parameter {position}.
                          */
                         Route::get('/{position}', 'show')
+                            ->middleware(CheckMenuPermission::class . ':positions.view')
                             ->whereNumber('position')
                             ->name('show');
                     });
@@ -1343,6 +1423,35 @@ Route::prefix('expenses')
                         ->name('show');
                 });
 
+            Route::prefix('attendances')
+                ->name('attendances.')
+                ->group(function (): void {
+                    Route::get('/', [AttendanceController::class, 'index'])
+                        ->name('index');
+
+                    Route::get('/create', [AttendanceController::class, 'create'])
+                        ->name('create');
+
+                    Route::post('/', [AttendanceController::class, 'store'])
+                        ->name('store');
+
+                    Route::get('/{attendance}/edit', [AttendanceController::class, 'edit'])
+                        ->whereNumber('attendance')
+                        ->name('edit');
+
+                    Route::match(['put', 'patch'], '/{attendance}', [AttendanceController::class, 'update'])
+                        ->whereNumber('attendance')
+                        ->name('update');
+
+                    Route::delete('/{attendance}', [AttendanceController::class, 'destroy'])
+                        ->whereNumber('attendance')
+                        ->name('destroy');
+
+                    Route::get('/{attendance}', [AttendanceController::class, 'show'])
+                        ->whereNumber('attendance')
+                        ->name('show');
+                });
+
             Route::prefix('service-order-status-histories')
                 ->name('service-order-status-histories.')
                 ->group(function (): void {
@@ -1363,6 +1472,43 @@ Route::prefix('expenses')
 
                     Route::get('/{serviceOrderStatusHistory}', [ServiceOrderStatusHistoryController::class, 'webShow'])
                         ->whereNumber('serviceOrderStatusHistory')
+                        ->name('show');
+                });
+
+        });
+
+    Route::prefix('super-admin')
+        ->name('super-admin.')
+        ->middleware('role:super_admin|direktur_utama|hrd_manager|manager_departemen|admin_operasional|auditor_internal')
+        ->group(function (): void {
+            Route::prefix('leave-requests')
+                ->name('leave-requests.')
+                ->group(function (): void {
+                    Route::get('/', [LeaveRequestController::class, 'index'])
+                        ->name('index');
+
+                    Route::patch('/{leaveRequest}/approve', [LeaveRequestController::class, 'approve'])
+                        ->whereNumber('leaveRequest')
+                        ->name('approve');
+
+                    Route::patch('/{leaveRequest}/reject', [LeaveRequestController::class, 'reject'])
+                        ->whereNumber('leaveRequest')
+                        ->name('reject');
+
+                    Route::get('/{leaveRequest}/edit', [LeaveRequestController::class, 'edit'])
+                        ->whereNumber('leaveRequest')
+                        ->name('edit');
+
+                    Route::match(['put', 'patch'], '/{leaveRequest}', [LeaveRequestController::class, 'update'])
+                        ->whereNumber('leaveRequest')
+                        ->name('update');
+
+                    Route::delete('/{leaveRequest}', [LeaveRequestController::class, 'destroy'])
+                        ->whereNumber('leaveRequest')
+                        ->name('destroy');
+
+                    Route::get('/{leaveRequest}', [LeaveRequestController::class, 'show'])
+                        ->whereNumber('leaveRequest')
                         ->name('show');
                 });
         });

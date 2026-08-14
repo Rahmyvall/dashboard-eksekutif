@@ -21,19 +21,24 @@
                --xpi-surface: #ffffff;
                --xpi-primary: #0f766e;
                --xpi-accent: #0ea5e9;
+               --xpi-indigo: #2563eb;
+               --xpi-rose: #e11d48;
+               --xpi-radius-md: 11px;
+               --xpi-radius-lg: 13px;
+               --xpi-shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.14);
                min-height: calc(100vh - 70px);
                padding: 24px 18px 48px;
                color: var(--xpi-ink);
                font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
                background:
-                    radial-gradient(circle at 8% 8%, rgba(14, 165, 233, 0.13), transparent 26%),
-                    radial-gradient(circle at 93% 11%, rgba(20, 184, 166, 0.11), transparent 28%),
-                    radial-gradient(circle at 82% 88%, rgba(59, 130, 246, 0.07), transparent 24%),
-                    linear-gradient(160deg, #f8fcff 0%, #f1f7fb 48%, #eef4fa 100%);
+                    radial-gradient(circle at 7% 8%, rgba(14, 165, 233, 0.18), transparent 28%),
+                    radial-gradient(circle at 93% 9%, rgba(20, 184, 166, 0.14), transparent 30%),
+                    radial-gradient(circle at 78% 86%, rgba(99, 102, 241, 0.08), transparent 26%),
+                    linear-gradient(164deg, #f8fcff 0%, #eef7ff 48%, #ecf6fb 100%);
           }
 
           .xpi-wrap {
-               max-width: 1600px;
+               max-width: 1680px;
                margin: 0 auto;
           }
 
@@ -45,15 +50,16 @@
                grid-template-columns: 1fr auto;
                align-items: center;
                gap: 18px;
-               padding: 28px 32px;
-               margin-bottom: 20px;
-               border-radius: 24px;
+               padding: 30px 34px;
+               margin-bottom: 22px;
+               border-radius: 28px;
                color: #fff;
-               border: 1px solid rgba(255, 255, 255, 0.28);
+               border: 1px solid rgba(255, 255, 255, 0.36);
                background:
-                    radial-gradient(circle at 86% 18%, rgba(255, 255, 255, 0.22), transparent 24%),
-                    linear-gradient(124deg, #0f766e 0%, #0369a1 54%, #0ea5e9 100%);
-               box-shadow: 0 24px 54px rgba(3, 105, 161, 0.28);
+                    radial-gradient(circle at 86% 18%, rgba(255, 255, 255, 0.26), transparent 25%),
+                    linear-gradient(124deg, #0f766e 0%, #0369a1 48%, #2563eb 100%);
+               box-shadow: 0 28px 62px rgba(3, 105, 161, 0.3);
+               animation: xpiRise .55s ease both;
           }
 
           .xpi-hero::after {
@@ -71,8 +77,8 @@
           .xpi-hero::before {
                content: '';
                position: absolute;
-               width: 200px;
-               height: 200px;
+               width: 220px;
+               height: 220px;
                border-radius: 32px;
                left: -38px;
                bottom: -80px;
@@ -116,6 +122,7 @@
                font-weight: 700;
                letter-spacing: 0.04em;
                backdrop-filter: blur(6px);
+               box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
           }
 
           .xpi-hero-badge .dot {
@@ -145,6 +152,41 @@
                flex-wrap: wrap;
           }
 
+          /* ── Unified Button System ── */
+          .xpi-btn,
+          .xpi-filter-btn,
+          .xpi-action {
+               position: relative;
+               overflow: hidden;
+               isolation: isolate;
+               transition: transform 0.18s, box-shadow 0.18s, background-color 0.18s, border-color 0.18s, color 0.18s;
+          }
+
+          .xpi-btn:focus-visible,
+          .xpi-filter-btn:focus-visible,
+          .xpi-action:focus-visible {
+               outline: none;
+               box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+          }
+
+          .xpi-btn::after,
+          .xpi-filter-btn::after,
+          .xpi-action::after {
+               content: '';
+               position: absolute;
+               inset: 0;
+               background: linear-gradient(120deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+               transform: translateX(-120%);
+               transition: transform 0.45s ease;
+               z-index: -1;
+          }
+
+          .xpi-btn:hover::after,
+          .xpi-filter-btn:hover::after,
+          .xpi-action:hover::after {
+               transform: translateX(120%);
+          }
+
           /* ── Hero buttons ── */
           .xpi-btn {
                display: inline-flex;
@@ -153,19 +195,20 @@
                gap: 8px;
                padding: 0 20px;
                height: 44px;
-               border-radius: 13px;
+               border-radius: var(--xpi-radius-lg);
                font-size: 0.82rem;
                font-weight: 800;
                text-decoration: none;
                line-height: 1;
                white-space: nowrap;
-               transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+               letter-spacing: 0.01em;
           }
 
           .xpi-btn-solid {
-               color: #0b3b66;
-               border: 1px solid rgba(255, 255, 255, 0.85);
-               background: #fff;
+               color: #083b62;
+               border: 1px solid rgba(255, 255, 255, 0.88);
+               background: linear-gradient(180deg, #ffffff 0%, #f5fbff 100%);
+               box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
           }
 
           .xpi-btn-ghost {
@@ -177,11 +220,13 @@
 
           .xpi-btn:hover {
                transform: translateY(-2px);
-               box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+               box-shadow: var(--xpi-shadow-soft);
                text-decoration: none;
           }
 
-          .xpi-btn .bi {
+          .xpi-btn .bi,
+          .xpi-filter-btn .bi,
+          .xpi-action .bi {
                font-size: 15px;
                width: 15px;
                height: 15px;
@@ -219,7 +264,7 @@
                display: grid;
                grid-template-columns: repeat(4, minmax(0, 1fr));
                gap: 14px;
-               margin-bottom: 20px;
+               margin-bottom: 22px;
           }
 
           .xpi-kpi {
@@ -230,15 +275,16 @@
                gap: 14px;
                padding: 18px 20px;
                border-radius: 18px;
-               background: var(--xpi-surface);
-               border: 1px solid var(--xpi-line);
-               box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+               background: linear-gradient(160deg, #ffffff 0%, #f8fbff 100%);
+               border: 1px solid #dbe7f2;
+               box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
                transition: transform 0.18s, box-shadow 0.18s;
+               animation: xpiRise .55s ease both;
           }
 
           .xpi-kpi:hover {
-               transform: translateY(-2px);
-               box-shadow: 0 10px 30px rgba(15, 23, 42, 0.10);
+               transform: translateY(-3px);
+               box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
           }
 
           .xpi-kpi::after {
@@ -315,10 +361,11 @@
           /* ── Generic card ── */
           .xpi-card {
                border: 1px solid var(--xpi-line);
-               border-radius: 20px;
-               background: var(--xpi-surface);
-               box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+               border-radius: 22px;
+               background: linear-gradient(180deg, #ffffff 0%, #fcfeff 100%);
+               box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
                overflow: hidden;
+               animation: xpiRise .55s ease both;
           }
 
           .xpi-card-header {
@@ -327,7 +374,7 @@
                gap: 12px;
                padding: 18px 24px;
                border-bottom: 1px solid #e8f0f8;
-               background: linear-gradient(to right, #f8fafc, #f0f7ff);
+               background: linear-gradient(to right, #f8fbff, #eef7ff);
           }
 
           .xpi-card-header-icon {
@@ -369,6 +416,10 @@
                padding: 22px 24px;
           }
 
+          .xpi-table-wrap {
+               position: relative;
+          }
+
           /* ── Filter inputs ── */
           .xpi-filter .form-control,
           .xpi-filter .form-select {
@@ -401,34 +452,32 @@
                gap: 7px;
                padding: 0 18px;
                height: 44px;
-               border-radius: 11px;
+               border-radius: var(--xpi-radius-md);
                font-size: 0.83rem;
                font-weight: 700;
-               border: none;
+               border: 1.5px solid transparent;
                cursor: pointer;
                text-decoration: none;
-               transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
                white-space: nowrap;
+               letter-spacing: 0.01em;
           }
 
           .xpi-filter-btn .bi {
                font-size: 14px;
                width: 14px;
                height: 14px;
-               display: inline-flex;
-               align-items: center;
-               justify-content: center;
           }
 
           .xpi-filter-btn-primary {
-               background: linear-gradient(135deg, #0f766e, #0369a1);
+               background: linear-gradient(135deg, #0f766e 0%, #0369a1 100%);
                color: #fff;
-               box-shadow: 0 4px 12px rgba(3, 105, 161, 0.22);
+               border-color: rgba(3, 105, 161, 0.4);
+               box-shadow: 0 6px 14px rgba(3, 105, 161, 0.24);
           }
 
           .xpi-filter-btn-primary:hover {
                transform: translateY(-1px);
-               box-shadow: 0 8px 20px rgba(3, 105, 161, 0.30);
+               box-shadow: 0 10px 22px rgba(3, 105, 161, 0.32);
                color: #fff;
                text-decoration: none;
           }
@@ -444,6 +493,7 @@
                border-color: #94a3b8;
                color: var(--xpi-ink);
                transform: translateY(-1px);
+               box-shadow: 0 6px 14px rgba(148, 163, 184, 0.25);
                text-decoration: none;
           }
 
@@ -453,11 +503,14 @@
                letter-spacing: 0.09em;
                text-transform: uppercase;
                color: var(--xpi-muted);
-               background: #f2f8fd;
+               background: #f3f9ff;
                border-bottom: 2px solid #e2ecf5;
                padding: 14px 16px;
                white-space: nowrap;
                font-weight: 700;
+               position: sticky;
+               top: 0;
+               z-index: 2;
           }
 
           .xpi-table tbody td {
@@ -473,7 +526,7 @@
           }
 
           .xpi-table tbody tr:hover {
-               background: #f3f9ff;
+               background: #eef7ff;
           }
 
           .xpi-table .col-amount {
@@ -513,8 +566,8 @@
                border-radius: 999px;
                font-size: 0.72rem;
                font-weight: 700;
-               color: #0f766e;
-               background: #dff7f3;
+               color: #0b6a62;
+               background: linear-gradient(135deg, #dcfce7, #ccfbf1);
                border: 1px solid #a7f3d0;
                white-space: nowrap;
           }
@@ -523,20 +576,31 @@
           .xpi-row-actions {
                display: flex;
                align-items: center;
-               gap: 5px;
+               justify-content: flex-end;
+               gap: 4px;
+               white-space: nowrap;
+          }
+
+          .xpi-row-actions form {
+               margin: 0;
+               display: inline-flex;
+          }
+
+          .xpi-col-actions {
+               width: 120px;
+               text-align: right;
           }
 
           .xpi-action {
                display: inline-flex;
                align-items: center;
                justify-content: center;
-               width: 32px;
-               height: 32px;
-               border-radius: 9px;
+               width: 34px;
+               height: 34px;
+               border-radius: 10px;
                font-size: 13px;
                text-decoration: none;
                border: 1.5px solid;
-               transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
                cursor: pointer;
                background: transparent;
                padding: 0;
@@ -549,10 +613,11 @@
                text-decoration: none;
           }
 
+          .xpi-action:active {
+               transform: translateY(0);
+          }
+
           .xpi-action .bi {
-               display: inline-flex;
-               align-items: center;
-               justify-content: center;
                width: 13px;
                height: 13px;
                font-size: 13px;
@@ -623,6 +688,18 @@
                margin: 0;
           }
 
+          @keyframes xpiRise {
+               from {
+                    opacity: 0;
+                    transform: translateY(10px);
+               }
+
+               to {
+                    opacity: 1;
+                    transform: translateY(0);
+               }
+          }
+
           /* ── Responsive ── */
           @media (max-width: 992px) {
                .xpi-hero {
@@ -654,6 +731,10 @@
                .xpi-btn {
                     padding: 0 14px;
                     font-size: 0.78rem;
+               }
+
+               .xpi-card-body {
+                    padding: 16px;
                }
           }
      </style>
@@ -831,7 +912,7 @@
                               </p>
                          </div>
                     </div>
-                    <div class="table-responsive">
+                    <div class="table-responsive xpi-table-wrap">
                          <table class="table xpi-table table-hover mb-0 align-middle">
                               <thead>
                                    <tr>
@@ -841,7 +922,7 @@
                                         <th>Service Order</th>
                                         <th>Nominal</th>
                                         <th>Dibuat Oleh</th>
-                                        <th style="width:120px;">Aksi</th>
+                                        <th class="xpi-col-actions">Aksi</th>
                                    </tr>
                               </thead>
                               <tbody>
@@ -868,7 +949,7 @@
                                              <td class="col-creator">
                                                   {{ $expense->creator?->name ?? '—' }}
                                              </td>
-                                             <td>
+                                             <td class="xpi-col-actions">
                                                   <div class="xpi-row-actions">
                                                        <a href="{{ route('super-admin.expenses.show', $expense) }}"
                                                             class="xpi-action xpi-action-view" aria-label="Detail"

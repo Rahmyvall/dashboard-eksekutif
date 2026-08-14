@@ -3,6 +3,7 @@ namespace App\Providers;
 
 use App\Models\Branch;
 use App\Models\User;
+use App\Services\MenuService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -25,7 +26,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        //
+        // Register MenuService as singleton
+        $this->app->singleton(MenuService::class, function ($app) {
+            return new MenuService();
+        });
+
+        // Load helper functions
+        require_once app_path('Helpers/PermissionHelper.php');
     }
 
     public function boot(): void
