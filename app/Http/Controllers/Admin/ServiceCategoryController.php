@@ -263,7 +263,7 @@ class ServiceCategoryController extends Controller
         Request $request,
         ServiceCategory $serviceCategory
     ): RedirectResponse {
-        $this->normalizeInput($request);
+        $this->normalizeInput($request, $serviceCategory);
 
         $validated = $request->validate(
             $this->validationRules($serviceCategory),
@@ -452,7 +452,7 @@ class ServiceCategoryController extends Controller
 
         return [
             'code'        => [
-                'required',
+                'nullable',
                 'string',
                 'max:30',
                 $uniqueCodeRule,
@@ -483,7 +483,6 @@ class ServiceCategoryController extends Controller
     private function validationMessages(): array
     {
         return [
-            'code.required'      => 'Kode kategori wajib diisi.',
             'code.string'        => 'Kode kategori harus berupa teks.',
             'code.max'           => 'Kode kategori maksimal 30 karakter.',
             'code.unique'        => 'Kode kategori sudah digunakan.',
@@ -503,9 +502,11 @@ class ServiceCategoryController extends Controller
     /**
      * Membersihkan input sebelum divalidasi.
      */
-    private function normalizeInput(Request $request): void
+    private function normalizeInput(
+        Request $request,
+        ?ServiceCategory $serviceCategory = null
+    ): void
     {
-        $code        = trim((string) $request->input('code'));
         $name        = trim((string) $request->input('name'));
         $description = trim(
             (string) $request->input('description')
@@ -515,7 +516,12 @@ class ServiceCategoryController extends Controller
         );
 
         $request->merge([
-            'code'        => strtoupper($code),
+            'code'        => ServiceCategory::nextServiceCategoryCode(
+                $name,
+                $serviceCategory?->getKey() !== null
+                    ? (int) $serviceCategory->getKey()
+                    : null
+            ),
             'name'        => $name,
             'description' => $description !== ''
                 ? $description

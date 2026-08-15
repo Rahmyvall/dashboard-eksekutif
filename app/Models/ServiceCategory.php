@@ -223,6 +223,31 @@ class ServiceCategory extends Model
         return $query->orderByDesc('created_at');
     }
 
+    /**
+     * Menetapkan kode kategori otomatis berdasarkan nama kategori.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $serviceCategory): void {
+            if ($serviceCategory->name === null) {
+                return;
+            }
+
+            if (
+                $serviceCategory->isDirty('name')
+                || $serviceCategory->isDirty('code')
+                || blank($serviceCategory->code)
+            ) {
+                $serviceCategory->code = self::nextServiceCategoryCode(
+                    (string) $serviceCategory->name,
+                    $serviceCategory->getKey() !== null
+                        ? (int) $serviceCategory->getKey()
+                        : null
+                );
+            }
+        });
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Helper methods
@@ -238,6 +263,84 @@ class ServiceCategory extends Model
             self::STATUS_ACTIVE   => 'Aktif',
             self::STATUS_INACTIVE => 'Tidak Aktif',
         ];
+    }
+
+    /**
+     * Membuat kode kategori layanan dari nama kategori.
+     */
+    public static function nextServiceCategoryCode(
+        ?string $name = null,
+        ?int $ignoreId = null
+    ): string {
+        $normalizedName = trim((string) ($name ?? ''));
+
+        if ($normalizedName === '') {
+            $baseCode = 'SVC';
+        } else {
+            $cleanName = preg_replace('/[^A-Za-z0-9]+/', ' ', $normalizedName) ?? '';
+            $words = preg_split('/\s+/', $cleanName, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+            if (count($words) === 1) {
+                $baseCode = strtoupper(
+                    substr(
+                        preg_replace('/[^A-Za-z0-9]+/', '', $words[0]) ?? '',
+                        0,
+                        4
+                    )
+                );
+            } else {
+                $baseCode = '';
+
+                foreach ($words as $word) {
+                    $baseCode .= strtoupper(substr($word, 0, 1));
+
+                    if (strlen($baseCode) >= 4) {
+                        break;
+                    }
+                }
+            }
+
+            if ($baseCode === '') {
+                $baseCode = 'SVC';
+            }
+        }
+
+        return self::uniqueServiceCategoryCode($baseCode, $ignoreId);
+    }
+
+    /**
+     * Memastikan kode yang dibuat tidak bentrok dengan data lain.
+     */
+    private static function uniqueServiceCategoryCode(
+        string $baseCode,
+        ?int $ignoreId = null
+    ): string {
+        $baseCode = strtoupper(trim($baseCode));
+
+        if ($baseCode === '') {
+            $baseCode = 'SVC';
+        }
+
+        $baseCode = substr($baseCode, 0, 30);
+        $candidate = $baseCode;
+        $counter = 1;
+
+        while (self::query()
+            ->withTrashed()
+            ->when(
+                $ignoreId !== null,
+                function ($query) use ($ignoreId): void {
+                    $query->where($query->getModel()->getKeyName(), '!=', $ignoreId);
+                }
+            )
+            ->where('code', $candidate)
+            ->exists()) {
+            $suffix = '-' . str_pad((string) $counter, 2, '0', STR_PAD_LEFT);
+            $candidate = substr($baseCode, 0, max(1, 30 - strlen($suffix))) . $suffix;
+            $counter++;
+        }
+
+        return $candidate;
     }
 
     /**

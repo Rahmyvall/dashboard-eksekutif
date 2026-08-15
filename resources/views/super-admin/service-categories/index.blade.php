@@ -939,9 +939,11 @@
                                    <div class="col-12 col-sm-6 col-lg-3">
                                         <div class="monitor-mini">
                                              <span class="monitor-mini-label">Aktivitas Terverifikasi</span>
+
                                              <span class="monitor-mini-value">
                                                   {{ number_format(max((int) $monitoringStats['activities_today'] - (int) $monitoringStats['activities_pending_verify'], 0)) }}
                                              </span>
+
                                              <div class="monitor-mini-caption">
                                                   dari {{ number_format((int) $monitoringStats['activities_today']) }}
                                                   aktivitas hari ini
@@ -952,10 +954,12 @@
                                    <div class="col-12 col-sm-6 col-lg-3">
                                         <div class="monitor-mini">
                                              <span class="monitor-mini-label">Pendapatan Jasa/Bulan</span>
+
                                              <span class="monitor-mini-value">
                                                   Rp
                                                   {{ number_format((float) $monitoringStats['service_revenue_this_month'], 0, ',', '.') }}
                                              </span>
+
                                              <div class="monitor-mini-caption">
                                                   berdasarkan invoice bulan berjalan
                                              </div>
@@ -965,9 +969,11 @@
                                    <div class="col-12 col-sm-6 col-lg-3">
                                         <div class="monitor-mini">
                                              <span class="monitor-mini-label">Payment Pending</span>
+
                                              <span class="monitor-mini-value">
                                                   {{ number_format((int) $monitoringStats['payments_pending']) }}
                                              </span>
+
                                              <div class="monitor-mini-caption">
                                                   menunggu tindak lanjut konfirmasi
                                              </div>
@@ -977,8 +983,11 @@
                                    <div class="col-12 col-sm-6 col-lg-3">
                                         <div class="monitor-mini">
                                              <span class="monitor-mini-label">Kategori Aktif (Halaman)</span>
-                                             <span
-                                                  class="monitor-mini-value">{{ number_format((int) $activeOnPage) }}</span>
+
+                                             <span class="monitor-mini-value">
+                                                  {{ number_format((int) $activeOnPage) }}
+                                             </span>
+
                                              <div class="monitor-mini-caption">
                                                   {{ number_format((int) $serviceCategories->total()) }} kategori sesuai
                                                   filter

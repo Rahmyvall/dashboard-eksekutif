@@ -24,12 +24,12 @@
           }
 
           /*
-               |--------------------------------------------------------------------------
-               | FULL WIDTH CONTAINER
-               |--------------------------------------------------------------------------
-               | Sebelumnya max-width: 1080px.
-               | Sekarang dibuat full mengikuti area content.
-               */
+                              |--------------------------------------------------------------------------
+                              | FULL WIDTH CONTAINER
+                              |--------------------------------------------------------------------------
+                              | Sebelumnya max-width: 1080px.
+                              | Sekarang dibuat full mengikuti area content.
+                              */
           .sc-container {
                width: 100%;
                max-width: 100%;
@@ -85,10 +85,10 @@
           }
 
           /*
-               |--------------------------------------------------------------------------
-               | FULL WIDTH CARD
-               |--------------------------------------------------------------------------
-               */
+                              |--------------------------------------------------------------------------
+                              | FULL WIDTH CARD
+                              |--------------------------------------------------------------------------
+                              */
           .sc-card {
                width: 100%;
                max-width: 100%;
@@ -136,10 +136,10 @@
           }
 
           /*
-               |--------------------------------------------------------------------------
-               | FORM
-               |--------------------------------------------------------------------------
-               */
+                              |--------------------------------------------------------------------------
+                              | FORM
+                              |--------------------------------------------------------------------------
+                              */
           .sc-card-body form {
                width: 100%;
           }
@@ -240,10 +240,10 @@
           }
 
           /*
-               |--------------------------------------------------------------------------
-               | TABLET
-               |--------------------------------------------------------------------------
-               */
+                              |--------------------------------------------------------------------------
+                              | TABLET
+                              |--------------------------------------------------------------------------
+                              */
           @media (max-width: 991.98px) {
                .sc-page {
                     padding: 24px 16px 38px;
@@ -255,10 +255,10 @@
           }
 
           /*
-               |--------------------------------------------------------------------------
-               | MOBILE
-               |--------------------------------------------------------------------------
-               */
+                              |--------------------------------------------------------------------------
+                              | MOBILE
+                              |--------------------------------------------------------------------------
+                              */
           @media (max-width: 767.98px) {
                .sc-page {
                     width: 100%;
@@ -401,10 +401,10 @@
 
 
                                         <input type="text" id="code" name="code"
-                                             class="form-control sc-control
-                                             @error('code') is-invalid @enderror"
-                                             value="{{ old('code') }}" maxlength="30" placeholder="Contoh: SVC-001"
-                                             autocomplete="off" required autofocus>
+                                             class="form-control sc-control @error('code') is-invalid @enderror"
+                                             value="{{ old('code') }}" maxlength="30"
+                                             placeholder="Otomatis dari nama kategori" autocomplete="off" readonly
+                                             aria-readonly="true">
 
 
                                         @error('code')
@@ -415,7 +415,7 @@
 
 
                                         <div class="sc-help">
-                                             Maksimal 30 karakter dan harus unik.
+                                             Kode dibuat otomatis dari nama kategori dan tetap unik.
                                         </div>
 
                                    </div>
@@ -432,10 +432,9 @@
 
 
                                         <input type="text" id="name" name="name"
-                                             class="form-control sc-control
-                                             @error('name') is-invalid @enderror"
+                                             class="form-control sc-control @error('name') is-invalid @enderror"
                                              value="{{ old('name') }}" maxlength="150"
-                                             placeholder="Contoh: Layanan Konsultasi" autocomplete="off" required>
+                                             placeholder="Contoh: Layanan Konsultasi" autocomplete="off" required autofocus>
 
 
                                         @error('name')
@@ -558,6 +557,50 @@
                               </div>
 
                          </form>
+
+                         <script>
+                              document.addEventListener('DOMContentLoaded', function() {
+                                   const nameInput = document.getElementById('name');
+                                   const codeInput = document.getElementById('code');
+
+                                   if (!nameInput || !codeInput) {
+                                        return;
+                                   }
+
+                                   const makeCode = function(value) {
+                                        const normalized = (value || '')
+                                             .trim()
+                                             .replace(/[^a-zA-Z0-9]+/g, ' ');
+                                        const words = normalized.split(/\s+/).filter(Boolean);
+
+                                        if (words.length === 0) {
+                                             return 'SVC';
+                                        }
+
+                                        if (words.length === 1) {
+                                             return words[0]
+                                                  .replace(/[^a-zA-Z0-9]/g, '')
+                                                  .slice(0, 4)
+                                                  .toUpperCase() || 'SVC';
+                                        }
+
+                                        let code = '';
+
+                                        words.forEach(function(word) {
+                                             code += word.charAt(0).toUpperCase();
+                                        });
+
+                                        return code.slice(0, 4) || 'SVC';
+                                   };
+
+                                   const syncCode = function() {
+                                        codeInput.value = makeCode(nameInput.value);
+                                   };
+
+                                   nameInput.addEventListener('input', syncCode);
+                                   syncCode();
+                              });
+                         </script>
 
                     </div>
 

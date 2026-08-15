@@ -19,17 +19,13 @@ class StoreServiceCategoryRequest extends FormRequest
     {
         $data = [];
 
-        if ($this->exists('code')) {
-            $data['code'] = strtoupper(
-                trim((string) $this->input('code'))
-            );
-        }
+        $name = trim((string) $this->input('name'));
 
         if ($this->exists('name')) {
-            $data['name'] = trim(
-                (string) $this->input('name')
-            );
+            $data['name'] = $name;
         }
+
+        $data['code'] = ServiceCategory::nextServiceCategoryCode($name);
 
         if ($this->exists('description')) {
             $description = trim(
@@ -56,7 +52,7 @@ class StoreServiceCategoryRequest extends FormRequest
     {
         return [
             'code'        => [
-                'required',
+                'nullable',
                 'string',
                 'max:30',
                 'regex:/^[A-Z0-9._\-\/]+$/',
@@ -94,9 +90,6 @@ class StoreServiceCategoryRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.required'      =>
-            'Kode kategori layanan wajib diisi.',
-
             'code.string'        =>
             'Kode kategori layanan harus berupa teks.',
 

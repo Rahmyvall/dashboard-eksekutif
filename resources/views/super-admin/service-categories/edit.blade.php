@@ -306,7 +306,8 @@
                                         <input type="text" id="code" name="code"
                                              class="form-control sc-control @error('code') is-invalid @enderror"
                                              value="{{ old('code', $serviceCategory->code) }}" maxlength="30"
-                                             autocomplete="off" required autofocus>
+                                             placeholder="Otomatis dari nama kategori" autocomplete="off" readonly
+                                             aria-readonly="true">
 
                                         @error('code')
                                              <div class="invalid-feedback">
@@ -315,7 +316,7 @@
                                         @enderror
 
                                         <div class="sc-help">
-                                             Maksimal 30 karakter dan harus unik.
+                                             Kode dibuat otomatis dari nama kategori dan tetap unik.
                                         </div>
                                    </div>
 
@@ -329,7 +330,7 @@
                                         <input type="text" id="name" name="name"
                                              class="form-control sc-control @error('name') is-invalid @enderror"
                                              value="{{ old('name', $serviceCategory->name) }}" maxlength="150"
-                                             autocomplete="off" required>
+                                             autocomplete="off" required autofocus>
 
                                         @error('name')
                                              <div class="invalid-feedback">
@@ -406,6 +407,50 @@
 
                               </div>
                          </form>
+
+                         <script>
+                              document.addEventListener('DOMContentLoaded', function() {
+                                   const nameInput = document.getElementById('name');
+                                   const codeInput = document.getElementById('code');
+
+                                   if (!nameInput || !codeInput) {
+                                        return;
+                                   }
+
+                                   const makeCode = function(value) {
+                                        const normalized = (value || '')
+                                             .trim()
+                                             .replace(/[^a-zA-Z0-9]+/g, ' ');
+                                        const words = normalized.split(/\s+/).filter(Boolean);
+
+                                        if (words.length === 0) {
+                                             return 'SVC';
+                                        }
+
+                                        if (words.length === 1) {
+                                             return words[0]
+                                                  .replace(/[^a-zA-Z0-9]/g, '')
+                                                  .slice(0, 4)
+                                                  .toUpperCase() || 'SVC';
+                                        }
+
+                                        let code = '';
+
+                                        words.forEach(function(word) {
+                                             code += word.charAt(0).toUpperCase();
+                                        });
+
+                                        return code.slice(0, 4) || 'SVC';
+                                   };
+
+                                   const syncCode = function() {
+                                        codeInput.value = makeCode(nameInput.value);
+                                   };
+
+                                   nameInput.addEventListener('input', syncCode);
+                                   syncCode();
+                              });
+                         </script>
 
                     </div>
                </div>

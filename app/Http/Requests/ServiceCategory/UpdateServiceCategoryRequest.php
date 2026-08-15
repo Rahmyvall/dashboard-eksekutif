@@ -18,17 +18,21 @@ class UpdateServiceCategoryRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $data = [];
+        $serviceCategory = $this->route('serviceCategory');
+        $serviceCategoryId = $serviceCategory instanceof ServiceCategory
+            ? $serviceCategory->getKey()
+            : $serviceCategory;
 
-        if ($this->exists('code')) {
-            $data['code'] = strtoupper(
-                trim((string) $this->input('code'))
+        if ($this->exists('name')) {
+            $name = trim((string) $this->input('name'));
+            $data['code'] = ServiceCategory::nextServiceCategoryCode(
+                $name,
+                $serviceCategoryId !== null ? (int) $serviceCategoryId : null
             );
         }
 
         if ($this->exists('name')) {
-            $data['name'] = trim(
-                (string) $this->input('name')
-            );
+            $data['name'] = trim((string) $this->input('name'));
         }
 
         if ($this->exists('description')) {
@@ -69,7 +73,7 @@ class UpdateServiceCategoryRequest extends FormRequest
 
         return [
             'code'        => [
-                $requiredRule,
+                'nullable',
                 'string',
                 'max:30',
                 'regex:/^[A-Z0-9._\-\/]+$/',
@@ -108,9 +112,6 @@ class UpdateServiceCategoryRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.required'      =>
-            'Kode kategori layanan wajib diisi.',
-
             'code.max'           =>
             'Kode kategori layanan maksimal 30 karakter.',
 
