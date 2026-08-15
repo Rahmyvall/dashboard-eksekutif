@@ -756,7 +756,7 @@ Route::middleware('role:super_admin')->group(function (): void {
                     */
 
                     Route::middleware(
-                        'role:super_admin'
+                        'role:super_admin|admin_pelayanan|admin_operasional'
 )->group(function (): void {
 
                         Route::get('/create', 'create')
@@ -798,7 +798,7 @@ Route::middleware('role:super_admin')->group(function (): void {
                     */
 
                     Route::middleware(
-                        'role:super_admin'
+                        'role:super_admin|admin_pelayanan|admin_operasional'
 )->group(function (): void {
 
                         Route::get('/{customer}/edit', 'edit')

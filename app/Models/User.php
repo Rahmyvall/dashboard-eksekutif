@@ -88,23 +88,37 @@ use Notifiable;
             'hrd_manager' => ['hrd_manager', 'hrd manager', 'hrdmanager', 'hr'],
             'manager_departemen' => ['manager_departemen', 'manager departemen', 'managerdepartemen'],
             'karyawan' => ['karyawan', 'pegawai', 'employee'],
-            'admin_pelayanan' => ['admin_pelayanan', 'admin pelayanan'],
-            'admin_operasional' => ['admin_operasional', 'admin operasional'],
+            'admin_pelayanan' => ['admin_pelayanan', 'admin pelayanan', 'adminpelayanan'],
+            'admin_operasional' => ['admin_operasional', 'admin operasional', 'adminoperasional'],
             'finance_staff' => ['finance_staff', 'finance staff', 'finance'],
             'auditor_internal' => ['auditor_internal', 'auditor internal', 'auditor'],
         ];
 
-        $normalizedRoles = collect((array) $roles)
-            ->map(fn(string $role): string => $this->normalizeRoleName($role))
-            ->flatMap(fn(string $role): array => $aliases[$role] ?? [$role])
+        $inputRoles = collect((array) $roles)
+            ->map(fn($role): string => (string) $role)
+            ->flatMap(fn(string $role): array => $aliases[$this->normalizeRoleName($role)] ?? [$role])
             ->map(fn(string $role): string => $this->normalizeRoleName($role))
             ->unique()
             ->values()
             ->all();
 
-        return $this->roles()
-            ->whereIn('roles.name', $normalizedRoles)
-            ->exists();
+        $dbRoleNames = $this->roles()->pluck('roles.name')->all();
+
+        foreach ($dbRoleNames as $dbRoleName) {
+            $normalizedDbRole = $this->normalizeRoleName((string) $dbRoleName);
+
+            if (in_array($normalizedDbRole, $inputRoles, true)) {
+                return true;
+            }
+
+            foreach ($inputRoles as $inputRole) {
+                if ($normalizedDbRole === $inputRole) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function normalizeRoleName(string $role): string

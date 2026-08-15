@@ -12,6 +12,15 @@ class Attendance extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $attendance): void {
+            if ($attendance->isDirty('check_in') || $attendance->isDirty('check_out')) {
+                $attendance->work_duration_minutes = $attendance->calculateWorkDurationMinutes();
+            }
+        });
+    }
+
     public const STATUS_PRESENT = 'present';
     public const STATUS_LATE = 'late';
     public const STATUS_ABSENT = 'absent';
@@ -287,14 +296,20 @@ class Attendance extends Model
             return null;
         }
 
-        try {
-            return Carbon::createFromFormat('H:i:s', (string) $value);
-        } catch (\Throwable) {
+        $stringValue = trim((string) $value);
+
+        foreach (['H:i:s', 'H:i'] as $format) {
             try {
-                return Carbon::parse((string) $value);
+                return Carbon::createFromFormat($format, $stringValue);
             } catch (\Throwable) {
-                return null;
+                // continue to next format
             }
+        }
+
+        try {
+            return Carbon::parse($stringValue);
+        } catch (\Throwable) {
+            return null;
         }
     }
 }

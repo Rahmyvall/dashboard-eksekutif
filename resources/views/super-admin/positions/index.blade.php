@@ -6,11 +6,34 @@
      @php
           $authUser = auth()->user();
 
+          $rawActiveRole =
+              session('active_role_name') ??
+              (session('active_role') ??
+                  (data_get($authUser, 'active_role_name') ??
+                      (data_get($authUser, 'role_name') ??
+                          (data_get($authUser, 'role') ??
+                              ($authUser && method_exists($authUser, 'getRoleNames')
+                                  ? $authUser->getRoleNames()->first()
+                                  : null)))));
+
+          $normalizedRole = strtolower(str_replace(['-', ' '], '_', trim((string) ($rawActiveRole ?? ''))));
+
           $isSuperAdmin = isset($isSuperAdmin)
               ? (bool) $isSuperAdmin
-              : $authUser && method_exists($authUser, 'hasRole') && $authUser->hasRole('super_admin');
+              : ($authUser &&
+                      method_exists($authUser, 'hasRole') &&
+                      ($authUser->hasRole('super_admin') ||
+                          $authUser->hasRole('super admin') ||
+                          $authUser->hasRole('superadministrator'))) ||
+                  in_array(
+                      $normalizedRole,
+                      ['super_admin', 'superadmin', 'super_administrator', 'superadministrator'],
+                      true,
+                  );
 
           $canManagePositions = $isSuperAdmin;
+
+          $routeHas = static fn(string $name): bool => \Illuminate\Support\Facades\Route::has($name);
 
           $search = isset($search) ? trim((string) $search) : trim((string) request('search', ''));
 
@@ -33,8 +56,6 @@
           $departmentsOnPage = $currentCollection->pluck('department_id')->filter()->unique()->count();
 
           $hasActiveFilters = $search !== '' || $status !== '' || $departmentId !== '' || $level !== '';
-
-          $routeHas = static fn(string $name): bool => \Illuminate\Support\Facades\Route::has($name);
 
           $statusLabel = static function (?string $value): string {
               return match ($value) {
@@ -132,8 +153,8 @@
           }
 
           /* ================================================================
-                HERO
-             ================================================================= */
+                     HERO
+                  ================================================================= */
 
           .position-hero {
                position: relative;
@@ -274,8 +295,8 @@
           }
 
           /* ================================================================
-                ALERT
-             ================================================================= */
+                     ALERT
+                  ================================================================= */
 
           .position-alert {
                display: flex;
@@ -323,8 +344,8 @@
           }
 
           /* ================================================================
-                STATISTICS
-             ================================================================= */
+                     STATISTICS
+                  ================================================================= */
 
           .position-stats-row {
                margin-bottom: 22px;
@@ -428,8 +449,8 @@
           }
 
           /* ================================================================
-                FILTER
-             ================================================================= */
+                     FILTER
+                  ================================================================= */
 
           .position-filter-card {
                padding: 22px;
@@ -603,8 +624,8 @@
           }
 
           /* ================================================================
-                TABLE CARD
-             ================================================================= */
+                     TABLE CARD
+                  ================================================================= */
 
           .position-card {
                overflow: hidden;
@@ -1001,8 +1022,8 @@
           }
 
           /* ================================================================
-                PAGINATION
-             ================================================================= */
+                     PAGINATION
+                  ================================================================= */
 
           .position-pagination-wrap {
                display: flex;
@@ -1062,8 +1083,8 @@
           }
 
           /* ================================================================
-                RESPONSIVE
-             ================================================================= */
+                     RESPONSIVE
+                  ================================================================= */
 
           @media (max-width: 1199.98px) {
                .position-hero-content {

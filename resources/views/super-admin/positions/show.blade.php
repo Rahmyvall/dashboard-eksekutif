@@ -6,9 +6,30 @@
      @php
           $authUser = auth()->user();
 
+          $rawActiveRole =
+              session('active_role_name') ??
+              (session('active_role') ??
+                  (data_get($authUser, 'active_role_name') ??
+                      (data_get($authUser, 'role_name') ??
+                          (data_get($authUser, 'role') ??
+                              ($authUser && method_exists($authUser, 'getRoleNames')
+                                  ? $authUser->getRoleNames()->first()
+                                  : null)))));
+
+          $normalizedRole = strtolower(str_replace(['-', ' '], '_', trim((string) ($rawActiveRole ?? ''))));
+
           $isSuperAdmin = isset($isSuperAdmin)
               ? (bool) $isSuperAdmin
-              : $authUser && method_exists($authUser, 'hasRole') && $authUser->hasRole('super_admin');
+              : ($authUser &&
+                      method_exists($authUser, 'hasRole') &&
+                      ($authUser->hasRole('super_admin') ||
+                          $authUser->hasRole('super admin') ||
+                          $authUser->hasRole('superadministrator'))) ||
+                  in_array(
+                      $normalizedRole,
+                      ['super_admin', 'superadmin', 'super_administrator', 'superadministrator'],
+                      true,
+                  );
 
           $isActive = $position->status === \App\Models\Position::STATUS_ACTIVE;
 

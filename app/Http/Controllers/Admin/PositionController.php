@@ -202,7 +202,7 @@ class PositionController extends Controller
                 function (Builder $query) use ($position): void {
                     $query
                         ->where('status', 'active')
-                        ->orWhereKey($position->department_id);
+                        ->orWhere('id', $position->department_id);
                 }
             )
             ->orderBy('name')

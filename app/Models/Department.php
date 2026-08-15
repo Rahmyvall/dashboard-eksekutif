@@ -11,6 +11,9 @@ class Department extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+
     /*
     |--------------------------------------------------------------------------
     | KONFIGURASI MODEL
@@ -184,6 +187,77 @@ class Department extends Model
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('name');
+    }
+
+    /**
+     * Menetapkan kode department otomatis saat payload kosong.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $department): void {
+            if (blank($department->code)) {
+                $department->code = self::nextDepartmentCode(
+                    (string) $department->name
+                );
+            }
+        });
+    }
+
+    /**
+     * Menghasilkan kode department dari nama department.
+     *
+     * Contoh:
+     * Human Resource Department -> HRD
+     * Information Technology -> IT
+     */
+    public static function nextDepartmentCode(?string $name = null): string
+    {
+        $normalizedName = trim((string) ($name ?? ''));
+
+        if ($normalizedName === '') {
+            return 'DEPT';
+        }
+
+        $words = preg_split(
+            '/\s+/u',
+            preg_replace('/[^A-Za-z0-9\p{L}\p{N}]+/u', ' ', $normalizedName)
+        );
+
+        $words = array_values(array_filter(
+            $words,
+            static fn(string $word): bool => trim($word) !== ''
+        ));
+
+        if ($words === []) {
+            return 'DEPT';
+        }
+
+        $prefix = '';
+
+        foreach ($words as $word) {
+            $prefix .= strtoupper(mb_substr($word, 0, 1, 'UTF-8'));
+
+            if (mb_strlen($prefix, 'UTF-8') >= 4) {
+                break;
+            }
+        }
+
+        $baseCode = $prefix !== '' ? $prefix : 'DEPT';
+
+        $candidate = $baseCode;
+        $counter = 1;
+
+        while (self::query()->where('code', $candidate)->withTrashed()->exists()) {
+            $candidate = $baseCode . '-' . str_pad((string) random_int(10, 99), 2, '0', STR_PAD_LEFT);
+
+            while (self::query()->where('code', $candidate)->withTrashed()->exists()) {
+                $candidate = $baseCode . '-' . str_pad((string) random_int(10, 99), 2, '0', STR_PAD_LEFT);
+            }
+
+            break;
+        }
+
+        return $candidate;
     }
 
     /*

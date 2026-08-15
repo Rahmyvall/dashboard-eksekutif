@@ -1086,17 +1086,14 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Position aktif tanpa mengasumsikan kolom status selalu ada.
+     * Semua jabatan yang tersedia untuk pemilihan di form employee.
+     *
+     * Hindari filter status aktif agar posisi tidak hilang dari dropdown
+     * ketika status masih inactive atau data belum dipublikasikan.
      */
     private function activePositions()
     {
-        $query = Position::query();
-
-        if (Schema::hasColumn('positions', 'status')) {
-            $query->where('status', 'active');
-        }
-
-        return $query
+        return Position::query()
             ->orderBy('name')
             ->get([
                 'id',

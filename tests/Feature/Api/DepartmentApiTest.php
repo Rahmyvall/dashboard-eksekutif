@@ -133,6 +133,30 @@ class DepartmentApiTest extends TestCase
     }
 
     /**
+     * Kode department dapat dibuat secara otomatis bila tidak dikirim.
+     */
+    public function test_can_create_department_without_code_generates_code(): void
+    {
+        $response = $this->postJson(self::BASE_URL, [
+            'name'        => 'Information Technology',
+            'description' => 'Memberikan dukungan teknis internal.',
+            'status'      => 'active',
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.code', 'IT')
+            ->assertJsonPath('data.name', 'Information Technology');
+
+        $this->assertDatabaseHas('departments', [
+            'code'   => 'IT',
+            'name'   => 'Information Technology',
+            'status' => 'active',
+        ]);
+    }
+
+    /**
      * Validasi store menolak kode yang sudah digunakan.
      */
     public function test_create_department_rejects_duplicate_code(): void

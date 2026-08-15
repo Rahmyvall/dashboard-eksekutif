@@ -58,11 +58,13 @@ $services = $this->getServices();
         $serviceCategorySummary = $this->buildServiceCategorySummary();
 $serviceSummary = $this->buildServiceSummary();
         $invoicePaymentLineChart = $this->buildInvoicePaymentLineChart();
+        $leaveTypeMonthlyChart   = $this->buildLeaveTypeMonthlyChart();
 
         $departmentSummary      = $this->buildDepartmentSummary();
         $roleSummary            = $this->buildRoleSummary();
+        $positionSummary        = $this->buildPositionSummary();
 
-        $totalActivePositions = $this->countByStatus('positions', 'active');
+        $totalActivePositions = (int) ($positionSummary['active'] ?? 0);
 
         $usersUrl                 = $this->routeUrl('super-admin.users.index');
         $positionsUrl             = $this->routeUrl('super-admin.positions.index');
@@ -134,9 +136,11 @@ $servicesUrl = $this->routeUrl('super-admin.services.index');
             'serviceCategorySummary'    => $serviceCategorySummary,
 'serviceSummary' => $serviceSummary,
             'invoicePaymentLineChart'   => $invoicePaymentLineChart,
+            'leaveTypeMonthlyChart'     => $leaveTypeMonthlyChart,
 
             'departmentSummary'         => $departmentSummary,
             'roleSummary'               => $roleSummary,
+            'positionSummary'           => $positionSummary,
             'monitoringPriorities'      => $monitoringPriorities,
             'systemActivities'          => $systemActivities,
 
@@ -146,11 +150,53 @@ $servicesUrl = $this->routeUrl('super-admin.services.index');
 
     private function getPositions(): Collection
     {
-        return $this->getTableRows(
-            table: 'positions',
-            preferredOrderColumns: ['updated_at', 'created_at', 'id'],
-            limit: 50,
-        );
+        if (! Schema::hasTable('positions')) {
+            return collect();
+        }
+
+        try {
+            $query = DB::table('positions');
+
+            if (Schema::hasColumn('positions', 'deleted_at')) {
+                $query->whereNull('deleted_at');
+            }
+
+            if (Schema::hasTable('departments')) {
+                $query->leftJoin('departments', 'departments.id', '=', 'positions.department_id');
+            }
+
+            $query->select([
+                'positions.id',
+                'positions.code',
+                'positions.name',
+                'positions.level',
+                'positions.status',
+                'positions.updated_at',
+            ]);
+
+            if (Schema::hasTable('departments')) {
+                $query->addSelect([
+                    'departments.name as department_name',
+                    'departments.code as department_code',
+                ]);
+            }
+
+            if (Schema::hasColumn('positions', 'level')) {
+                $query->orderByDesc('positions.level');
+            }
+
+            if (Schema::hasColumn('positions', 'updated_at')) {
+                $query->orderByDesc('positions.updated_at');
+            }
+
+            $query->orderBy('positions.name')->limit(8);
+
+            return $query
+                ->get()
+                ->map(fn(object $row): object => $this->castDateColumns($row, ['updated_at']));
+        } catch (Throwable) {
+            return collect();
+        }
     }
 
     private function buildAdminOperasionalDashboardPayload(mixed $currentUser): array
@@ -869,6 +915,158 @@ $servicesUrl = $this->routeUrl('super-admin.services.index');
     ];
 }
 
+    private function buildLeaveTypeMonthlyChart(int $months = 6): array
+    {
+        if (! Schema::hasTable('leave_requests')) {
+            return [
+                'labels' => [],
+                'series' => [],
+                'max_value' => 1,
+            ];
+        }
+
+        $months = max(3, min(12, $months));
+        $end = now()->startOfMonth();
+        $start = (clone $end)->subMonths($months - 1);
+
+        $monthKeys = collect();
+        for ($i = 0; $i < $months; $i++) {
+            $period = (clone $start)->addMonths($i);
+            $monthKeys->push([
+                'key' => $period->format('Y-m'),
+                'label' => $period->translatedFormat('M Y'),
+            ]);
+        }
+
+        $typeMap = collect();
+        $leaveTypeQuery = DB::table('leave_requests')
+            ->selectRaw("LOWER(TRIM(COALESCE(leave_type, ''))) AS leave_type")
+            ->whereNotNull('start_date')
+            ->whereDate('start_date', '>=', $start->toDateString())
+            ->whereDate('start_date', '<=', $end->toDateString())
+            ->groupByRaw("LOWER(TRIM(COALESCE(leave_type, ''))) ");
+
+        if (Schema::hasColumn('leave_requests', 'deleted_at')) {
+            $leaveTypeQuery->whereNull('deleted_at');
+        }
+
+        foreach ($leaveTypeQuery->get() as $row) {
+            $type = trim((string) ($row->leave_type ?? ''));
+            if ($type === '') {
+                continue;
+            }
+
+            $typeMap->put($type, true);
+        }
+
+        $orderedTypes = $typeMap->keys()->sort()->values()->all();
+        if ($orderedTypes === []) {
+            $orderedTypes = ['cuti'];
+        }
+
+        $dataByType = collect();
+        foreach ($orderedTypes as $type) {
+            $values = array_fill(0, $monthKeys->count(), 0);
+            $dataByType->put($type, $values);
+        }
+
+        $monthKeyExpression = $this->monthKeyExpression('start_date');
+
+        $query = DB::table('leave_requests')
+            ->selectRaw("LOWER(TRIM(COALESCE(leave_type, ''))) AS leave_type")
+            ->selectRaw("{$monthKeyExpression} AS month_key")
+            ->selectRaw('COUNT(*) AS total')
+            ->whereNotNull('start_date')
+            ->whereDate('start_date', '>=', $start->toDateString())
+            ->whereDate('start_date', '<=', $end->toDateString())
+            ->groupByRaw("LOWER(TRIM(COALESCE(leave_type, ''))), {$monthKeyExpression}");
+
+        if (Schema::hasColumn('leave_requests', 'deleted_at')) {
+            $query->whereNull('deleted_at');
+        }
+
+        $rows = $query->get();
+        foreach ($rows as $row) {
+            $leaveType = trim((string) ($row->leave_type ?? ''));
+            $monthKey = (string) ($row->month_key ?? '');
+            if ($leaveType === '' || $monthKey === '') {
+                continue;
+            }
+
+            $index = $monthKeys->search(fn(array $period): bool => $period['key'] === $monthKey);
+            if ($index === false) {
+                continue;
+            }
+
+            if (! $dataByType->has($leaveType)) {
+                $dataByType->put($leaveType, array_fill(0, $monthKeys->count(), 0));
+            }
+
+            $current = $dataByType->get($leaveType, array_fill(0, $monthKeys->count(), 0));
+            $current[$index] = (int) ($row->total ?? 0);
+            $dataByType->put($leaveType, $current);
+        }
+
+        $series = $dataByType
+            ->map(function (array $values, string $type): array {
+                $label = ucwords(str_replace(['_', '-'], ' ', $type));
+
+                return [
+                    'name' => $label === '' ? 'Cuti' : $label,
+                    'values' => array_values($values),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $maxValue = max(1, (int) collect($series)->max(fn(array $item): int => max(1, max($item['values'] ?? [0]))));
+
+        return [
+            'labels' => $monthKeys->pluck('label')->values()->all(),
+            'series' => $series,
+            'max_value' => $maxValue,
+        ];
+    }
+
+    private function buildPositionSummary(): array
+    {
+        if (! Schema::hasTable('positions')) {
+            return [
+                'total'   => 0,
+                'active'  => 0,
+                'inactive'=> 0,
+            ];
+        }
+
+        try {
+            $rows = DB::table('positions')
+                ->when(
+                    Schema::hasColumn('positions', 'deleted_at'),
+                    fn(Builder $query): Builder => $query->whereNull('deleted_at')
+                )
+                ->select(['status'])
+                ->get();
+
+            $active = $rows->filter(function (object $row): bool {
+                return $this->isPositionActiveStatus(data_get($row, 'status'));
+            })->count();
+
+            $total = $rows->count();
+
+            return [
+                'total'    => $total,
+                'active'   => $active,
+                'inactive' => max(0, $total - $active),
+            ];
+        } catch (Throwable) {
+            return [
+                'total'    => 0,
+                'active'   => 0,
+                'inactive' => 0,
+            ];
+        }
+    }
+
     private function buildInvoicePaymentLineChart(int $months = 6): array
     {
         $months = max(3, min(12, $months));
@@ -1378,6 +1576,15 @@ $servicesUrl = $this->routeUrl('super-admin.services.index');
         }
 
         return round(($part / $total) * 100, 1);
+    }
+
+    private function isPositionActiveStatus(mixed $status): bool
+    {
+        return in_array(
+            Str::lower(trim((string) $status)),
+            ['active', '1', 'true', 'yes', 'y'],
+            true,
+        );
     }
 
     private function emptyStatusSummary(): array

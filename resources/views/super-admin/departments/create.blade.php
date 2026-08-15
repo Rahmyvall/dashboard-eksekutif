@@ -943,16 +943,17 @@
                                         <div class="row g-4">
                                              <div class="col-md-5">
                                                   <label for="code" class="form-label">
-                                                       Kode Department <span class="required-mark">*</span>
+                                                       Kode Department
                                                   </label>
 
                                                   <div class="field-shell">
                                                        <i class="bi bi-code-square field-icon"></i>
                                                        <input type="text" id="code" name="code" maxlength="30"
                                                             class="form-control @error('code') is-invalid @enderror"
-                                                            placeholder="Contoh: HRD" value="{{ old('code') }}"
-                                                            oninput="this.value = this.value.toUpperCase()" required
-                                                            autofocus autocomplete="off">
+                                                            placeholder="Akan dibuat otomatis dari nama"
+                                                            value="{{ old('code', '') }}"
+                                                            oninput="this.value = this.value.toUpperCase()" autofocus
+                                                            autocomplete="off">
                                                   </div>
 
                                                   @error('code')
@@ -961,7 +962,7 @@
 
                                                   <div class="form-hint">
                                                        <i class="bi bi-info-circle"></i>
-                                                       <span>Maksimal 30 karakter dan harus unik.</span>
+                                                       <span>Kode akan otomatis mengikuti nama department.</span>
                                                   </div>
                                              </div>
 
@@ -1209,4 +1210,48 @@
                </div>
           </div>
      </div>
+
+     <script>
+          document.addEventListener('DOMContentLoaded', function() {
+               const nameInput = document.getElementById('name');
+               const codeInput = document.getElementById('code');
+
+               if (!nameInput || !codeInput) {
+                    return;
+               }
+
+               const toCodeFromName = (value) => {
+                    const cleaned = value
+                         .normalize('NFKD')
+                         .replace(/[\u0300-\u036f]/g, '')
+                         .replace(/[^A-Za-z0-9\s]/g, ' ')
+                         .trim();
+
+                    if (!cleaned) {
+                         return '';
+                    }
+
+                    const parts = cleaned.split(/\s+/).filter(Boolean);
+                    const initials = parts
+                         .slice(0, 4)
+                         .map(part => part.charAt(0).toUpperCase())
+                         .join('');
+
+                    const suffix = String(Math.floor(Math.random() * 90) + 10);
+
+                    return initials ? `${initials}-${suffix}` : '';
+               };
+
+               const syncCodeFromName = () => {
+                    if (codeInput.value.trim() !== '') {
+                         return;
+                    }
+
+                    codeInput.value = toCodeFromName(nameInput.value);
+               };
+
+               nameInput.addEventListener('input', syncCodeFromName);
+               syncCodeFromName();
+          });
+     </script>
 @endsection

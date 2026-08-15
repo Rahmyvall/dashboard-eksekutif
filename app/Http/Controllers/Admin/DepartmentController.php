@@ -50,7 +50,9 @@ class DepartmentController extends Controller
      */
     public function create(): View
     {
-        return view('super-admin.departments.create');
+        return view('super-admin.departments.create', [
+            'nextCode' => '',
+        ]);
     }
 
     /**
@@ -63,9 +65,10 @@ class DepartmentController extends Controller
         $validated = $request->validate(
             [
                 'code'        => [
-                    'required',
+                    'nullable',
                     'string',
                     'max:30',
+                    'regex:/^[A-Z0-9_-]+$/',
                     Rule::unique('departments', 'code'),
                 ],
 
@@ -86,9 +89,9 @@ class DepartmentController extends Controller
                 ],
             ],
             [
-                'code.required'      => 'Kode department wajib diisi.',
                 'code.string'        => 'Kode department harus berupa teks.',
                 'code.max'           => 'Kode department maksimal 30 karakter.',
+                'code.regex'         => 'Kode department hanya boleh berisi huruf, angka, tanda hubung, dan garis bawah.',
                 'code.unique'        => 'Kode department sudah digunakan.',
 
                 'name.required'      => 'Nama department wajib diisi.',
@@ -102,10 +105,14 @@ class DepartmentController extends Controller
             ]
         );
 
+        $validated['code'] = filled($validated['code'] ?? null)
+            ? strtoupper(trim((string) $validated['code']))
+            : Department::nextDepartmentCode((string) ($validated['name'] ?? ''));
+
         try {
             DB::transaction(function () use ($validated): void {
                 Department::create([
-                    'code'        => strtoupper(trim($validated['code'])),
+                    'code'        => $validated['code'],
 
                     'name'        => trim($validated['name']),
 

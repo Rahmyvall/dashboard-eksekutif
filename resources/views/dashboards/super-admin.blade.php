@@ -93,6 +93,15 @@
               $invoicePaymentLineChart ?? [],
           );
 
+          $leaveTypeMonthlyChart = array_merge(
+              [
+                  'labels' => [],
+                  'series' => [],
+                  'max_value' => 1,
+              ],
+              $leaveTypeMonthlyChart ?? [],
+          );
+
           $branchSummary = array_merge(
               [
                   'total' => 0,
@@ -228,6 +237,28 @@
           $serviceSummary['active_percentage'] =
               $serviceTotal > 0 ? round(($serviceActive / $serviceTotal) * 100, 1) : 0.0;
 
+          $positionSummary = array_merge(
+              [
+                  'total' => $positions->count(),
+                  'active' => $positions
+                      ->filter(
+                          static fn($position) => in_array(
+                              \Illuminate\Support\Str::lower(trim((string) data_get($position, 'status', ''))),
+                              ['active', '1', 'true', 'yes', 'y'],
+                              true,
+                          ),
+                      )
+                      ->count(),
+                  'inactive' => 0,
+              ],
+              $positionSummary ?? [],
+          );
+
+          $positionTotal = max(0, (int) $positionSummary['total']);
+          $positionActive = max(0, (int) $positionSummary['active']);
+          $positionInactive = max(0, (int) $positionSummary['inactive']);
+          $positionPreview = $positions->take(5);
+
           $serviceCategoryTotal = max(0, (int) ($serviceCategorySummary['total'] ?? 0));
           $serviceCategoryActive = max(0, (int) ($serviceCategorySummary['active'] ?? 0));
           $serviceCategoryInactive = max(0, (int) ($serviceCategorySummary['inactive'] ?? 0));
@@ -246,7 +277,7 @@
 
           $indicatorChartColumnCount = max(1, $indicatorWeightChart->count());
 
-          $totalActivePositions = (int) ($totalActivePositions ?? $positions->where('status', 'active')->count());
+          $totalActivePositions = (int) ($totalActivePositions ?? ($positionSummary['active'] ?? 0));
 
           $totalUsers = (int) $roleSummary->sum(fn($role) => (int) data_get($role, 'users', 0));
 
@@ -1036,7 +1067,7 @@
           }
 
           .sad-footer-grid {
-               grid-template-columns: minmax(0, 1.15fr) minmax(350px, 0.85fr);
+               grid-template-columns: repeat(3, minmax(0, 1fr));
                margin-bottom: 0;
           }
 
@@ -1131,6 +1162,92 @@
           .sad-card-action svg {
                width: 14px;
                height: 14px;
+          }
+
+          .sad-position-summary {
+               display: grid;
+               grid-template-columns: repeat(3, minmax(0, 1fr));
+               gap: 10px;
+               padding: 22px 25px 0;
+          }
+
+          .sad-position-summary-item {
+               padding: 14px;
+               border: 1px solid var(--sad-border);
+               border-radius: 16px;
+               background: var(--sad-card-soft);
+          }
+
+          .sad-position-summary-item strong {
+               display: block;
+               color: var(--sad-heading);
+               font-size: 20px;
+               font-weight: 850;
+               line-height: 1;
+          }
+
+          .sad-position-summary-item span {
+               display: block;
+               margin-top: 5px;
+               color: var(--sad-muted);
+               font-size: 10px;
+               font-weight: 800;
+               letter-spacing: 0.02em;
+               text-transform: uppercase;
+          }
+
+          .sad-position-list {
+               padding: 18px 25px 25px;
+               display: grid;
+               gap: 12px;
+          }
+
+          .sad-position-item {
+               display: flex;
+               align-items: center;
+               justify-content: space-between;
+               gap: 14px;
+               padding: 14px 15px;
+               border: 1px solid var(--sad-border);
+               border-radius: 16px;
+               background: var(--sad-card-soft);
+          }
+
+          .sad-position-main {
+               min-width: 0;
+          }
+
+          .sad-position-name {
+               display: block;
+               overflow: hidden;
+               color: var(--sad-heading);
+               font-size: 13px;
+               font-weight: 850;
+               text-overflow: ellipsis;
+               white-space: nowrap;
+          }
+
+          .sad-position-meta {
+               display: block;
+               margin-top: 4px;
+               color: var(--sad-muted);
+               font-size: 10px;
+               line-height: 1.5;
+          }
+
+          .sad-position-chip {
+               flex: 0 0 auto;
+               padding: 7px 10px;
+               color: #0f766e;
+               font-size: 10px;
+               font-weight: 850;
+               border-radius: 999px;
+               background: rgba(15, 118, 110, 0.10);
+          }
+
+          .sad-position-chip.inactive {
+               color: #b91c1c;
+               background: rgba(220, 38, 38, 0.10);
           }
 
           /* CHART */
@@ -2277,6 +2394,11 @@
                     grid-row: 2;
                }
 
+
+               .sad-position-summary {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+               }
+
                .sad-stat-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                }
@@ -2417,13 +2539,22 @@
                .sad-quick-grid {
                     grid-template-columns: 1fr;
                }
+
+               .sad-position-summary {
+                    grid-template-columns: 1fr;
+               }
+
+               .sad-position-item {
+                    align-items: flex-start;
+                    flex-direction: column;
+               }
           }
 
           /* ======================================================================
-                                                          HERO BRIGHTNESS PATCH
-                                                          Mempertahankan struktur template yang ada dan hanya memperbaiki
-                                                          warna hero agar lebih terang, kontras, dan mudah dibaca.
-                                                          ====================================================================== */
+                                                                                        HERO BRIGHTNESS PATCH
+                                                                                        Mempertahankan struktur template yang ada dan hanya memperbaiki
+                                                                                        warna hero agar lebih terang, kontras, dan mudah dibaca.
+                                                                                        ====================================================================== */
           .sad-dashboard .sad-hero {
                border-color: rgba(255, 255, 255, 0.34);
                background:
@@ -2815,6 +2946,230 @@
                    ->values();
           @endphp
 
+          @php
+               $leaveChartLabels = collect($leaveTypeMonthlyChart['labels'] ?? [])->values();
+               $leaveChartSeries = collect($leaveTypeMonthlyChart['series'] ?? [])->values();
+               $leaveChartMax = max(1, (int) ($leaveTypeMonthlyChart['max_value'] ?? 1));
+               $leaveChartWidth = 860;
+               $leaveChartHeight = 230;
+               $leaveChartPaddingTop = 20;
+               $leaveChartPaddingRight = 20;
+               $leaveChartPaddingBottom = 38;
+               $leaveChartPaddingLeft = 52;
+               $leaveChartPlotWidth = max(1, $leaveChartWidth - $leaveChartPaddingLeft - $leaveChartPaddingRight);
+               $leaveChartPlotHeight = max(1, $leaveChartHeight - $leaveChartPaddingTop - $leaveChartPaddingBottom);
+               $leaveChartXStep =
+                   $leaveChartLabels->count() > 1 ? $leaveChartPlotWidth / ($leaveChartLabels->count() - 1) : 0;
+               $leaveChartColors = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#14b8a6'];
+
+               $leaveChartSeriesTrend = $leaveChartSeries
+                   ->map(function (array $seriesItem, int $seriesIndex) use ($leaveChartColors): array {
+                       $values = collect($seriesItem['values'] ?? [])
+                           ->map(fn($value) => (int) $value)
+                           ->values();
+                       $first = $values->first() ?? 0;
+                       $last = $values->last() ?? 0;
+                       $delta = $last - $first;
+                       $direction = $delta > 0 ? 'naik' : ($delta < 0 ? 'turun' : 'stabil');
+                       $tone = $delta > 0 ? 'success' : ($delta < 0 ? 'danger' : 'neutral');
+                       $label = $delta > 0 ? '+' . $delta : ($delta < 0 ? (string) $delta : '0');
+
+                       return [
+                           'name' => $seriesItem['name'] ?? 'Series',
+                           'color' => $leaveChartColors[$seriesIndex % count($leaveChartColors)],
+                           'delta' => $delta,
+                           'direction' => $direction,
+                           'tone' => $tone,
+                           'label' => $label,
+                       ];
+                   })
+                   ->values();
+
+               $leaveChartLatestMonth = $leaveChartLabels->last() ?? 'Bulan ini';
+               $leaveChartTotalCurrent = $leaveChartSeries->sum(
+                   fn(array $item): int => (int) collect($item['values'] ?? [])->last(),
+               );
+          @endphp
+
+          <section class="sad-card sad-reveal" style="margin-bottom: 24px;">
+               <header class="sad-card-header">
+                    <div class="sad-card-heading">
+                         <span class="sad-card-heading-icon">
+                              <i data-feather="calendar"></i>
+                         </span>
+                         <div>
+                              <h2 class="sad-card-title">Grafik Leave Requests per Jenis Cuti</h2>
+                              <p class="sad-card-subtitle">Jumlah pengajuan cuti per bulan berdasarkan jenis leave_type dalam
+                                   {{ $leaveChartLabels->count() }} bulan terakhir.</p>
+                         </div>
+                    </div>
+               </header>
+
+               <div class="sad-line-segment-body">
+                    @if ($leaveChartLabels->isNotEmpty() && $leaveChartSeries->isNotEmpty())
+                         <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px;">
+                              <div
+                                   style="flex: 1; min-width: 160px; padding: 14px 16px; border-radius: 16px; background: linear-gradient(135deg, rgba(14,165,233,0.12), rgba(14,165,233,0.03)); border: 1px solid rgba(14,165,233,0.18);">
+                                   <div
+                                        style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b;">
+                                        Total {{ $leaveChartLatestMonth }}</div>
+                                   <div style="font-size: 28px; font-weight: 700; color: #0f172a; margin-top: 8px;">
+                                        {{ $leaveChartTotalCurrent }}</div>
+                              </div>
+                              <div
+                                   style="flex: 1; min-width: 160px; padding: 14px 16px; border-radius: 16px; background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.03)); border: 1px solid rgba(16,185,129,0.18);">
+                                   <div
+                                        style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b;">
+                                        Trend Bulanan</div>
+                                   <div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 8px;">
+                                        {{ $leaveChartSeriesTrend->map(fn($trend) => $trend['delta'])->sum() > 0 ? '+' : '' }}{{ $leaveChartSeriesTrend->map(fn($trend) => $trend['delta'])->sum() }}
+                                   </div>
+                              </div>
+                         </div>
+
+                         <div class="sad-line-canvas-wrap">
+                              <svg class="sad-line-canvas" viewBox="0 0 {{ $leaveChartWidth }} {{ $leaveChartHeight }}"
+                                   role="img" aria-label="Grafik pengajuan cuti berdasarkan jenis per bulan">
+                                   <defs>
+                                        @foreach ($leaveChartSeries as $seriesIndex => $seriesItem)
+                                             @php $stroke = $leaveChartColors[$seriesIndex % count($leaveChartColors)]; @endphp
+                                             <linearGradient id="leaveChartBg-{{ $seriesIndex }}" x1="0"
+                                                  x2="0" y1="0" y2="1">
+                                                  <stop offset="0%" stop-color="{{ $stroke }}"
+                                                       stop-opacity="0.30" />
+                                                  <stop offset="100%" stop-color="{{ $stroke }}"
+                                                       stop-opacity="0.04" />
+                                             </linearGradient>
+                                        @endforeach
+                                   </defs>
+
+                                   <line class="sad-line-axis" x1="{{ $leaveChartPaddingLeft }}"
+                                        y1="{{ $leaveChartPaddingTop + $leaveChartPlotHeight }}"
+                                        x2="{{ $leaveChartWidth - $leaveChartPaddingRight }}"
+                                        y2="{{ $leaveChartPaddingTop + $leaveChartPlotHeight }}"></line>
+
+                                   @for ($i = 0; $i <= 4; $i++)
+                                        @php
+                                             $ratio = $i / 4;
+                                             $y = $leaveChartPaddingTop + $leaveChartPlotHeight * (1 - $ratio);
+                                             $tickValue = round($leaveChartMax * $ratio, 0);
+                                        @endphp
+                                        <line class="sad-line-grid" x1="{{ $leaveChartPaddingLeft }}"
+                                             y1="{{ $y }}" x2="{{ $leaveChartWidth - $leaveChartPaddingRight }}"
+                                             y2="{{ $y }}"></line>
+                                        <text class="sad-line-axis-label" x="8"
+                                             y="{{ $y + 3 }}">{{ $tickValue }}</text>
+                                   @endfor
+
+                                   @foreach ($leaveChartSeries as $seriesIndex => $seriesItem)
+                                        @php
+                                             $seriesValues = collect($seriesItem['values'] ?? [])->values();
+                                             $points = $seriesValues
+                                                 ->map(function (int $value, int $index) use (
+                                                     $leaveChartPaddingLeft,
+                                                     $leaveChartPaddingTop,
+                                                     $leaveChartPlotHeight,
+                                                     $leaveChartMax,
+                                                     $leaveChartXStep,
+                                                 ): array {
+                                                     $x = $leaveChartPaddingLeft + $leaveChartXStep * $index;
+                                                     $y =
+                                                         $leaveChartPaddingTop +
+                                                         $leaveChartPlotHeight *
+                                                             (1 - min(1, max(0, $value / max(1, $leaveChartMax))));
+
+                                                     return ['x' => round($x, 2), 'y' => round($y, 2)];
+                                                 })
+                                                 ->values();
+                                             $polyline = $points
+                                                 ->map(fn(array $point): string => $point['x'] . ',' . $point['y'])
+                                                 ->implode(' ');
+                                             $areaPoints = $points
+                                                 ->map(fn(array $point): string => $point['x'] . ',' . $point['y'])
+                                                 ->implode(' ');
+                                             $baselineY = $leaveChartPaddingTop + $leaveChartPlotHeight;
+                                             $areaPath =
+                                                 $points->count() > 0
+                                                     ? $areaPoints .
+                                                         ' ' .
+                                                         $points->last()['x'] .
+                                                         ',' .
+                                                         $baselineY .
+                                                         ' ' .
+                                                         $points->first()['x'] .
+                                                         ',' .
+                                                         $baselineY
+                                                     : '';
+                                             $stroke = $leaveChartColors[$seriesIndex % count($leaveChartColors)];
+                                        @endphp
+
+                                        <polygon points="{{ $areaPath }}"
+                                             fill="url(#leaveChartBg-{{ $seriesIndex }})" opacity="0.9"></polygon>
+                                        <polyline fill="none" stroke="{{ $stroke }}" stroke-width="3.2"
+                                             points="{{ $polyline }}" stroke-linecap="round" stroke-linejoin="round">
+                                        </polyline>
+
+                                        @foreach ($points as $point)
+                                             <circle cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="3.8"
+                                                  fill="{{ $stroke }}" stroke="#ffffff" stroke-width="1.5" />
+                                        @endforeach
+                                   @endforeach
+
+                                   @foreach ($leaveChartLabels as $labelIndex => $label)
+                                        @php
+                                             $x =
+                                                 $leaveChartPaddingLeft +
+                                                 ($leaveChartLabels->count() > 1
+                                                     ? ($leaveChartPlotWidth / max(1, $leaveChartLabels->count() - 1)) *
+                                                         $labelIndex
+                                                     : 0);
+                                        @endphp
+                                        <text class="sad-line-axis-label" x="{{ $x }}"
+                                             y="{{ $leaveChartHeight - 12 }}"
+                                             text-anchor="middle">{{ $label }}</text>
+                                   @endforeach
+                              </svg>
+                         </div>
+
+                         <div class="sad-line-click-values"
+                              style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 12px;">
+                              @foreach ($leaveChartSeries as $seriesIndex => $seriesItem)
+                                   @php
+                                        $stroke = $leaveChartColors[$seriesIndex % count($leaveChartColors)];
+                                        $trend = $leaveChartSeriesTrend[$seriesIndex] ?? [
+                                            'delta' => 0,
+                                            'direction' => 'stabil',
+                                            'tone' => 'neutral',
+                                            'label' => '0',
+                                        ];
+                                        $trendColor =
+                                            $trend['tone'] === 'success'
+                                                ? '#10b981'
+                                                : ($trend['tone'] === 'danger'
+                                                    ? '#ef4444'
+                                                    : '#64748b');
+                                   @endphp
+                                   <div class="sad-line-click-item"
+                                        style="border-color: {{ $stroke }}20; background: {{ $stroke }}10; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 180px;">
+                                        <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                                             <span class="sad-line-click-bullet"
+                                                  style="background: {{ $stroke }};"></span>
+                                             <span
+                                                  style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $seriesItem['name'] }}</span>
+                                        </div>
+                                        <span
+                                             style="display: inline-flex; align-items: center; justify-content: center; min-width: 62px; padding: 4px 8px; border-radius: 999px; background: {{ $trendColor }}15; color: {{ $trendColor }}; font-weight: 700; font-size: 11px;">
+                                             {{ $trend['label'] }}
+                                        </span>
+                                   </div>
+                              @endforeach
+                         </div>
+                    @else
+                         <div class="sad-empty-state">Belum ada data leave request untuk ditampilkan.</div>
+                    @endif
+               </div>
+          </section>
+
           <section class="sad-card sad-reveal" style="margin-bottom: 24px;">
                <header class="sad-card-header">
                     <div class="sad-card-heading">
@@ -2944,10 +3299,12 @@
                               <div class="sad-line-click-values">
                                    <span id="lineChartClickInvoice">Invoice: Rp
                                         {{ number_format($lineInvoiceSum, 0, ',', '.') }}
-                                        ({{ number_format(array_sum($lineInvoiceCounts->all()), 0, ',', '.') }} data)</span>
+                                        ({{ number_format(array_sum($lineInvoiceCounts->all()), 0, ',', '.') }}
+                                        data)</span>
                                    <span id="lineChartClickPayment">Payment: Rp
                                         {{ number_format($linePaymentSum, 0, ',', '.') }}
-                                        ({{ number_format(array_sum($linePaymentCounts->all()), 0, ',', '.') }} data)</span>
+                                        ({{ number_format(array_sum($linePaymentCounts->all()), 0, ',', '.') }}
+                                        data)</span>
                                    <span id="lineChartClickTotal">Total Gabungan: Rp
                                         {{ number_format($lineGrandSum, 0, ',', '.') }}</span>
                               </div>
@@ -3815,6 +4172,92 @@
                                    </div>
                               </div>
                          @endforeach
+                    </div>
+               </article>
+
+               <article class="sad-card">
+                    <header class="sad-card-header">
+                         <div class="sad-card-heading">
+                              <span class="sad-card-heading-icon">
+                                   <i data-feather="briefcase"></i>
+                              </span>
+
+                              <div>
+                                   <h2 class="sad-card-title">Data Jabatan</h2>
+                                   <p class="sad-card-subtitle">
+                                        Menampilkan cuplikan database <code>positions</code> beserta status dan
+                                        departemennya.
+                                   </p>
+                              </div>
+                         </div>
+
+                         <a href="{{ $positionsUrl }}" class="sad-card-action">
+                              Buka master jabatan
+                              <i data-feather="arrow-up-right"></i>
+                         </a>
+                    </header>
+
+                    <div class="sad-position-summary">
+                         <div class="sad-position-summary-item">
+                              <strong>{{ number_format($positionTotal, 0, ',', '.') }}</strong>
+                              <span>Total jabatan</span>
+                         </div>
+
+                         <div class="sad-position-summary-item">
+                              <strong>{{ number_format($positionActive, 0, ',', '.') }}</strong>
+                              <span>Jabatan aktif</span>
+                         </div>
+
+                         <div class="sad-position-summary-item">
+                              <strong>{{ number_format($positionInactive, 0, ',', '.') }}</strong>
+                              <span>Jabatan nonaktif</span>
+                         </div>
+                    </div>
+
+                    <div class="sad-position-list">
+                         @forelse ($positionPreview as $position)
+                              @php
+                                   $positionName = (string) data_get($position, 'name', 'Jabatan');
+                                   $positionCode = (string) data_get($position, 'code', '-');
+                                   $positionLevel = data_get($position, 'level');
+                                   $positionDepartment = (string) data_get(
+                                       $position,
+                                       'department_name',
+                                       'Departemen tidak tersedia',
+                                   );
+                                   $positionStatus = \Illuminate\Support\Str::lower(
+                                       trim((string) data_get($position, 'status', 'inactive')),
+                                   );
+                                   $positionIsActive = in_array(
+                                       $positionStatus,
+                                       ['active', '1', 'true', 'yes', 'y'],
+                                       true,
+                                   );
+                                   $positionStatusLabel = $positionIsActive ? 'Aktif' : 'Nonaktif';
+                              @endphp
+
+                              <div class="sad-position-item">
+                                   <div class="sad-position-main">
+                                        <span class="sad-position-name">{{ $positionName }}</span>
+                                        <span class="sad-position-meta">
+                                             {{ $positionCode }} · Level {{ $positionLevel ?? '-' }} ·
+                                             {{ $positionDepartment }}
+                                        </span>
+                                   </div>
+
+                                   <span class="sad-position-chip {{ $positionIsActive ? '' : 'inactive' }}">
+                                        {{ $positionStatusLabel }}
+                                   </span>
+                              </div>
+                         @empty
+                              <div class="sad-position-item">
+                                   <div class="sad-position-main">
+                                        <span class="sad-position-meta">
+                                             Data jabatan belum tersedia di tabel <code>positions</code>.
+                                        </span>
+                                   </div>
+                              </div>
+                         @endforelse
                     </div>
                </article>
 

@@ -92,6 +92,12 @@ class DepartmentApiController extends Controller
     ): JsonResponse {
         $data = $this->normalizePayload($request->validated());
 
+        if (blank($data['code'] ?? null)) {
+            $data['code'] = Department::nextDepartmentCode(
+                (string) ($data['name'] ?? '')
+            );
+        }
+
         $department = DB::transaction(
             fn(): Department => Department::create($data)
         );

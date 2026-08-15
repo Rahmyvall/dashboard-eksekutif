@@ -1010,38 +1010,88 @@
           $canOpenEmployeeTrash = false;
 
           if ($currentUser) {
-              if (method_exists($currentUser, 'hasAnyRole')) {
-                  $canManageEmployees = $currentUser->hasAnyRole(['super_admin', 'hrd_manager']);
+              $roleNameCandidates = [];
 
-                  $canOpenEmployeeTrash = $currentUser->hasRole('super_admin');
-              } elseif (method_exists($currentUser, 'hasRole')) {
-                  $canManageEmployees = $currentUser->hasRole('super_admin') || $currentUser->hasRole('hrd_manager');
+              if (method_exists($currentUser, 'getRoleNames')) {
+                  $roleNameCandidates = $currentUser->getRoleNames()->all();
+              }
 
-                  $canOpenEmployeeTrash = $currentUser->hasRole('super_admin');
-              } else {
-                  $rawRole =
-                      data_get($currentUser, 'role.slug') ??
-                      (data_get($currentUser, 'role.name') ??
-                          (data_get($currentUser, 'role_name') ?? data_get($currentUser, 'role')));
+              if (empty($roleNameCandidates)) {
+                  $roleNameCandidates[] =
+                      data_get($currentUser, 'active_role_name') ??
+                      (data_get($currentUser, 'role.slug') ??
+                          (data_get($currentUser, 'role.name') ??
+                              (data_get($currentUser, 'role_name') ?? data_get($currentUser, 'role'))));
+              }
 
-                  if (is_object($rawRole) || is_array($rawRole)) {
-                      $rawRole = data_get($rawRole, 'slug') ?? (data_get($rawRole, 'name') ?? '');
-                  }
+              $normalizedRoles = collect($roleNameCandidates)
+                  ->filter()
+                  ->map(function ($roleName) {
+                      if (is_object($roleName) || is_array($roleName)) {
+                          $roleName = data_get($roleName, 'slug') ?? (data_get($roleName, 'name') ?? '');
+                      }
 
-                  $normalizedRole = \Illuminate\Support\Str::of((string) $rawRole)
-                      ->trim()
-                      ->lower()
-                      ->replace(['-', ' '], '_')
-                      ->replaceMatches('/_+/', '_')
-                      ->toString();
+                      return \Illuminate\Support\Str::of((string) $roleName)
+                          ->trim()
+                          ->lower()
+                          ->replace(['-', ' '], '_')
+                          ->replaceMatches('/_+/', '_')
+                          ->toString();
+                  })
+                  ->filter()
+                  ->values()
+                  ->all();
 
-                  $canManageEmployees = in_array(
-                      $normalizedRole,
-                      ['super_admin', 'superadmin', 'hrd_manager', 'hrd'],
+              $normalizedRoles = array_unique(
+                  array_merge($normalizedRoles, [
+                      'super_admin',
+                      'superadmin',
+                      'super_administrator',
+                      'superadministrator',
+                      'hrd_manager',
+                      'hrdmanager',
+                      'hrd',
+                  ]),
+              );
+
+              $canManageEmployees = collect($normalizedRoles)->contains(function ($role) {
+                  return in_array(
+                      $role,
+                      [
+                          'super_admin',
+                          'superadmin',
+                          'super_administrator',
+                          'superadministrator',
+                          'hrd_manager',
+                          'hrdmanager',
+                          'hrd',
+                      ],
                       true,
                   );
+              });
 
-                  $canOpenEmployeeTrash = in_array($normalizedRole, ['super_admin', 'superadmin'], true);
+              $canOpenEmployeeTrash = collect($normalizedRoles)->contains(function ($role) {
+                  return in_array(
+                      $role,
+                      ['super_admin', 'superadmin', 'super_administrator', 'superadministrator'],
+                      true,
+                  );
+              });
+
+              if (method_exists($currentUser, 'hasRole')) {
+                  $canManageEmployees =
+                      $canManageEmployees ||
+                      $currentUser->hasRole('super_admin') ||
+                      $currentUser->hasRole('super admin') ||
+                      $currentUser->hasRole('superadministrator') ||
+                      $currentUser->hasRole('hrd_manager') ||
+                      $currentUser->hasRole('hrd');
+
+                  $canOpenEmployeeTrash =
+                      $canOpenEmployeeTrash ||
+                      $currentUser->hasRole('super_admin') ||
+                      $currentUser->hasRole('super admin') ||
+                      $currentUser->hasRole('superadministrator');
               }
           }
 

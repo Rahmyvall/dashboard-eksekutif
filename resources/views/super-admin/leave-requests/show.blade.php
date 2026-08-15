@@ -15,81 +15,127 @@
      <style>
           @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap');
 
+          :root {
+               --lrs-bg: #f4f8ff;
+               --lrs-panel: rgba(255, 255, 255, 0.96);
+               --lrs-border: rgba(148, 163, 184, 0.24);
+               --lrs-text: #15243d;
+               --lrs-muted: #64748b;
+               --lrs-primary: #0f766e;
+               --lrs-secondary: #2563eb;
+               --lrs-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+          }
+
           .lrs-page {
                min-height: calc(100vh - 70px);
-               padding: 28px 18px 44px;
-               color: #1f2a44;
+               padding: 28px 16px 44px;
+               color: var(--lrs-text);
                font-family: 'Manrope', 'Segoe UI', sans-serif;
                background:
-                    radial-gradient(circle at 7% 8%, rgba(14, 165, 233, .12), transparent 24%),
-                    radial-gradient(circle at 93% 10%, rgba(16, 185, 129, .13), transparent 26%),
-                    linear-gradient(155deg, #f7fcff 0%, #eff8ff 52%, #ecfbf7 100%);
+                    radial-gradient(circle at 7% 8%, rgba(14, 165, 233, 0.12), transparent 22%),
+                    radial-gradient(circle at 94% 10%, rgba(16, 185, 129, 0.12), transparent 24%),
+                    linear-gradient(145deg, #f9fcff 0%, #f3f8ff 50%, #f0fdf9 100%);
           }
 
           .lrs-wrap {
-               max-width: 1360px;
+               max-width: 1500px;
                margin: 0 auto;
           }
 
           .lrs-hero {
-               border-radius: 24px;
-               padding: 24px 28px;
-               margin-bottom: 16px;
-               color: #fff;
-               background: linear-gradient(124deg, #0f766e 0%, #0369a1 58%, #2563eb 100%);
-               box-shadow: 0 22px 48px rgba(3, 105, 161, .24);
+               position: relative;
+               overflow: hidden;
                display: flex;
                align-items: center;
                justify-content: space-between;
-               gap: 10px;
+               gap: 12px;
+               border: 1px solid rgba(255, 255, 255, 0.76);
+               border-radius: 28px;
+               padding: 28px 30px;
+               margin-bottom: 18px;
+               color: #fff;
+               background:
+                    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.25), transparent 20%),
+                    radial-gradient(circle at 15% 100%, rgba(16, 185, 129, 0.18), transparent 28%),
+                    linear-gradient(128deg, #0f766e 0%, #0369a1 54%, #2563eb 100%);
+               box-shadow: 0 26px 60px rgba(3, 105, 161, 0.22);
+          }
+
+          .lrs-hero::before {
+               position: absolute;
+               top: -80px;
+               right: 10%;
+               width: 240px;
+               height: 240px;
+               content: '';
+               border: 1px solid rgba(255, 255, 255, 0.12);
+               border-radius: 50%;
           }
 
           .lrs-hero h4 {
                margin: 0;
                font-family: 'Sora', 'Manrope', sans-serif;
-               font-size: clamp(1.05rem, 2vw, 1.45rem);
+               font-size: clamp(1.2rem, 2vw, 1.7rem);
+               font-weight: 800;
+               letter-spacing: -0.04em;
           }
 
           .lrs-hero p {
-               margin: 6px 0 0;
-               font-size: .84rem;
-               color: rgba(255, 255, 255, .93);
+               margin: 7px 0 0;
+               font-size: 0.9rem;
+               color: rgba(255, 255, 255, 0.9);
+          }
+
+          .lrs-back {
+               position: relative;
+               z-index: 1;
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               width: 42px;
+               height: 42px;
+               border-radius: 12px;
+               background: rgba(255, 255, 255, 0.96);
+               color: #0f172a;
+               border: 1px solid rgba(255, 255, 255, 0.3);
+               box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
           }
 
           .lrs-card {
-               border: 1px solid #dbe6f2;
-               border-radius: 20px;
-               background: rgba(255, 255, 255, .96);
-               box-shadow: 0 14px 30px rgba(15, 23, 42, .08);
-               padding: 18px;
+               border: 1px solid var(--lrs-border);
+               border-radius: 24px;
+               background: var(--lrs-panel);
+               box-shadow: var(--lrs-shadow);
+               padding: 22px;
           }
 
           .lrs-grid {
                display: grid;
                grid-template-columns: repeat(2, minmax(0, 1fr));
-               gap: 12px;
+               gap: 14px;
           }
 
           .lrs-item {
                border: 1px solid #e5edf6;
-               border-radius: 14px;
-               background: #fbfdff;
-               padding: 14px;
+               border-radius: 16px;
+               background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 0.96));
+               padding: 16px;
           }
 
           .lrs-item .k {
-               font-size: .72rem;
-               letter-spacing: .08em;
+               margin-bottom: 8px;
+               font-size: 0.72rem;
+               letter-spacing: 0.09em;
                text-transform: uppercase;
-               color: #64748b;
+               color: var(--lrs-muted);
                font-weight: 800;
-               margin-bottom: 7px;
           }
 
           .lrs-item .v {
-               font-size: .92rem;
+               font-size: 0.96rem;
                color: #1f2937;
                font-weight: 700;
+               line-height: 1.6;
           }
 
           .lrs-item.wide {
@@ -100,32 +146,32 @@
                display: inline-flex;
                align-items: center;
                justify-content: center;
-               min-width: 90px;
-               padding: 5px 10px;
+               min-width: 110px;
+               padding: 6px 12px;
                border-radius: 999px;
-               font-size: .72rem;
+               font-size: 0.72rem;
                font-weight: 800;
                text-transform: uppercase;
-               letter-spacing: .04em;
+               letter-spacing: 0.05em;
                border: 1px solid transparent;
           }
 
           .lrs-pill.is-pending {
                color: #92400e;
                background: #fffbeb;
-               border-color: #fde68a;
+               border-color: #fcd34d;
           }
 
           .lrs-pill.is-approved {
                color: #065f46;
                background: #ecfdf5;
-               border-color: #a7f3d0;
+               border-color: #86efac;
           }
 
           .lrs-pill.is-rejected {
                color: #9f1239;
                background: #fff1f2;
-               border-color: #fecdd3;
+               border-color: #fda4af;
           }
 
           .lrs-pill.is-default {
@@ -134,9 +180,44 @@
                border-color: #cbd5e1;
           }
 
+          .lrs-actions {
+               display: flex;
+               flex-wrap: wrap;
+               gap: 10px;
+               margin-top: 18px;
+          }
+
+          .lrs-actions .btn {
+               display: inline-flex;
+               align-items: center;
+               justify-content: center;
+               gap: 8px;
+               min-height: 42px;
+               border-radius: 12px;
+               font-weight: 700;
+          }
+
+          .lrs-actions .btn-outline-primary {
+               border-color: rgba(37, 99, 235, 0.2);
+               color: #1d4ed8;
+               background: rgba(59, 130, 246, 0.04);
+          }
+
+          .lrs-actions .btn-outline-danger {
+               border-color: rgba(220, 38, 38, 0.2);
+               color: #b91c1c;
+               background: rgba(239, 68, 68, 0.04);
+          }
+
           @media (max-width: 820px) {
                .lrs-grid {
                     grid-template-columns: 1fr;
+               }
+
+               .lrs-hero {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    padding: 22px 18px;
                }
           }
      </style>
@@ -148,7 +229,7 @@
                          <h4>Detail Pengajuan Cuti</h4>
                          <p>Produktivitas Karyawan dan Transaksi Jasa</p>
                     </div>
-                    <a href="{{ route('super-admin.leave-requests.index') }}" class="btn btn-light btn-sm" title="Kembali"
+                    <a href="{{ route('super-admin.leave-requests.index') }}" class="lrs-back" title="Kembali"
                          aria-label="Kembali">
                          <i class="bi bi-arrow-left"></i>
                     </a>
@@ -207,10 +288,11 @@
                          </article>
                     </div>
 
-                    <div class="mt-3 d-flex gap-2">
+                    <div class="lrs-actions">
                          <a href="{{ route('super-admin.leave-requests.edit', $leaveRequest) }}"
                               class="btn btn-outline-primary" title="Ubah" aria-label="Ubah">
                               <i class="bi bi-pencil-square"></i>
+                              Ubah
                          </a>
                          <form action="{{ route('super-admin.leave-requests.destroy', $leaveRequest) }}" method="POST"
                               onsubmit="return confirm('Hapus pengajuan ini?');">
@@ -218,6 +300,7 @@
                               @method('DELETE')
                               <button type="submit" class="btn btn-outline-danger" title="Hapus" aria-label="Hapus">
                                    <i class="bi bi-trash3"></i>
+                                   Hapus
                               </button>
                          </form>
                     </div>

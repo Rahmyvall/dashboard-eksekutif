@@ -11,13 +11,59 @@
         */
           $authUser = auth()->user();
 
-          $hasRole = static function (string $role) use ($authUser): bool {
-              return $authUser && method_exists($authUser, 'hasRole') && $authUser->hasRole($role);
+          $normalizeRole = static function ($role): string {
+              if (is_object($role) || is_array($role)) {
+                  $role = data_get($role, 'slug') ?? (data_get($role, 'name') ?? '');
+              }
+
+              return strtolower(str_replace(['-', ' '], '_', trim((string) $role)));
           };
 
-          $isSuperAdmin = $hasRole('super_admin');
-          $isPelayanan = $hasRole('admin_pelayanan');
-          $isOperasional = $hasRole('admin_operasional');
+          $roleNameCandidates = [];
+
+          if ($authUser) {
+              if (method_exists($authUser, 'getRoleNames')) {
+                  $roleNameCandidates = $authUser->getRoleNames()->all();
+              }
+
+              if (empty($roleNameCandidates)) {
+                  $roleNameCandidates[] =
+                      data_get($authUser, 'active_role_name') ??
+                      (data_get($authUser, 'role_name') ??
+                          (data_get($authUser, 'role.slug') ??
+                              (data_get($authUser, 'role.name') ?? (data_get($authUser, 'role') ?? ''))));
+              }
+          }
+
+          $normalizedRoleNames = collect($roleNameCandidates)->map($normalizeRole)->filter()->values()->all();
+
+          $hasRole = static function (string $role) use ($authUser, $normalizeRole, $normalizedRoleNames): bool {
+              if (!$authUser) {
+                  return false;
+              }
+
+              $normalizedInput = $normalizeRole($role);
+
+              if (method_exists($authUser, 'hasRole') && $authUser->hasRole($role)) {
+                  return true;
+              }
+
+              if (method_exists($authUser, 'hasRole') && $authUser->hasRole(str_replace('_', ' ', $role))) {
+                  return true;
+              }
+
+              return in_array($normalizedInput, $normalizedRoleNames, true) ||
+                  in_array(
+                      str_replace('_', ' ', $normalizedInput),
+                      array_map($normalizeRole, $normalizedRoleNames),
+                      true,
+                  );
+          };
+
+          $isSuperAdmin = $hasRole('super_admin') || $hasRole('super admin') || $hasRole('superadministrator');
+          $isPelayanan = $hasRole('admin_pelayanan') || $hasRole('admin pelayanan') || $hasRole('adminpelayanan');
+          $isOperasional =
+              $hasRole('admin_operasional') || $hasRole('admin operasional') || $hasRole('adminoperasional');
 
           /*
            * Sesuai routes/web.php:
@@ -179,8 +225,8 @@
           }
 
           /* ================================================================
-                               HERO
-                            ================================================================= */
+                                    HERO
+                                 ================================================================= */
 
           .customer-hero {
                position: relative;
@@ -323,8 +369,8 @@
           }
 
           /* ================================================================
-                               ALERT
-                            ================================================================= */
+                                    ALERT
+                                 ================================================================= */
 
           .customer-alert {
                display: flex;
@@ -372,8 +418,8 @@
           }
 
           /* ================================================================
-                               STATISTICS
-                            ================================================================= */
+                                    STATISTICS
+                                 ================================================================= */
 
           .customer-stats-row {
                margin-bottom: 22px;
@@ -603,8 +649,8 @@
           }
 
           /* ================================================================
-                               FILTER
-                            ================================================================= */
+                                    FILTER
+                                 ================================================================= */
 
           .customer-filter-card {
                padding: 22px;
@@ -778,8 +824,8 @@
           }
 
           /* ================================================================
-                               TABLE CARD
-                            ================================================================= */
+                                    TABLE CARD
+                                 ================================================================= */
 
           .customer-card {
                overflow: hidden;
@@ -1215,8 +1261,8 @@
           }
 
           /* ================================================================
-                               PAGINATION
-                            ================================================================= */
+                                    PAGINATION
+                                 ================================================================= */
 
           .customer-pagination-wrap {
                display: flex;
@@ -1276,8 +1322,8 @@
           }
 
           /* ================================================================
-                               RESPONSIVE
-                            ================================================================= */
+                                    RESPONSIVE
+                                 ================================================================= */
 
           @media (max-width: 1199.98px) {
                .customer-hero-content {

@@ -28,10 +28,64 @@
           $currentUser = auth()->user();
           $canManageEmployees = false;
 
-          if ($currentUser && method_exists($currentUser, 'hasAnyRole')) {
-              $canManageEmployees = $currentUser->hasAnyRole(['super_admin', 'hrd_manager']);
-          } elseif ($currentUser && method_exists($currentUser, 'hasRole')) {
-              $canManageEmployees = $currentUser->hasRole('super_admin') || $currentUser->hasRole('hrd_manager');
+          if ($currentUser) {
+              $roleNameCandidates = [];
+
+              if (method_exists($currentUser, 'getRoleNames')) {
+                  $roleNameCandidates = $currentUser->getRoleNames()->all();
+              }
+
+              if (empty($roleNameCandidates)) {
+                  $roleNameCandidates[] =
+                      data_get($currentUser, 'active_role_name') ??
+                      (data_get($currentUser, 'role.slug') ??
+                          (data_get($currentUser, 'role.name') ??
+                              (data_get($currentUser, 'role_name') ?? data_get($currentUser, 'role'))));
+              }
+
+              $normalizedRoles = collect($roleNameCandidates)
+                  ->filter()
+                  ->map(function ($roleName) {
+                      if (is_object($roleName) || is_array($roleName)) {
+                          $roleName = data_get($roleName, 'slug') ?? (data_get($roleName, 'name') ?? '');
+                      }
+
+                      return \Illuminate\Support\Str::of((string) $roleName)
+                          ->trim()
+                          ->lower()
+                          ->replace(['-', ' '], '_')
+                          ->replaceMatches('/_+/', '_')
+                          ->toString();
+                  })
+                  ->filter()
+                  ->values()
+                  ->all();
+
+              $canManageEmployees = collect($normalizedRoles)->contains(function ($role) {
+                  return in_array(
+                      $role,
+                      [
+                          'super_admin',
+                          'superadmin',
+                          'super_administrator',
+                          'superadministrator',
+                          'hrd_manager',
+                          'hrdmanager',
+                          'hrd',
+                      ],
+                      true,
+                  );
+              });
+
+              if (method_exists($currentUser, 'hasRole')) {
+                  $canManageEmployees =
+                      $canManageEmployees ||
+                      $currentUser->hasRole('super_admin') ||
+                      $currentUser->hasRole('super admin') ||
+                      $currentUser->hasRole('superadministrator') ||
+                      $currentUser->hasRole('hrd_manager') ||
+                      $currentUser->hasRole('hrd');
+              }
           }
      @endphp
 

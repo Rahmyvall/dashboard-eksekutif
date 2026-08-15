@@ -158,11 +158,13 @@
 
      <div class="col-md-4">
           <div class="attf-field">
-               <label for="work_duration_minutes" class="attf-label">Durasi Kerja (menit)</label>
-               <input type="number" min="0" name="work_duration_minutes" id="work_duration_minutes"
-                    value="{{ old('work_duration_minutes', $attendance?->work_duration_minutes ?? 0) }}"
-                    class="form-control attf-control @error('work_duration_minutes') is-invalid @enderror">
-               <div class="attf-help">Kosongkan atau isi 0 untuk hitung otomatis dari jam masuk/pulang.</div>
+               <label for="work_duration_minutes" class="attf-label">Durasi Kerja</label>
+               <input type="text" id="work_duration_display"
+                    value="{{ old('work_duration_minutes', $attendance?->work_duration_minutes ?? 0) }} menit"
+                    class="form-control attf-control" readonly>
+               <input type="hidden" name="work_duration_minutes" id="work_duration_minutes"
+                    value="{{ old('work_duration_minutes', $attendance?->work_duration_minutes ?? 0) }}">
+               <div class="attf-help">Durasi dihitung otomatis dari jam masuk dan jam pulang.</div>
                @error('work_duration_minutes')
                     <div class="invalid-feedback">{{ $message }}</div>
                @enderror
@@ -180,3 +182,56 @@
           </div>
      </div>
 </div>
+
+<script>
+     document.addEventListener('DOMContentLoaded', function() {
+          const checkInInput = document.getElementById('check_in');
+          const checkOutInput = document.getElementById('check_out');
+          const workDurationInput = document.getElementById('work_duration_minutes');
+          const workDurationDisplay = document.getElementById('work_duration_display');
+
+          if (!checkInInput || !checkOutInput || !workDurationInput) {
+               return;
+          }
+
+          const toMinutes = (value) => {
+               if (!value) {
+                    return null;
+               }
+
+               const [hours, minutes] = value.split(':').map(Number);
+
+               if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+                    return null;
+               }
+
+               return hours * 60 + minutes;
+          };
+
+          const updateDuration = () => {
+               const checkIn = toMinutes(checkInInput.value);
+               const checkOut = toMinutes(checkOutInput.value);
+
+               let durationMinutes = 0;
+
+               if (checkIn !== null && checkOut !== null) {
+                    durationMinutes = checkOut - checkIn;
+
+                    if (durationMinutes <= 0) {
+                         durationMinutes = (24 * 60 - checkIn) + checkOut;
+                    }
+               }
+
+               durationMinutes = Math.max(0, durationMinutes);
+               workDurationInput.value = String(durationMinutes);
+
+               if (workDurationDisplay) {
+                    workDurationDisplay.value = `${durationMinutes} menit`;
+               }
+          };
+
+          checkInInput.addEventListener('input', updateDuration);
+          checkOutInput.addEventListener('input', updateDuration);
+          updateDuration();
+     });
+</script>

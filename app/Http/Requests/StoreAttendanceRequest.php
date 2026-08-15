@@ -27,8 +27,17 @@ class StoreAttendanceRequest extends FormRequest
 
     public function rules(): array
     {
+        $attendanceId = $this->route('attendance')?->id;
+
         return [
-            'employee_id' => ['required', 'integer', 'exists:employees,id'],
+            'employee_id' => [
+                'required',
+                'integer',
+                'exists:employees,id',
+                Rule::unique('attendances', 'employee_id')
+                    ->where(fn ($query) => $query->where('attendance_date', $this->input('attendance_date')))
+                    ->ignore($attendanceId),
+            ],
             'attendance_date' => ['required', 'date'],
             'check_in' => ['nullable', 'date_format:H:i'],
             'check_out' => ['nullable', 'date_format:H:i', 'different:check_in'],
@@ -45,6 +54,7 @@ class StoreAttendanceRequest extends FormRequest
         return [
             'employee_id.required' => 'Pegawai wajib dipilih.',
             'employee_id.exists' => 'Pegawai tidak ditemukan.',
+            'employee_id.unique' => 'Pegawai sudah memiliki data kehadiran untuk tanggal ini.',
             'attendance_date.required' => 'Tanggal kehadiran wajib diisi.',
             'check_in.date_format' => 'Format jam masuk harus HH:MM.',
             'check_out.date_format' => 'Format jam pulang harus HH:MM.',

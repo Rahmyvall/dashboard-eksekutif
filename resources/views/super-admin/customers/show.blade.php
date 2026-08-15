@@ -6,11 +6,65 @@
      @php
           $authUser = auth()->user();
 
-          $hasRole = static function (string $role) use ($authUser): bool {
-              return $authUser && method_exists($authUser, 'hasRole') && $authUser->hasRole($role);
+          $normalizeRole = static function ($role): string {
+              if (is_object($role) || is_array($role)) {
+                  $role = data_get($role, 'slug') ?? (data_get($role, 'name') ?? '');
+              }
+
+              return strtolower(str_replace(['-', ' '], '_', trim((string) $role)));
           };
 
-          $canManageCustomers = $hasRole('super_admin') || $hasRole('admin_pelayanan') || $hasRole('admin_operasional');
+          $roleNameCandidates = [];
+
+          if ($authUser) {
+              if (method_exists($authUser, 'getRoleNames')) {
+                  $roleNameCandidates = $authUser->getRoleNames()->all();
+              }
+
+              if (empty($roleNameCandidates)) {
+                  $roleNameCandidates[] =
+                      data_get($authUser, 'active_role_name') ??
+                      (data_get($authUser, 'role_name') ??
+                          (data_get($authUser, 'role.slug') ??
+                              (data_get($authUser, 'role.name') ?? (data_get($authUser, 'role') ?? ''))));
+              }
+          }
+
+          $normalizedRoleNames = collect($roleNameCandidates)->map($normalizeRole)->filter()->values()->all();
+
+          $hasRole = static function (string $role) use ($authUser, $normalizeRole, $normalizedRoleNames): bool {
+              if (!$authUser) {
+                  return false;
+              }
+
+              $normalizedInput = $normalizeRole($role);
+
+              if (method_exists($authUser, 'hasRole') && $authUser->hasRole($role)) {
+                  return true;
+              }
+
+              if (method_exists($authUser, 'hasRole') && $authUser->hasRole(str_replace('_', ' ', $role))) {
+                  return true;
+              }
+
+              return in_array($normalizedInput, $normalizedRoleNames, true) ||
+                  in_array(
+                      str_replace('_', ' ', $normalizedInput),
+                      array_map($normalizeRole, $normalizedRoleNames),
+                      true,
+                  );
+          };
+
+          $canManageCustomers =
+              $hasRole('super_admin') ||
+              $hasRole('super admin') ||
+              $hasRole('superadministrator') ||
+              $hasRole('admin_pelayanan') ||
+              $hasRole('admin pelayanan') ||
+              $hasRole('adminpelayanan') ||
+              $hasRole('admin_operasional') ||
+              $hasRole('admin operasional') ||
+              $hasRole('adminoperasional');
 
           $isCompany = $customer->customer_type === \App\Models\Customer::TYPE_COMPANY;
 

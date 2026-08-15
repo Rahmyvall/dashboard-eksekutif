@@ -181,10 +181,7 @@ class AttendanceController extends Controller
         $validated = $request->validated();
 
         $attendance = new Attendance($validated);
-
-        if ((int) ($validated['work_duration_minutes'] ?? 0) <= 0) {
-            $attendance->syncWorkDuration();
-        }
+        $attendance->syncWorkDuration();
 
         $attendance->work_duration_minutes = max(0, (int) ($attendance->work_duration_minutes ?? 0));
         $attendance->late_minutes = max(0, (int) ($validated['late_minutes'] ?? 0));
@@ -219,10 +216,7 @@ class AttendanceController extends Controller
         $validated = $request->validated();
 
         $attendance->fill($validated);
-
-        if ((int) ($validated['work_duration_minutes'] ?? 0) <= 0) {
-            $attendance->syncWorkDuration();
-        }
+        $attendance->syncWorkDuration();
 
         $attendance->work_duration_minutes = max(0, (int) ($attendance->work_duration_minutes ?? 0));
         $attendance->late_minutes = max(0, (int) ($validated['late_minutes'] ?? 0));

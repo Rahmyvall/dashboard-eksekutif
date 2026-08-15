@@ -24,10 +24,12 @@ class StoreDepartmentRequest extends FormRequest
     {
         $description = $this->input('description');
 
+        $code = $this->input('code');
+
         $this->merge([
-            'code'        => strtoupper(
-                trim((string) $this->input('code', ''))
-            ),
+            'code'        => $code === null || trim((string) $code) === ''
+                ? null
+                : strtoupper(trim((string) $code)),
 
             'name'        => trim(
                 (string) $this->input('name', '')
@@ -55,7 +57,7 @@ class StoreDepartmentRequest extends FormRequest
         return [
             'code'        => [
                 'bail',
-                'required',
+                'nullable',
                 'string',
                 'max:30',
                 'regex:/^[A-Z0-9_-]+$/',
@@ -94,7 +96,6 @@ class StoreDepartmentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.required'      => 'Kode department wajib diisi.',
             'code.string'        => 'Kode department harus berupa teks.',
             'code.max'           => 'Kode department maksimal 30 karakter.',
             'code.regex'         => 'Kode department hanya boleh berisi huruf, angka, tanda hubung, dan garis bawah.',
