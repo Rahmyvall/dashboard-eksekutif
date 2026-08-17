@@ -33,4 +33,31 @@ class MenuServiceTest extends TestCase
 
         $this->assertTrue($positionsVisible);
     }
+
+    public function test_auditor_internal_sees_required_performance_menu_items(): void
+    {
+        $user = Mockery::mock(User::class)->makePartial();
+        $user->shouldReceive('hasRole')
+            ->with('auditor_internal')
+            ->andReturn(true);
+        $user->shouldReceive('hasAnyRole')
+            ->withArgs(function (array $roles): bool {
+                return in_array('auditor_internal', $roles, true);
+            })
+            ->andReturn(true);
+        $user->shouldReceive('can')->andReturn(true);
+
+        Auth::login($user);
+
+        $menus = app(MenuService::class)->getMenus();
+
+        $visibleLabels = collect($menus)
+            ->flatMap(fn ($menu) => $menu['children'] ?? [])
+            ->pluck('label')
+            ->all();
+
+        $this->assertContains('Indikator Kinerja', $visibleLabels);
+        $this->assertContains('Periode Penilaian', $visibleLabels);
+        $this->assertContains('Laporan Kinerja', $visibleLabels);
+    }
 }

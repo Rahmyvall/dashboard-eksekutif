@@ -59,6 +59,63 @@ class CheckMenuPermission
             }
         }
 
+        $activeRoleName = (string) (
+            session('active_role_name')
+            ?? data_get($user, 'active_role_name')
+            ?? data_get($user, 'role_name')
+            ?? data_get($user, 'role')
+            ?? ''
+        );
+
+        $normalizedActiveRole = strtolower(str_replace(['-', ' '], '_', trim($activeRoleName)));
+
+        $directeurPermissionFallback = [
+            'dashboard.view',
+            'dashboard.executive.view',
+            'branches.view',
+            'departments.view',
+            'positions.view',
+            'employees.view',
+            'customers.view',
+            'services.view',
+            'service_categories.view',
+            'service_orders.view',
+            'service_order_items.view',
+            'service_order_status.view',
+            'work_schedules.view',
+            'employee_schedules.view',
+            'employee_activities.view',
+            'attendances.view',
+            'leave_requests.view',
+            'performance_indicators.view',
+            'performance_periods.view',
+            'performance_roles.view',
+            'employee_targets.view',
+            'employee_performance.view',
+            'performance_details.view',
+            'customer_feedback.view',
+            'customer_complaints.view',
+            'invoices.view',
+            'payments.view',
+            'expenses.view',
+            'reports.view',
+            'reports.export',
+            'reports.services',
+            'reports.performance',
+            'reports.customers',
+            'reports.complaints',
+            'reports.finance',
+            'reports.hr',
+        ];
+
+        if (in_array($normalizedActiveRole, ['direktur_utama', 'direktur_manager', 'direktur manager'], true)) {
+            foreach ($permissions as $permission) {
+                if (in_array($permission, $directeurPermissionFallback, true)) {
+                    return true;
+                }
+            }
+        }
+
         if (! method_exists($user, 'roles')) {
             return false;
         }

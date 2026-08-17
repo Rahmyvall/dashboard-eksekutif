@@ -861,30 +861,26 @@ Route::middleware(
         ->controller(InvoiceController::class)
         ->group(function (): void {
             Route::get('/', 'index')->name('index');
-Route::get('/{invoice}', 'show')
-    ->whereNumber('invoice')
-    ->name('show');
+            Route::get('/{invoice}', 'show')
+                ->whereNumber('invoice')
+                ->name('show');
 
-Route::middleware('role:super_admin')->group(function (): void {
-
-Route::get('/create', 'create')->name('create');
-Route::post('/', 'store')->name('store');
-Route::patch('/{invoice}/refresh-status', 'refreshPaymentStatus')
-    ->whereNumber('invoice')
-    ->name('refresh-status');
-Route::get('/{invoice}/edit', 'edit')
-    ->whereNumber('invoice')
-    ->name('edit');
-Route::match(['put', 'patch'], '/{invoice}', 'update')
-    ->whereNumber('invoice')
-    ->name('update');
-Route::delete('/{invoice}', 'destroy')
-    ->whereNumber('invoice')
-    ->name('destroy');
-
-
-});
-
+            Route::middleware('role:super_admin')->group(function (): void {
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::patch('/{invoice}/refresh-status', 'refreshPaymentStatus')
+                    ->whereNumber('invoice')
+                    ->name('refresh-status');
+                Route::get('/{invoice}/edit', 'edit')
+                    ->whereNumber('invoice')
+                    ->name('edit');
+                Route::match(['put', 'patch'], '/{invoice}', 'update')
+                    ->whereNumber('invoice')
+                    ->name('update');
+                Route::delete('/{invoice}', 'destroy')
+                    ->whereNumber('invoice')
+                    ->name('destroy');
+            });
         });
 
     Route::prefix('payments')
@@ -892,38 +888,56 @@ Route::delete('/{invoice}', 'destroy')
         ->controller(PaymentController::class)
         ->group(function (): void {
             Route::get('/', 'index')->name('index');
-Route::get('/{payment}/print', 'print')
-    ->whereNumber('payment')
-    ->name('print');
-Route::get('/{payment}', 'show')
-    ->whereNumber('payment')
-    ->name('show');
+            Route::get('/{payment}/print', 'print')
+                ->whereNumber('payment')
+                ->name('print');
+            Route::get('/{payment}', 'show')
+                ->whereNumber('payment')
+                ->name('show');
 
-Route::middleware('role:super_admin')->group(function (): void {
+            Route::middleware('role:super_admin')->group(function (): void {
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::post('/{payment}/capture-proof', 'captureProof')
+                    ->whereNumber('payment')
+                    ->name('capture-proof');
+                Route::patch('/{payment}/status', 'updateStatus')
+                    ->whereNumber('payment')
+                    ->name('status');
+                Route::get('/{payment}/edit', 'edit')
+                    ->whereNumber('payment')
+                    ->name('edit');
+                Route::match(['put', 'patch'], '/{payment}', 'update')
+                    ->whereNumber('payment')
+                    ->name('update');
+                Route::delete('/{payment}', 'destroy')
+                    ->whereNumber('payment')
+                    ->name('destroy');
+            });
+        });
 
-Route::get('/create', 'create')->name('create');
-Route::post('/', 'store')->name('store');
-Route::post('/{payment}/capture-proof', 'captureProof')
-    ->whereNumber('payment')
-    ->name('capture-proof');
+    Route::prefix('expenses')
+        ->name('expenses.')
+        ->controller(ExpenseController::class)
+        ->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{expense}', 'show')
+                ->whereNumber('expense')
+                ->name('show');
 
-
-Route::patch('/{payment}/status', 'updateStatus')
-    ->whereNumber('payment')
-    ->name('status');
-Route::get('/{payment}/edit', 'edit')
-    ->whereNumber('payment')
-    ->name('edit');
-Route::match(['put', 'patch'], '/{payment}', 'update')
-    ->whereNumber('payment')
-    ->name('update');
-Route::delete('/{payment}', 'destroy')
-    ->whereNumber('payment')
-    ->name('destroy');
-
-
-});
-
+            Route::middleware('role:super_admin')->group(function (): void {
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{expense}/edit', 'edit')
+                    ->whereNumber('expense')
+                    ->name('edit');
+                Route::match(['put', 'patch'], '/{expense}', 'update')
+                    ->whereNumber('expense')
+                    ->name('update');
+                Route::delete('/{expense}', 'destroy')
+                    ->whereNumber('expense')
+                    ->name('destroy');
+            });
         });
 });
 
@@ -1513,6 +1527,19 @@ Route::prefix('expenses')
                 });
         });
 
+    /**
+     * Registrasi shortcut route berbasis role agar deklarasi tidak berulang.
+     *
+     * @param array<string, string> $shortcuts
+     */
+    $registerRoleShortcuts = static function (array $shortcuts): void {
+        foreach ($shortcuts as $path => $targetRoute) {
+            Route::get('/' . $path, static function () use ($targetRoute): RedirectResponse {
+                return redirect()->route($targetRoute);
+            })->name($path . '.index');
+        }
+    };
+
     /*
     |--------------------------------------------------------------------------
     | Direktur Utama
@@ -1522,10 +1549,26 @@ Route::prefix('expenses')
     Route::prefix('direktur-utama')
         ->name('direktur-utama.')
         ->middleware('role:direktur_utama')
-        ->group(function (): void {
+        ->group(function () use ($registerRoleShortcuts): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'direktur_utama')
                 ->name('dashboard');
+
+            $registerRoleShortcuts([
+                'branches' => 'branches.index',
+                'departments' => 'super-admin.departments.index',
+                'positions' => 'super-admin.positions.index',
+                'employees' => 'super-admin.employees.index',
+                'employment' => 'super-admin.employment.index',
+                'customers' => 'super-admin.customers.index',
+                'work-schedules' => 'super-admin.work-schedules.index',
+                'employee-activities' => 'super-admin.employee-activities.index',
+                'attendances' => 'super-admin.attendances.index',
+                'leave-requests' => 'super-admin.leave-requests.index',
+                'expenses' => 'expenses.index',
+                'invoices' => 'invoices.index',
+                'payments' => 'payments.index',
+            ]);
         });
 
     /*
@@ -1537,10 +1580,23 @@ Route::prefix('expenses')
     Route::prefix('hrd-manager')
         ->name('hrd-manager.')
         ->middleware('role:hrd_manager')
-        ->group(function (): void {
+        ->group(function () use ($registerRoleShortcuts): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'hrd_manager')
                 ->name('dashboard');
+
+            $registerRoleShortcuts([
+                'branches' => 'branches.index',
+                'departments' => 'super-admin.departments.index',
+                'positions' => 'super-admin.positions.index',
+                'employees' => 'super-admin.employees.index',
+                'employment' => 'super-admin.employment.index',
+                'customers' => 'super-admin.customers.index',
+                'leave-requests' => 'super-admin.leave-requests.index',
+                'expenses' => 'expenses.index',
+                'invoices' => 'invoices.index',
+                'payments' => 'payments.index',
+            ]);
         });
 
     /*
@@ -1552,10 +1608,26 @@ Route::prefix('expenses')
     Route::prefix('manager-departemen')
         ->name('manager-departemen.')
         ->middleware('role:manager_departemen')
-        ->group(function (): void {
+        ->group(function () use ($registerRoleShortcuts): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'manager_departemen')
                 ->name('dashboard');
+
+            $registerRoleShortcuts([
+                'branches' => 'branches.index',
+                'departments' => 'super-admin.departments.index',
+                'positions' => 'super-admin.positions.index',
+                'employees' => 'super-admin.employees.index',
+                'employment' => 'super-admin.employment.index',
+                'customers' => 'super-admin.customers.index',
+                'work-schedules' => 'super-admin.work-schedules.index',
+                'employee-activities' => 'super-admin.employee-activities.index',
+                'attendances' => 'super-admin.attendances.index',
+                'leave-requests' => 'super-admin.leave-requests.index',
+                'invoices' => 'invoices.index',
+                'payments' => 'payments.index',
+                'expenses' => 'expenses.index',
+            ]);
         });
 
     /*
@@ -1567,10 +1639,17 @@ Route::prefix('expenses')
     Route::prefix('karyawan')
         ->name('karyawan.')
         ->middleware('role:karyawan')
-        ->group(function (): void {
+        ->group(function () use ($registerRoleShortcuts): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'karyawan')
                 ->name('dashboard');
+
+            $registerRoleShortcuts([
+                'employees' => 'super-admin.employees.index',
+                'employment' => 'super-admin.employment.index',
+                'attendances' => 'attendances.mine',
+                'leave-requests' => 'leave-requests.mine',
+            ]);
         });
 
     /*
@@ -1582,10 +1661,22 @@ Route::prefix('expenses')
     Route::prefix('admin-pelayanan')
         ->name('admin-pelayanan.')
         ->middleware('role:admin_pelayanan')
-        ->group(function (): void {
+        ->group(function () use ($registerRoleShortcuts): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'admin_pelayanan')
                 ->name('dashboard');
+
+            $registerRoleShortcuts([
+                'branches' => 'branches.index',
+                'departments' => 'super-admin.departments.index',
+                'positions' => 'super-admin.positions.index',
+                'employees' => 'super-admin.employees.index',
+                'employment' => 'super-admin.employment.index',
+                'customers' => 'super-admin.customers.index',
+                'expenses' => 'expenses.index',
+                'invoices' => 'invoices.index',
+                'payments' => 'payments.index',
+            ]);
         });
 
     /*
@@ -1597,10 +1688,26 @@ Route::prefix('expenses')
     Route::prefix('admin-operasional')
         ->name('admin-operasional.')
         ->middleware('role:admin_operasional')
-        ->group(function (): void {
+        ->group(function () use ($registerRoleShortcuts): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'admin_operasional')
                 ->name('dashboard');
+
+            $registerRoleShortcuts([
+                'branches' => 'branches.index',
+                'employees' => 'super-admin.employees.index',
+                'employment' => 'super-admin.employment.index',
+                'customers' => 'super-admin.customers.index',
+                'services' => 'super-admin.services.index',
+                'service-orders' => 'super-admin.service-orders.index',
+                'work-schedules' => 'super-admin.work-schedules.index',
+                'employee-activities' => 'super-admin.employee-activities.index',
+                'attendances' => 'super-admin.attendances.index',
+                'leave-requests' => 'super-admin.leave-requests.index',
+                'expenses' => 'expenses.index',
+                'invoices' => 'invoices.index',
+                'payments' => 'payments.index',
+            ]);
         });
 
     /*
@@ -1616,6 +1723,22 @@ Route::prefix('expenses')
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'finance_staff')
                 ->name('dashboard');
+
+            Route::get('/expenses', function (): RedirectResponse {
+                return redirect()->route('super-admin.expenses.index');
+            })->name('expenses.index');
+
+            Route::get('/invoices', function (): RedirectResponse {
+                return redirect()->route('invoices.index');
+            })->name('invoices.index');
+
+            Route::get('/payments', function (): RedirectResponse {
+                return redirect()->route('payments.index');
+            })->name('payments.index');
+
+            Route::get('/reports/finance', function (): RedirectResponse {
+                return redirect()->route('invoices.index');
+            })->name('reports.finance');
         });
 
     /*
@@ -1627,10 +1750,26 @@ Route::prefix('expenses')
     Route::prefix('auditor-internal')
         ->name('auditor-internal.')
         ->middleware('role:auditor_internal')
-        ->group(function (): void {
+        ->group(function () use ($registerRoleShortcuts): void {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->defaults('dashboard_role', 'auditor_internal')
                 ->name('dashboard');
+
+            $registerRoleShortcuts([
+                'branches' => 'branches.index',
+                'departments' => 'super-admin.departments.index',
+                'positions' => 'super-admin.positions.index',
+                'employees' => 'super-admin.employees.index',
+                'employment' => 'super-admin.employment.index',
+                'customers' => 'super-admin.customers.index',
+                'work-schedules' => 'super-admin.work-schedules.index',
+                'employee-activities' => 'super-admin.employee-activities.index',
+                'attendances' => 'super-admin.attendances.index',
+                'leave-requests' => 'super-admin.leave-requests.index',
+                'expenses' => 'expenses.index',
+                'invoices' => 'invoices.index',
+                'payments' => 'payments.index',
+            ]);
         });
 
     /*

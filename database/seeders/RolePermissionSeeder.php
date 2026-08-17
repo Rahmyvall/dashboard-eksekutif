@@ -502,6 +502,7 @@ class RolePermissionSeeder extends Seeder
                 'dashboard.view',
 
                 // Master Data
+                'branches.view',
                 'employees.view',
                 'customers.view',
                 'services.view',
@@ -527,8 +528,17 @@ class RolePermissionSeeder extends Seeder
                 'employee_activities.create',
                 'employee_activities.edit',
 
+                // HR Operations
+                'attendances.view',
+                'leave_requests.view',
+
                 // Performance
                 'employee_performance.view',
+
+                // Finance Monitoring
+                'expenses.view',
+                'invoices.view',
+                'payments.view',
 
                 // Reports
                 'reports.view',

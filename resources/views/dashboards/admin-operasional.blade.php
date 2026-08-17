@@ -13,41 +13,41 @@
 
           $statistics = $statistics ?? [
               [
-                  'label' => 'Pekerjaan Aktif',
+                  'label' => 'Pesanan Aktif',
                   'value' => 42,
                   'suffix' => '',
                   'icon' => 'activity',
-                  'description' => '18 pekerjaan prioritas tinggi',
+                  'description' => 'Masuk dalam Proses Layanan',
                   'trend' => '+8,4%',
                   'trend_type' => 'up',
                   'theme' => 'orange',
               ],
               [
-                  'label' => 'Selesai Hari Ini',
+                  'label' => 'Jadwal Kerja',
                   'value' => 31,
                   'suffix' => '',
                   'icon' => 'check-circle',
-                  'description' => '73,8% dari target harian',
+                  'description' => 'Telah terjadwal hari ini',
                   'trend' => '+12,6%',
                   'trend_type' => 'up',
                   'theme' => 'green',
               ],
               [
-                  'label' => 'Pekerjaan Terlambat',
+                  'label' => 'Kehadiran',
                   'value' => 6,
                   'suffix' => '',
                   'icon' => 'clock',
-                  'description' => 'Memerlukan tindak lanjut',
+                  'description' => 'Perlu perhatian SDM Operasional',
                   'trend' => '+2',
                   'trend_type' => 'down',
                   'theme' => 'red',
               ],
               [
-                  'label' => 'Utilisasi Sumber Daya',
+                  'label' => 'Layanan Selesai',
                   'value' => 87,
                   'suffix' => '%',
                   'icon' => 'cpu',
-                  'description' => 'Masih dalam batas aman',
+                  'description' => 'Kinerja operasional masih sehat',
                   'trend' => '+4,2%',
                   'trend_type' => 'up',
                   'theme' => 'blue',
@@ -1746,12 +1746,12 @@
                          Admin Operasional
                     </div>
 
-                    <h1>Operational Control Center</h1>
+                    <h1>Dashboard Admin Operasional</h1>
 
                     <p class="operations-hero-description">
-                         Selamat datang, {{ $currentUserName }}. Pantau pekerjaan aktif,
-                         utilisasi sumber daya, jadwal lapangan, keterlambatan, serta
-                         kondisi operasional perusahaan dari satu dashboard terintegrasi.
+                         Selamat datang, {{ $currentUserName }}. Pantau layanan aktif,
+                         jadwal kerja, kebutuhan SDM, dan perkembangan operasional dari
+                         modul yang tersedia di sidebar menu.
                     </p>
 
                     <div class="operations-hero-meta">
@@ -1837,11 +1837,11 @@
 
                               <div>
                                    <h2 class="operations-card-title">
-                                        Kinerja Operasional Mingguan
+                                        Ringkasan Proses Layanan
                                    </h2>
 
                                    <p class="operations-card-subtitle">
-                                        Perbandingan pekerjaan dijadwalkan dan diselesaikan.
+                                        Perbandingan tugas terjadwal dan tugas yang telah diselesaikan.
                                    </p>
                               </div>
                          </div>
@@ -1930,11 +1930,11 @@
 
                               <div>
                                    <h2 class="operations-card-title">
-                                        Kondisi Operasional
+                                        Status Modul Operasional
                                    </h2>
 
                                    <p class="operations-card-subtitle">
-                                        Ringkasan kapasitas dan kesehatan operasional.
+                                        Kondisi ketersediaan modul dan sumber daya terkait menu sidebar.
                                    </p>
                               </div>
                          </div>
@@ -2045,11 +2045,11 @@
 
                               <div>
                                    <h2 class="operations-card-title">
-                                        Prioritas Operasional
+                                        Prioritas Tindakan
                                    </h2>
 
                                    <p class="operations-card-subtitle">
-                                        Item yang membutuhkan tindak lanjut.
+                                        Item yang perlu mendapat perhatian segera dari admin operasional.
                                    </p>
                               </div>
                          </div>
@@ -2101,11 +2101,11 @@
 
                               <div>
                                    <h2 class="operations-card-title">
-                                        Jadwal Operasional Hari Ini
+                                        Jadwal Kerja &amp; Penugasan
                                    </h2>
 
                                    <p class="operations-card-subtitle">
-                                        Monitoring pekerjaan, tim, waktu, dan progres.
+                                        Monitoring pekerjaan, tim, waktu, dan progres dari menu Proses Layanan.
                                    </p>
                               </div>
                          </div>
@@ -2302,7 +2302,7 @@
                                    </h2>
 
                                    <p class="operations-card-subtitle">
-                                        Kapasitas personel berdasarkan pekerjaan aktif.
+                                        Kapasitas personel sesuai jadwal kerja dan penugasan aktif.
                                    </p>
                               </div>
                          </div>
@@ -2363,11 +2363,11 @@
 
                               <div>
                                    <h2 class="operations-card-title">
-                                        Aktivitas Operasional
+                                        Aktivitas Terbaru
                                    </h2>
 
                                    <p class="operations-card-subtitle">
-                                        Pembaruan operasional terbaru.
+                                        Pembaruan terkini dari modul operasional dan SDM.
                                    </p>
                               </div>
                          </div>

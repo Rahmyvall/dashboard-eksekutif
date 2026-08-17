@@ -162,8 +162,8 @@
           }
 
           /* ================================================================
-                                                                            HERO
-                                                                         ================================================================= */
+                                                                                      HERO
+                                                                                   ================================================================= */
 
           .schedule-hero {
                position: relative;
@@ -420,8 +420,8 @@
           }
 
           /* ================================================================
-                                                                            ALERT
-                                                                         ================================================================= */
+                                                                                      ALERT
+                                                                                   ================================================================= */
 
           .schedule-alert {
                display: flex;
@@ -469,8 +469,8 @@
           }
 
           /* ================================================================
-                                                                            STATISTICS
-                                                                         ================================================================= */
+                                                                                      STATISTICS
+                                                                                   ================================================================= */
 
           .schedule-stats-row {
                margin-bottom: 22px;
@@ -575,8 +575,8 @@
           }
 
           /* ================================================================
-                                                                            FILTER
-                                                                         ================================================================= */
+                                                                                      FILTER
+                                                                                   ================================================================= */
 
           .schedule-filter-card {
                padding: 22px;
@@ -779,8 +779,8 @@
           }
 
           /* ================================================================
-                                                                            TABLE CARD
-                                                                         ================================================================= */
+                                                                                      TABLE CARD
+                                                                                   ================================================================= */
 
           .schedule-card {
                overflow: hidden;
@@ -1226,8 +1226,8 @@
           }
 
           /* ================================================================
-                                                                            PAGINATION
-                                                                         ================================================================= */
+                                                                                      PAGINATION
+                                                                                   ================================================================= */
 
           .schedule-pagination-wrap {
                display: flex;
@@ -1287,8 +1287,8 @@
           }
 
           /* ================================================================
-                                                                            RESPONSIVE
-                                                                         ================================================================= */
+                                                                                      RESPONSIVE
+                                                                                   ================================================================= */
 
           @media (max-width: 1199.98px) {
                .schedule-hero-content {
@@ -1424,13 +1424,13 @@
           }
 
           /*
-                                                                      |--------------------------------------------------------------------------
-                                                                      | Penyesuaian komponen Work Schedule
-                                                                      |--------------------------------------------------------------------------
-                                                                      | Hanya menambahkan gaya untuk data khusus jadwal kerja.
-                                                                      | Struktur warna, kartu, hero, filter, tabel, dan responsivitas tetap
-                                                                      | mengikuti template sumber.
-                                                                      */
+                                                                                |--------------------------------------------------------------------------
+                                                                                | Penyesuaian komponen Work Schedule
+                                                                                |--------------------------------------------------------------------------
+                                                                                | Hanya menambahkan gaya untuk data khusus jadwal kerja.
+                                                                                | Struktur warna, kartu, hero, filter, tabel, dan responsivitas tetap
+                                                                                | mengikuti template sumber.
+                                                                                */
 
           .schedule-time-range {
                display: flex;
@@ -1557,35 +1557,103 @@
           }
 
           /* ================================================================
-                                                                            PRINT SELURUH TABEL
-                                                                         ================================================================= */
+                                                                                      PRINT SELURUH TABEL
+                                                                                   ================================================================= */
 
           .schedule-print-only {
                display: none;
           }
 
           .schedule-print-header {
-               padding: 0 0 18px;
-               margin-bottom: 14px;
-               text-align: center;
-               border-bottom: 2px solid #1e293b;
+               padding: 18px 20px 16px;
+               margin-bottom: 20px;
+               border: 1px solid #d9e2ec;
+               border-radius: 10px;
+               background: #ffffff;
+               box-shadow: 0 6px 16px rgba(15, 23, 42, .04);
+          }
+
+          .schedule-print-brand {
+               display: flex;
+               gap: 14px;
+               align-items: center;
+               margin-bottom: 12px;
+               padding-bottom: 12px;
+               border-bottom: 1px solid #e2e8f0;
+          }
+
+          .schedule-print-icon {
+               display: inline-flex;
+               width: 46px;
+               height: 46px;
+               align-items: center;
+               justify-content: center;
+               border-radius: 12px;
+               background: #f1f5f9;
+               border: 1px solid #dfe7f0;
+               color: #0f172a;
+          }
+
+          .schedule-print-icon svg {
+               width: 22px;
+               height: 22px;
+          }
+
+          .schedule-print-kicker {
+               display: inline-block;
+               margin-bottom: 4px;
+               color: #334155;
+               font-size: .68rem;
+               font-weight: 800;
+               letter-spacing: .08em;
+               text-transform: uppercase;
           }
 
           .schedule-print-header h1 {
-               margin: 0 0 7px;
+               margin: 0;
                color: #0f172a;
-               font-size: 1.35rem;
+               font-size: 1.45rem;
                font-weight: 850;
+               line-height: 1.2;
           }
 
-          .schedule-print-header p {
-               margin: 3px 0;
-               color: #475569;
-               font-size: .78rem;
+          .schedule-print-meta {
+               display: flex;
+               flex-wrap: wrap;
+               gap: 10px 18px;
+               align-items: center;
+               justify-content: space-between;
+               color: #334155;
+          }
+
+          .schedule-print-meta p {
+               margin: 0;
+               font-size: .76rem;
+               line-height: 1.5;
+          }
+
+          .schedule-print-summary {
+               display: inline-flex;
+               flex-wrap: wrap;
+               gap: 8px;
+               justify-content: flex-end;
+          }
+
+          .schedule-print-pill {
+               display: inline-flex;
+               padding: 6px 10px;
+               align-items: center;
+               gap: 6px;
+               border-radius: 999px;
+               background: #f8fafc;
+               border: 1px solid #dfe7f0;
+               color: #0f172a;
+               font-size: .7rem;
+               font-weight: 700;
           }
 
           .schedule-page.is-print-mode {
-               padding: 22px;
+               padding: 0;
                background: #ffffff;
           }
 
@@ -1613,8 +1681,8 @@
 
           @media print {
                @page {
-                    size: A4 landscape;
-                    margin: 8mm;
+                    size: A4 portrait;
+                    margin: 12mm;
                }
 
                html,
@@ -1623,6 +1691,7 @@
                     margin: 0 !important;
                     padding: 0 !important;
                     background: #ffffff !important;
+                    color: #0f172a !important;
                }
 
                body * {
@@ -1635,14 +1704,14 @@
                }
 
                .schedule-print-area {
-                    position: absolute !important;
+                    position: relative !important;
                     top: 0 !important;
                     left: 0 !important;
                     width: 100% !important;
                     margin: 0 !important;
                     padding: 0 !important;
                     overflow: visible !important;
-                    border: 0 !important;
+                    border: 1px solid #dfe7f0 !important;
                     border-radius: 0 !important;
                     background: #ffffff !important;
                     box-shadow: none !important;
@@ -1676,6 +1745,7 @@
                     margin: 0 !important;
                     table-layout: auto !important;
                     border-collapse: collapse !important;
+                    border: 1px solid #cbd5e1 !important;
                }
 
                .schedule-table thead {
@@ -2117,25 +2187,38 @@
                     <div class="schedule-card-body">
                          @if ($printMode)
                               <div class="schedule-print-header schedule-print-only">
-                                   <h1>MONITORING PRODUKTIVITAS KARYAWAN DAN TRANSAKSI JASA</h1>
+                                   <div class="schedule-print-brand">
+                                        <span class="schedule-print-icon" aria-hidden="true">
+                                             <i data-feather="activity"></i>
+                                        </span>
 
-                                   <p>
-                                        Dicetak pada:
-                                        {{ $printedAt instanceof \DateTimeInterface ? $printedAt->format('d-m-Y H:i') : $printedAt }}
-                                        WIB
-                                   </p>
+                                        <div>
+                                             <span class="schedule-print-kicker">Dashboard Monitoring</span>
+                                             <h1>Produktivitas Karyawan &amp; Transaksi Jasa</h1>
+                                        </div>
+                                   </div>
 
-                                   <p>
-                                        Total data: {{ number_format($filteredTotal) }}
+                                   <div class="schedule-print-meta">
+                                        <p>
+                                             Dicetak pada:
+                                             {{ $printedAt instanceof \DateTimeInterface ? $printedAt->format('d-m-Y H:i') : $printedAt }}
+                                             WIB
+                                        </p>
 
-                                        @if ($search !== '')
-                                             | Kata kunci: {{ $search }}
-                                        @endif
+                                        <div class="schedule-print-summary">
+                                             <span class="schedule-print-pill">Total:
+                                                  {{ number_format($filteredTotal) }}</span>
 
-                                        @if ($status !== '')
-                                             | Status: {{ $statusLabel($status) }}
-                                        @endif
-                                   </p>
+                                             @if ($search !== '')
+                                                  <span class="schedule-print-pill">Kata kunci: {{ $search }}</span>
+                                             @endif
+
+                                             @if ($status !== '')
+                                                  <span class="schedule-print-pill">Status:
+                                                       {{ $statusLabel($status) }}</span>
+                                             @endif
+                                        </div>
+                                   </div>
                               </div>
                          @endif
 

@@ -14,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
 
     private const ROLE_ALIASES = [
         'super_admin' => ['super_admin', 'super administrator', 'superadministrator'],
-        'direktur_utama' => ['direktur_utama', 'direktur utama', 'direkturutama', 'executive'],
+        'direktur_utama' => ['direktur_utama', 'direktur manager', 'direktur_manager', 'direktur utama', 'direkturutama', 'executive'],
         'hrd_manager' => ['hrd_manager', 'hrd manager', 'hrdmanager', 'hr'],
         'manager_departemen' => ['manager_departemen', 'manager departemen', 'managerdepartemen'],
         'karyawan' => ['karyawan', 'pegawai', 'employee'],

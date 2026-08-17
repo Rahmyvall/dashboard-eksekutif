@@ -52,6 +52,8 @@
          // DIREKTUR
          'direktur' => 'direktur_utama',
          'direktur_utama' => 'direktur_utama',
+         'direktur_manager' => 'direktur_utama',
+         'direktur manager' => 'direktur_utama',
          'direkturutama' => 'direktur_utama',
          'direktur utama' => 'direktur_utama',
          'executive' => 'direktur_utama',
@@ -173,6 +175,49 @@
          }
 
          // Fallback untuk kasus sinkronisasi permission cache/session belum konsisten.
+         if ($hasRole(['direktur_utama'])) {
+             $direkturPermissionFallback = [
+                 'dashboard.view',
+                 'dashboard.executive.view',
+                 'branches.view',
+                 'departments.view',
+                 'positions.view',
+                 'employees.view',
+                 'customers.view',
+                 'services.view',
+                 'service_categories.view',
+                 'service_orders.view',
+                 'service_order_items.view',
+                 'service_order_status.view',
+                 'work_schedules.view',
+                 'employee_schedules.view',
+                 'employee_activities.view',
+                 'attendances.view',
+                 'leave_requests.view',
+                 'performance_indicators.view',
+                 'performance_periods.view',
+                 'performance_roles.view',
+                 'employee_targets.view',
+                 'employee_performance.view',
+                 'performance_details.view',
+                 'customer_feedback.view',
+                 'customer_complaints.view',
+                 'invoices.view',
+                 'payments.view',
+                 'expenses.view',
+                 'reports.view',
+                 'reports.export',
+                 'reports.services',
+                 'reports.performance',
+                 'reports.customers',
+                 'reports.complaints',
+                 'reports.finance',
+                 'reports.hr',
+             ];
+
+             return in_array($permission, $direkturPermissionFallback, true);
+         }
+
          if ($hasRole(['manager_departemen'])) {
              $managerPermissionFallback = [
                  'dashboard.view',
@@ -248,6 +293,7 @@
          if ($hasRole(['admin_operasional'])) {
              $adminOperasionalPermissionFallback = [
                  'dashboard.view',
+                 'branches.view',
                  'employees.view',
                  'customers.view',
                  'services.view',
@@ -266,7 +312,12 @@
                  'employee_activities.view',
                  'employee_activities.create',
                  'employee_activities.edit',
+                 'attendances.view',
+                 'leave_requests.view',
                  'employee_performance.view',
+                 'expenses.view',
+                 'invoices.view',
+                 'payments.view',
                  'reports.view',
                  'reports.export',
                  'reports.services',
@@ -274,6 +325,74 @@
              ];
 
              return in_array($permission, $adminOperasionalPermissionFallback, true);
+         }
+
+         if ($hasRole(['finance_staff'])) {
+             $financePermissionFallback = [
+                 'dashboard.view',
+                 'service_orders.view',
+                 'service_order_items.view',
+                 'invoices.view',
+                 'invoices.create',
+                 'invoices.edit',
+                 'invoices.approve',
+                 'payments.view',
+                 'payments.create',
+                 'payments.edit',
+                 'payments.approve',
+                 'expenses.view',
+                 'expenses.create',
+                 'expenses.edit',
+                 'expenses.approve',
+                 'reports.view',
+                 'reports.export',
+                 'reports.services',
+                 'reports.finance',
+             ];
+
+             return in_array($permission, $financePermissionFallback, true);
+         }
+
+         if ($hasRole(['auditor_internal'])) {
+             $auditorPermissionFallback = [
+                 'dashboard.view',
+                 'branches.view',
+                 'departments.view',
+                 'positions.view',
+                 'employees.view',
+                 'customers.view',
+                 'services.view',
+                 'service_categories.view',
+                 'service_orders.view',
+                 'service_order_items.view',
+                 'service_order_status.view',
+                 'work_schedules.view',
+                 'employee_schedules.view',
+                 'employee_activities.view',
+                 'attendances.view',
+                 'leave_requests.view',
+                 'performance_indicators.view',
+                 'employee_targets.view',
+                 'employee_performance.view',
+                 'performance_details.view',
+                 'invoices.view',
+                 'payments.view',
+                 'expenses.view',
+                 'customer_feedback.view',
+                 'customer_complaints.view',
+                 'audit_logs.view',
+                 'audit_logs.export',
+                 'reports.view',
+                 'reports.export',
+                 'reports.services',
+                 'reports.performance',
+                 'reports.customers',
+                 'reports.complaints',
+                 'reports.finance',
+                 'reports.hr',
+             ];
+
+             return in_array($permission, $auditorPermissionFallback, true);
          }
 
          return false;
