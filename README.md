@@ -3,11 +3,11 @@
 Sistem informasi berbasis web untuk memantau produktivitas karyawan, absensi, transaksi jasa, keuangan, dan kepuasan pelanggan.
 
 ![Preview Dashboard](public/backend/assets/img/readme/1.png)
-[Preview 1](public/backend/assets/img/readme/2.png)
-[Preview 2](public/backend/assets/img/readme/3.png)
-[Preview 3](public/backend/assets/img/readme/4.png)
-[Preview 4](public/backend/assets/img/readme/5.png)
-[Preview 5](public/backend/assets/img/readme/6.png)
+![Preview 1](public/backend/assets/img/readme/2.png)
+![Preview 2](public/backend/assets/img/readme/3.png)
+![Preview 3](public/backend/assets/img/readme/4.png)
+![Preview 4](public/backend/assets/img/readme/5.png)
+![Preview 5](public/backend/assets/img/readme/6.png)
 
 ## Fitur Utama
 
