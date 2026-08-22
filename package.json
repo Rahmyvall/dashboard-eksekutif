@@ -14,6 +14,25 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "express": "^5.2.1",
         "leaflet": "^1.9.4"
-    }
+    },
+    "name": "dashboard-eksekutif",
+    "version": "1.0.0",
+    "description": "Sistem informasi berbasis web untuk memantau produktivitas karyawan, absensi, transaksi jasa, keuangan, dan kepuasan pelanggan.",
+    "main": "vite.config.js",
+    "directories": {
+        "test": "tests"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Rahmyvall/dashboard-eksekutif.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Rahmyvall/dashboard-eksekutif/issues"
+    },
+    "homepage": "https://github.com/Rahmyvall/dashboard-eksekutif#readme"
 }
